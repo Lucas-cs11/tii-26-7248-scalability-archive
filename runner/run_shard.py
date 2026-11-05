@@ -93,6 +93,33 @@ for i, t in enumerate(tasks, 1):
                     "shard_id": int(shard),
                     "raw_artifact": f"raw/{out.name}",
                     "wall_s": round(time.time() - t0, 3)})
+        attrs = rec.get("model_attributes") or {}
+        counters = rec.get("counters") or {}
+        rec.update({
+            "number_of_places": rec.get("n_places"),
+            "number_of_transitions": rec.get("n_transitions"),
+            "number_of_arcs": rec.get("n_arcs"),
+            "number_of_parts": attrs.get("number_of_parts"),
+            "operations_per_part": attrs.get("operations_per_part"),
+            "resource_count": attrs.get("resource_count"),
+            "WIP": attrs.get("WIP"),
+            "verified_reachable_concurrency": attrs.get("verified_reachable_concurrency"),
+            "cycle_presence": attrs.get("cycle_presence"),
+            "cycle_semantics": attrs.get("cycle_semantics"),
+            "fault_configuration": attrs.get("fault_configuration"),
+            "observable_ratio": attrs.get("observable_ratio_target"),
+            "runtime_sec": rec.get("runtime_s"),
+            "time_limit_sec": int(t["timeout_s"]),
+            "scg_limit": 50000,
+            "SCG_classes": counters.get("scg_classes"),
+            "SCG_edges": counters.get("scg_edges"),
+            "synchronizer_states": counters.get("sync_states"),
+            "candidate_words": counters.get("candidate_words"),
+            "retained_path_records": counters.get("trace_records"),
+            "terminal_path_pairs": counters.get("terminal_pairs"),
+            "LP_calls": counters.get("lp_calls"),
+            "error_type": rec.get("error", "").split(":", 1)[0] if rec.get("error") else None,
+        })
         rec["configuration_hash"] = hashlib.sha256(
             json.dumps(spec, sort_keys=True).encode()
         ).hexdigest()
