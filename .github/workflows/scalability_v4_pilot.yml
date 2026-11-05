@@ -8,8 +8,6 @@ on:
       - .github/workflows/scalability_v4_pilot.yml
       - protocol/v4_pilot_manifest.json
       - protocol/v4_pilot_tasks/**
-      - runner/**
-      - src/**
 permissions:
   contents: read
 jobs:
