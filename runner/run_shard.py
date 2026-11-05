@@ -28,7 +28,7 @@ for i, t in enumerate(tasks, 1):
         model_value = t.get("model") or t.get("model_id")
         spec = {"tag": t["task_id"], "experiment_id": t.get("experiment_id", t["experiment"]),
                 "benchmark_family": t.get("benchmark_family"),
-                "model_id": t.get("model_id", t["model"]),
+                "model_id": t.get("model_id") or model_value,
                 "bounded_problem_id": t.get("bounded_problem_id"),
                 "configuration_id": t.get("configuration_id", t["task_id"]),
                 "experiment": t["experiment"], "model": model_value,
@@ -80,7 +80,7 @@ for i, t in enumerate(tasks, 1):
         rec.update({"task_id": t["task_id"], "experiment": t["experiment"],
                     "experiment_id": t.get("experiment_id", t["experiment"]),
                     "benchmark_family": t.get("benchmark_family"),
-                    "model_id": t.get("model_id", t["model"]),
+                    "model_id": t.get("model_id") or model_value,
                     "bounded_problem_id": t.get("bounded_problem_id"),
                     "configuration_id": t.get("configuration_id", t["task_id"]),
                     "model": model_value, "seed": int(t["seed"]),
