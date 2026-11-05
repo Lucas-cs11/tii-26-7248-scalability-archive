@@ -25,12 +25,13 @@ fields = ["task_id", "experiment", "model", "seed", "replicate", "L", "H", "mode
 for i, t in enumerate(tasks, 1):
         if t["task_id"] in done:
             continue
+        model_value = t.get("model") or t.get("model_id")
         spec = {"tag": t["task_id"], "experiment_id": t.get("experiment_id", t["experiment"]),
                 "benchmark_family": t.get("benchmark_family"),
                 "model_id": t.get("model_id", t["model"]),
                 "bounded_problem_id": t.get("bounded_problem_id"),
                 "configuration_id": t.get("configuration_id", t["task_id"]),
-                "experiment": t["experiment"], "model": t["model"],
+                "experiment": t["experiment"], "model": model_value,
                 "seed": int(t["seed"]), "replicate": int(t["replicate"]),
                 "L": int(t["L"]), "H": float(t["H"]), "mode": t["mode"],
                 "timeout_s": int(t["timeout_s"]), "params": json.loads(t["params"])}
@@ -82,7 +83,7 @@ for i, t in enumerate(tasks, 1):
                     "model_id": t.get("model_id", t["model"]),
                     "bounded_problem_id": t.get("bounded_problem_id"),
                     "configuration_id": t.get("configuration_id", t["task_id"]),
-                    "model": t["model"], "seed": int(t["seed"]),
+                    "model": model_value, "seed": int(t["seed"]),
                     "replicate": int(t["replicate"]),
                     "replicate_id": int(t["replicate"]),
                     "commit_sha": os.environ.get("GITHUB_SHA"),
