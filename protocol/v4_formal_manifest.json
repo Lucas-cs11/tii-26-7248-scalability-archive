@@ -1,0 +1,27 @@
+{
+  "version": "v4-final",
+  "frozen_before_execution": true,
+  "pilot_run_id": 42004602864,
+  "selection_rule": "all declared families, seeds, replicates and consecutive L levels; no outcome filtering",
+  "tasks": 465,
+  "shards": 60,
+  "replicates": 3,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "experiments": {
+    "size": 105,
+    "wip": 135,
+    "Lsweep": 225
+  },
+  "limits": {
+    "scg_class_limit": 50000,
+    "wip_external_timeout_s": 30,
+    "other_external_timeout_s": 60
+  },
+  "timing_policy": "GitHub-hosted ubuntu-22.04 only; three repeats; no cross-source timing merge"
+}
