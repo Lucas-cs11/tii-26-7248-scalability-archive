@@ -29,19 +29,26 @@ with out.open("a") as fh:
         try:
             p = subprocess.run([sys.executable, str(HERE / "run_cell.py"), json.dumps(spec)],
                                capture_output=True, text=True, timeout=int(t["timeout_s"]))
+            if p.returncode != 0 or not p.stdout.strip():
+                raise RuntimeError(
+                    f"run_cell exit={p.returncode}; stderr={p.stderr[-1000:]}"
+                )
             rec = json.loads(p.stdout.strip().splitlines()[-1])
         except subprocess.TimeoutExpired:
             rec = {"tag": t["task_id"], "mode": t["mode"], "verdict": None,
                    "execution_status": "TIMEOUT", "error": None, "model_hash": None,
+                   "analysis_status": "NOT_RUN", "inconclusive_reason": None,
                    "n_places": None, "n_transitions": None, "counters": None,
                    "runtime_s": None, "L": int(t["L"]), "H": float(t["H"]),
                    "params": json.loads(t["params"])}
         except Exception as exc:  # noqa: BLE001
             rec = {"tag": t["task_id"], "mode": t["mode"], "verdict": None,
                    "execution_status": "ERROR", "error": f"{type(exc).__name__}: {exc}",
+                   "analysis_status": "NOT_RUN", "inconclusive_reason": None,
                    "counters": None, "runtime_s": None}
         rec.update({"task_id": t["task_id"], "experiment": t["experiment"],
-                    "model": t["model"], "replicate": int(t["replicate"]),
+                    "model": t["model"], "seed": int(t["seed"]),
+                    "replicate": int(t["replicate"]),
                     "wall_s": round(time.time() - t0, 3)})
         fh.write(json.dumps(rec, default=str) + "\n"); fh.flush()
         if i % 10 == 0:

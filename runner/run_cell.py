@@ -35,6 +35,7 @@ def main() -> int:
            "seed": spec.get("seed"), "replicate": spec.get("replicate"),
            "L": spec.get("L"), "H": spec.get("H"), "params": spec["params"],
            "verdict": None, "execution_status": "ERROR", "error": None,
+           "analysis_status": "NOT_RUN", "inconclusive_reason": None,
            "model_hash": None, "n_places": None, "n_transitions": None, "n_arcs": None,
            "counters": None, "runtime_s": None, "python": platform.python_version(),
            "timeout_s": spec.get("timeout_s", 120)}
@@ -54,6 +55,10 @@ def main() -> int:
         rec["runtime_s"] = time.perf_counter() - t0
         rec["verdict"] = out.get("result")
         rec["execution_status"] = "COMPLETED"
+        rec["analysis_status"] = (
+            "INCONCLUSIVE" if rec["verdict"] == "INC" else "CONCLUSIVE"
+        )
+        rec["inconclusive_reason"] = out.get("inconclusive_reason")
         rec["enumeration_complete"] = out.get("enumeration_complete")
         rec["critical_pair_count"] = len(out.get("certificates", []) or [])
         st = out.get("stats", {})

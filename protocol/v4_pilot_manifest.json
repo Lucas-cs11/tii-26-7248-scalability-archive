@@ -1,0 +1,13 @@
+{
+  "phase": "pilot",
+  "frozen_before_execution": true,
+  "selection_rule": "all declared families, seeds, and consecutive L levels; no outcome filtering",
+  "tasks": 99,
+  "shards": 30,
+  "experiments": {
+    "pilot_L": 72,
+    "pilot_WIP": 27
+  },
+  "scg_class_limit": 50000,
+  "external_timeout_s": 120
+}

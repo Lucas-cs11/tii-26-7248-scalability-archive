@@ -1,0 +1,4 @@
+task_id,experiment,model,seed,replicate,L,H,mode,timeout_s,params
+pilotL:LP1:s1:L10,pilot_L,LP1,1,0,10,60.0,complete,120,"{""adjustable_ratio"": 0.25, ""fault_locations"": 2, ""inspection_locations"": 3, ""interval_width_factor"": 1.0, ""n_configs"": 1, ""n_machines"": 4, ""n_parts"": 1, ""ops_per_part"": 4, ""seed"": 1, ""unobservable_ratio"": 0.5, ""wip_bound"": 1}"
+pilotL:LP2:s0:L5,pilot_L,LP2,0,0,5,80.0,complete,120,"{""adjustable_ratio"": 0.25, ""fault_locations"": 2, ""inspection_locations"": 2, ""interval_width_factor"": 1.0, ""n_configs"": 1, ""n_machines"": 4, ""n_parts"": 2, ""ops_per_part"": 2, ""seed"": 0, ""unobservable_ratio"": 0.5, ""wip_bound"": 1}"
+pilotL:LP2:s2:L9,pilot_L,LP2,2,0,9,80.0,complete,120,"{""adjustable_ratio"": 0.25, ""fault_locations"": 2, ""inspection_locations"": 2, ""interval_width_factor"": 1.0, ""n_configs"": 1, ""n_machines"": 4, ""n_parts"": 2, ""ops_per_part"": 2, ""seed"": 2, ""unobservable_ratio"": 0.5, ""wip_bound"": 1}"

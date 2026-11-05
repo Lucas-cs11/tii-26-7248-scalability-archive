@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+results/
+artifacts/
+.DS_Store
