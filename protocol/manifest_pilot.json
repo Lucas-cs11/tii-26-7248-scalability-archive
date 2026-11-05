@@ -1,0 +1,8 @@
+{
+ "experiments": {
+  "pilot_wip": 4
+ },
+ "total_tasks": 4,
+ "shards": 4,
+ "note": "concurrency-ladder calibration; 4 cells, one per shard; 120 s; GitHub Actions only"
+}

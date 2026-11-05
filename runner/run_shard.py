@@ -5,9 +5,10 @@ import csv, json, subprocess, sys, time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+TASKS_DIR = Path(__import__("os").environ.get("TASKS_DIR", ROOT / "protocol" / "tasks"))
 HERE = Path(__file__).resolve().parent
 shard = sys.argv[1]
-tasks = list(csv.DictReader(open(ROOT / "protocol" / "tasks" / f"shard_{int(shard):03d}.csv")))
+tasks = list(csv.DictReader(open(TASKS_DIR / f"shard_{int(shard):03d}.csv")))
 outdir = ROOT / "results" / "raw"; outdir.mkdir(parents=True, exist_ok=True)
 out = outdir / f"shard_{int(shard):03d}.jsonl"
 done = set()
