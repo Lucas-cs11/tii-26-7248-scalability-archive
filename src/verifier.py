@@ -14,7 +14,7 @@ from __future__ import annotations
 import math
 import time
 from fractions import Fraction
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from .model.tpn import TPN
 from .scg.builder import build_scg, SCG
@@ -30,6 +30,7 @@ def verify(
     H: float,
     budget: Optional[int] = None,
     complete_set: bool = False,
+    progress_hook: Optional[Callable[[str, Dict], None]] = None,
 ) -> Dict:
     """Full verification pipeline.
 
@@ -90,12 +91,17 @@ def verify(
     any_inconclusive = False
     enumeration_complete = False
 
+    def progress(stage: str) -> None:
+        if progress_hook is not None:
+            progress_hook(stage, dict(stats))
+
     # Step 1: Build SCG
     t0 = time.perf_counter()
     scg = build_scg(tpn)
     stats["runtime_scg"] = time.perf_counter() - t0
     stats["scg_classes"] = len(scg.classes)
     stats["scg_edges"] = len(scg.edges)
+    progress("SCG_COMPLETE")
 
     # A capped SCG is incomplete.  In particular, an empty completion_ids set
     # cannot establish that completion is unreachable when exploration stopped
@@ -146,6 +152,7 @@ def verify(
     stats["runtime_sync"] = time.perf_counter() - t0
     stats["sync_states"] = len(sync.states)
     stats["candidate_words"] = len(sync.candidate_words)
+    progress("SYNCHRONIZER_COMPLETE")
 
     # No candidates: diagnosable (exhaustive absence established)
     if not sync.candidate_words:
@@ -248,6 +255,7 @@ def verify(
                         stats["runtime_expansion"] = t_exp_total
                         stats["runtime_lp"] = t_lp_total
                         stats["runtime_total"] = time.perf_counter() - t_start
+                        progress("FIRST_CERTIFICATE_COMPLETE")
                         return {
                             "result": "AMB",
                             "inconclusive_reason": None,
@@ -259,6 +267,12 @@ def verify(
 
             if found_cert_this_word and not complete_set:
                 break  # inner loop already returned above; this is belt-and-suspenders
+        stats["candidate_words_processed"] = words_processed
+        stats["temporal_states"] = total_temporal_states
+        stats["trace_records"] = total_trace_records
+        stats["terminal_pairs"] = total_terminal_pairs
+        stats["lp_calls"] = total_lp_calls
+        progress("HISTORY_ANALYSIS_PARTIAL")
 
     # enumeration_complete is True only if ALL candidates were fully analyzed
     # (no INC expansions, no solver unknowns that prevented full enumeration)
@@ -271,6 +285,7 @@ def verify(
     stats["runtime_expansion"] = t_exp_total
     stats["runtime_lp"] = t_lp_total
     stats["runtime_total"] = time.perf_counter() - t_start
+    progress("VERIFICATION_COMPLETE")
 
     if certificates:
         return {

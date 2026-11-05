@@ -1,0 +1,35 @@
+{
+  "version": "v5-pilot-1",
+  "frozen_before_execution": true,
+  "purpose": "protocol, semantics, checkpoints, L coverage and resource-budget acceptance; no outcome-based model selection",
+  "tasks": 756,
+  "unique_configurations": 756,
+  "distinct_base_models": 144,
+  "families": [
+    "F01_sequential_sparse",
+    "F02_sequential_dense",
+    "F03_deep_inspection",
+    "F04_alternative_routes",
+    "F05_routes_inspections",
+    "F06_parallel_parts",
+    "F07_shared_contention",
+    "F08_mixed_visibility",
+    "F09_deep_fault_stages",
+    "F10_bounded_rework",
+    "F11_resource_cycle",
+    "F12_sparse_cycle"
+  ],
+  "shards": 48,
+  "experiments": {
+    "A_structural": 36,
+    "B_wip": 108,
+    "C_Lsweep": 576,
+    "D_difficult": 36
+  },
+  "timeout_s": 45,
+  "worst_case_runner_minutes": 567.0,
+  "estimated_raw_and_checkpoint_mb": 8.86,
+  "runner": "GitHub-hosted ubuntu-22.04 standard runner only",
+  "billing": "public repository; standard hosted runner is free; no larger or paid runner",
+  "selection_rule": "all declared families/seeds/cells retained; semantic-invalid cells reported, not silently replaced"
+}

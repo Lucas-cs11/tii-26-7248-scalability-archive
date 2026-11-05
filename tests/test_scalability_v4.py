@@ -4,6 +4,8 @@ from unittest.mock import patch
 
 from scripts.audit_v4_results import task_spec_mismatches
 from src.benchmarks.rmt_fms_generator import generate_rmt_fms
+from src.benchmarks.v5_families import FAMILY_SPECS, generate_v5_model
+from src.model.validation import validate_model
 from src.scg.builder import build_scg
 from src.synchronizer.builder import build_synchronizer
 from src.verifier import verify
@@ -24,6 +26,17 @@ BASE_PARAMS = {
 
 
 class ScalabilityV4GeneratorTests(unittest.TestCase):
+    def test_v5_family_registry_builds_valid_distinct_models(self):
+        hashes = set()
+        for family in FAMILY_SPECS:
+            tpn, L, H, attributes = generate_v5_model(family, seed=0)
+            self.assertTrue(L > 0 and H > 0)
+            self.assertEqual(attributes["benchmark_family"], family)
+            self.assertFalse(validate_model(tpn))
+            hashes.add((len(tpn.places), len(tpn.transitions), len(tpn.arcs),
+                        tuple(sorted(tpn.observable_alphabet))))
+        self.assertGreaterEqual(len(hashes), 10)
+
     def test_audit_rejects_record_that_differs_from_frozen_task(self):
         params = {"n_parts": 1, "seed": 0}
         expected = {"x": {

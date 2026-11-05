@@ -1,0 +1,67 @@
+name: scalability-v5-pilot
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - scalability-v5-fullscale
+    paths:
+      - .github/workflows/scalability_v5_pilot.yml
+      - protocol/v5_pilot_manifest.json
+      - protocol/v5_pilot_tasks/**
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install numpy==2.3.4 scipy==1.16.2
+      - run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - run: python scripts/validate_v5_models.py --seeds 0,1,2 --out results/semantic_validation.json
+      - run: |
+          python scripts/build_v5_pilot.py
+          git diff --exit-code -- protocol/v5_pilot_manifest.json protocol/v5_pilot_tasks
+      - id: matrix
+        run: |
+          MATRIX=$(python -c 'import json; d=json.load(open("protocol/v5_pilot_manifest.json")); print(json.dumps(list(range(d["shards"]))))')
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v5-pilot-semantic-${{ github.run_id }}
+          path: results/semantic_validation.json
+          if-no-files-found: error
+          retention-days: 14
+  run:
+    needs: validate
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: ${{ fromJSON(needs.validate.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install numpy==2.3.4 scipy==1.16.2
+      - env:
+          TASKS_DIR: protocol/v5_pilot_tasks
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+          PYTHONHASHSEED: "0"
+        run: python runner/run_shard.py "${{ matrix.shard }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v5-pilot-${{ matrix.shard }}-${{ github.run_id }}
+          path: results/
+          if-no-files-found: error
+          retention-days: 14
