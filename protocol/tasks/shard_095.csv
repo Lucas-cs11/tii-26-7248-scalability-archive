@@ -1,0 +1,5 @@
+task_id,experiment,model,seed,replicate,L,H,mode,timeout_s,params
+Lsweep:L2:s0:r2:L20:first,Lsweep,L2,0,2,20,72.0,first,120,"{""n_machines"": 4, ""unobservable_ratio"": 0.5, ""fault_locations"": 2, ""interval_width_factor"": 1.0, ""adjustable_ratio"": 0.25, ""n_configs"": 1, ""n_parts"": 2, ""ops_per_part"": 4, ""wip_bound"": 1, ""seed"": 0}"
+Lsweep:L4:s0:r2:L38:first,Lsweep,L4,0,2,38,162.0,first,120,"{""n_machines"": 4, ""unobservable_ratio"": 0.5, ""fault_locations"": 2, ""interval_width_factor"": 1.0, ""adjustable_ratio"": 0.25, ""n_configs"": 1, ""n_parts"": 3, ""ops_per_part"": 6, ""wip_bound"": 1, ""seed"": 0}"
+Lsweep:L6:s0:r2:L8:first,Lsweep,L6,0,2,8,36.0,first,120,"{""n_machines"": 4, ""unobservable_ratio"": 0.5, ""fault_locations"": 2, ""interval_width_factor"": 1.0, ""adjustable_ratio"": 0.25, ""n_configs"": 1, ""n_parts"": 1, ""ops_per_part"": 4, ""wip_bound"": 1, ""seed"": 0}"
+size:A7:s2:r1:L38:first,size,A7,2,1,38,162.0,first,120,"{""n_machines"": 4, ""unobservable_ratio"": 0.5, ""fault_locations"": 2, ""interval_width_factor"": 1.0, ""adjustable_ratio"": 0.25, ""n_configs"": 1, ""n_parts"": 3, ""ops_per_part"": 6, ""wip_bound"": 1, ""seed"": 2}"

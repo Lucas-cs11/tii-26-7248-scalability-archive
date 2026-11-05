@@ -1,0 +1,23 @@
+{
+ "experiments": {
+  "size": 63,
+  "wip": 27,
+  "Lsweep": 396
+ },
+ "total_tasks": 486,
+ "shards": 120,
+ "timeout_s": 120,
+ "generator": "n_configs fixed at 1 (dead parameter in v2); structural scaling via n_parts x ops_per_part",
+ "concurrency": "n_parts=3 family; WIP 1/2/3 verified by untimed reachability (max in-process 1/2/3)",
+ "modes": {
+  "first": "verifier default (first-certificate)",
+  "complete": "complete_set=True"
+ },
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "replicates": 3,
+ "order_rule": "sorted by (experiment, model, L, mode, replicate), round-robin into 120 shards"
+}

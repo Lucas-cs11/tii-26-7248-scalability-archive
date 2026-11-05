@@ -1,0 +1,53 @@
+name: scalability-v3
+on:
+  workflow_dispatch:
+    inputs:
+      shards:
+        description: "comma separated shard ids (empty = all)"
+        required: false
+        default: ""
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: m
+        run: |
+          if [ -n "${{ github.event.inputs.shards }}" ]; then
+            M="[${{ github.event.inputs.shards }}]"
+          else
+            M=$(python3 -c 'import json;d=json.load(open("protocol/manifest.json"));print(json.dumps(list(range(d["shards"]))))')
+          fi
+          echo "matrix=$M" >> "$GITHUB_OUTPUT"
+  run:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install numpy==2.3.4 scipy==1.16.2
+      - env:
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+          PYTHONHASHSEED: "0"
+        run: python runner/run_shard.py "${{ matrix.shard }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v3-${{ matrix.shard }}-${{ github.run_id }}
+          path: results/
+          if-no-files-found: warn
+          retention-days: 14
