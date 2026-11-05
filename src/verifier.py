@@ -97,6 +97,20 @@ def verify(
     stats["scg_classes"] = len(scg.classes)
     stats["scg_edges"] = len(scg.edges)
 
+    # A capped SCG is incomplete.  In particular, an empty completion_ids set
+    # cannot establish that completion is unreachable when exploration stopped
+    # at the class limit.  Report the limiting mechanism before semantic checks.
+    if scg.scg_state_limit_reached:
+        stats["runtime_total"] = time.perf_counter() - t_start
+        return {
+            "result": "INC",
+            "inconclusive_reason": "SCG_STATE_LIMIT",
+            "certificates": [],
+            "certificate_mode": certificate_mode,
+            "enumeration_complete": False,
+            "stats": stats,
+        }
+
     # Guard: completion must be reachable for the property to be meaningful
     if len(scg.completion_ids) == 0:
         stats["scg_classes"] = len(scg.classes)
@@ -117,18 +131,6 @@ def verify(
         return {
             "result": "INC",
             "inconclusive_reason": "ZERO_TIME_UNOBSERVABLE_CYCLE",
-            "certificates": [],
-            "certificate_mode": certificate_mode,
-            "enumeration_complete": False,
-            "stats": stats,
-        }
-
-    # State limit reached: SCG too large to analyze conclusively
-    if scg.scg_state_limit_reached:
-        stats["runtime_total"] = time.perf_counter() - t_start
-        return {
-            "result": "INC",
-            "inconclusive_reason": "SCG_STATE_LIMIT",
             "certificates": [],
             "certificate_mode": certificate_mode,
             "enumeration_complete": False,

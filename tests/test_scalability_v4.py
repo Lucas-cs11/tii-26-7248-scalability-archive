@@ -1,8 +1,11 @@
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from src.benchmarks.rmt_fms_generator import generate_rmt_fms
 from src.scg.builder import build_scg
 from src.synchronizer.builder import build_synchronizer
+from src.verifier import verify
 
 
 BASE_PARAMS = {
@@ -42,6 +45,19 @@ class ScalabilityV4GeneratorTests(unittest.TestCase):
         self.assertEqual(original.arcs, explicit_zero.arcs)
         self.assertEqual(original.initial_marking, explicit_zero.initial_marking)
         self.assertEqual(original.completion_markings, explicit_zero.completion_markings)
+
+    def test_scg_limit_is_not_misreported_as_unreachable_completion(self):
+        limited_scg = SimpleNamespace(
+            classes={},
+            edges=[],
+            completion_ids=frozenset(),
+            scg_state_limit_reached=True,
+            has_zero_time_unobservable_cycle=False,
+        )
+        with patch("src.verifier.build_scg", return_value=limited_scg):
+            result = verify(SimpleNamespace(), L=1, H=1.0)
+        self.assertEqual(result["result"], "INC")
+        self.assertEqual(result["inconclusive_reason"], "SCG_STATE_LIMIT")
 
 
 if __name__ == "__main__":
