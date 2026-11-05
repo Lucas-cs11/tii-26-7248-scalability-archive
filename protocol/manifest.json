@@ -1,0 +1,11 @@
+{
+ "experiments": {
+  "dense_L_sweep": 660,
+  "size_wip": 600
+ },
+ "total_tasks": 1260,
+ "shards": 140,
+ "timeout_s": 120,
+ "protocol": "L sweep: L0=2*(n_p*n_ops)+2, L in [L0-2, L0+8], H=9*(n_p*n_ops) fixed; size-wip: base params fixed, n_configs in {2,3,4,5}, wip in {1,2,3}, seeds 0-9, 5 reps, L=18,H=72",
+ "order_rule": "sorted by (experiment, model, L, replicate) then round-robin into 140 shards"
+}
