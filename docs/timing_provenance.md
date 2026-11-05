@@ -27,6 +27,12 @@ The `runtime_s` and `wall_s` values in the formal merged data originate only
 from this run. Pilot timings, local validation timings, v3 timings, and the
 cancelled duplicate run are not merged into any Figure 6 statistic.
 
+The 56 raw timeout records from the already-executed formal runner do not
+repeat `timeout_s` inside each JSON object. Their 30 s threshold is recovered
+without inference from the frozen per-task CSV that the runner consumed. The
+merged CSV preserves both `raw_timeout_s_present=false` and
+`declared_timeout_s=30`; future runner output includes the field directly.
+
 ## Interpretation
 
 The workflow-level success means every shard completed and uploaded its raw

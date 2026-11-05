@@ -2,6 +2,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from scripts.audit_v4_results import task_spec_mismatches
 from src.benchmarks.rmt_fms_generator import generate_rmt_fms
 from src.scg.builder import build_scg
 from src.synchronizer.builder import build_synchronizer
@@ -23,6 +24,21 @@ BASE_PARAMS = {
 
 
 class ScalabilityV4GeneratorTests(unittest.TestCase):
+    def test_audit_rejects_record_that_differs_from_frozen_task(self):
+        params = {"n_parts": 1, "seed": 0}
+        expected = {"x": {
+            "experiment": "Lsweep", "model": "L1", "seed": "0",
+            "replicate": "0", "L": "8", "H": "60.0",
+            "mode": "complete", "timeout_s": "60",
+            "params": '{"n_parts": 1, "seed": 0}',
+        }}
+        record = {
+            "task_id": "x", "experiment": "Lsweep", "model": "L1",
+            "seed": 0, "replicate": 0, "L": 9, "H": 60.0,
+            "mode": "complete", "timeout_s": 60, "params": params,
+        }
+        self.assertEqual(task_spec_mismatches(expected, [record]), ["x"])
+
     def test_optional_inspections_create_multiple_L_frontiers(self):
         tpn, _, _ = generate_rmt_fms(**BASE_PARAMS, inspection_locations=3)
         scg = build_scg(tpn).build_truncated()

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import glob
 import itertools
 import json
 from collections import Counter
@@ -19,10 +18,15 @@ COUNTERS = (
 
 def load_expected(tasks_dir: Path):
     rows = []
-    for path in sorted(tasks_dir.glob("shard_*.csv")):
+    paths = sorted(tasks_dir.glob("shard_*.csv"))
+    for path in paths:
         with path.open(newline="") as fh:
             rows.extend(csv.DictReader(fh))
-    return {row["task_id"]: row for row in rows}
+    duplicate_ids = sorted(
+        task_id for task_id, count in Counter(row["task_id"] for row in rows).items()
+        if count > 1
+    )
+    return {row["task_id"]: row for row in rows}, len(rows), len(paths), duplicate_ids
 
 
 def load_records(artifacts: Path):
@@ -37,15 +41,40 @@ def load_records(artifacts: Path):
     return paths, records
 
 
-def percentile(values, q):
-    values = sorted(values)
-    if not values:
-        return None
-    pos = (len(values) - 1) * q
-    lo = int(pos)
-    hi = min(lo + 1, len(values) - 1)
-    frac = pos - lo
-    return values[lo] * (1 - frac) + values[hi] * frac
+def task_spec_mismatches(expected, records):
+    """Return task IDs whose recorded cell differs from the frozen CSV row."""
+    mismatches = []
+    for rec in records:
+        task_id = rec.get("task_id")
+        row = expected.get(task_id)
+        if row is None:
+            continue
+        recorded = {
+            "experiment": str(rec.get("experiment")),
+            "model": str(rec.get("model")),
+            "seed": str(rec.get("seed")),
+            "replicate": str(rec.get("replicate")),
+            "L": str(rec.get("L")),
+            "H": str(float(rec.get("H"))),
+            "mode": str(rec.get("mode")),
+            # The executed v4 timeout records predate explicit timeout_s
+            # emission. The runner used the frozen CSV value; verify any
+            # recorded value and otherwise bind it to the declared row.
+            "timeout_s": str(int(
+                rec.get("timeout_s") if rec.get("timeout_s") is not None
+                else row["timeout_s"]
+            )),
+            "params": json.dumps(rec.get("params"), sort_keys=True),
+        }
+        declared = {
+            **{key: row[key] for key in ("experiment", "model", "seed", "replicate", "L", "mode")},
+            "H": str(float(row["H"])),
+            "timeout_s": str(int(row["timeout_s"])),
+            "params": json.dumps(json.loads(row["params"]), sort_keys=True),
+        }
+        if recorded != declared:
+            mismatches.append(task_id)
+    return sorted(mismatches)
 
 
 def main():
@@ -56,7 +85,7 @@ def main():
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
 
-    expected = load_expected(args.tasks)
+    expected, expected_rows, task_shards, expected_duplicates = load_expected(args.tasks)
     shard_paths, records = load_records(args.artifacts)
     ids = [r.get("task_id") for r in records]
     duplicate_ids = sorted(k for k, v in Counter(ids).items() if v > 1)
@@ -64,10 +93,32 @@ def main():
     unexpected = sorted(set(ids) - set(expected))
     errors = []
 
+    manifest_path = args.tasks.parent / "v4_formal_manifest.json"
+    if not manifest_path.is_file():
+        errors.append(f"missing frozen manifest: {manifest_path}")
+        declared_tasks, declared_shards = 465, 60
+    else:
+        manifest = json.loads(manifest_path.read_text())
+        declared_tasks = int(manifest["tasks"])
+        declared_shards = int(manifest["shards"])
+    if task_shards != declared_shards or expected_rows != declared_tasks:
+        errors.append(
+            f"frozen task grid mismatch: {task_shards}/{declared_shards} shards, "
+            f"{expected_rows}/{declared_tasks} rows"
+        )
+    if expected_duplicates:
+        errors.append(f"duplicate frozen task IDs: {len(expected_duplicates)}")
     if len(shard_paths) != 60:
         errors.append(f"expected 60 raw shard files, found {len(shard_paths)}")
     if missing or unexpected or duplicate_ids:
         errors.append("task identity mismatch")
+    spec_mismatches = task_spec_mismatches(expected, records)
+    if spec_mismatches:
+        errors.append(f"frozen task specification mismatches: {len(spec_mismatches)}")
+    for rec in records:
+        row = expected.get(rec.get("task_id"))
+        rec["raw_timeout_s_present"] = rec.get("timeout_s") is not None
+        rec["declared_timeout_s"] = int(row["timeout_s"]) if row else None
 
     allowed_execution = {"COMPLETED", "TIMEOUT", "ERROR", "VALIDATION_FAILURE"}
     for rec in records:
@@ -77,14 +128,22 @@ def main():
         reason = rec.get("inconclusive_reason")
         if status not in allowed_execution:
             errors.append(f"{rec.get('task_id')}: unknown execution status {status}")
+        if status in {"ERROR", "VALIDATION_FAILURE"}:
+            errors.append(f"{rec.get('task_id')}: unsuccessful execution status {status}")
+        if status == "COMPLETED" and verdict not in {"VER", "AMB", "INC"}:
+            errors.append(f"{rec.get('task_id')}: completed without a valid verdict")
         if status == "TIMEOUT" and (verdict is not None or analysis != "NOT_RUN"):
             errors.append(f"{rec.get('task_id')}: TIMEOUT assigned a verdict")
+        if status == "TIMEOUT" and reason is not None:
+            errors.append(f"{rec.get('task_id')}: TIMEOUT assigned an internal reason")
         if verdict == "INC" and not (
             status == "COMPLETED" and analysis == "INCONCLUSIVE" and reason
         ):
             errors.append(f"{rec.get('task_id')}: malformed INC record")
         if verdict in {"VER", "AMB"} and analysis != "CONCLUSIVE":
             errors.append(f"{rec.get('task_id')}: conclusive verdict/status mismatch")
+        if verdict in {"VER", "AMB"} and reason is not None:
+            errors.append(f"{rec.get('task_id')}: conclusive verdict has an INC reason")
         if status == "COMPLETED" and not rec.get("counters"):
             errors.append(f"{rec.get('task_id')}: completed record lacks counters")
 
@@ -139,7 +198,8 @@ def main():
     flat_fields = [
         "task_id", "experiment", "model", "seed", "replicate", "L", "H", "mode",
         "execution_status", "analysis_status", "verdict", "inconclusive_reason",
-        "runtime_s", "wall_s", "timeout_s", "model_hash", "n_places",
+        "runtime_s", "wall_s", "timeout_s", "declared_timeout_s",
+        "raw_timeout_s_present", "model_hash", "n_places",
         "n_transitions", "n_arcs", *COUNTERS, "source_shard_file", "source_line",
     ]
     with (args.out / "merged_results.csv").open("w", newline="") as fh:
@@ -147,6 +207,8 @@ def main():
         writer.writeheader()
         for rec in sorted(records, key=lambda r: r["task_id"]):
             row = {name: rec.get(name) for name in flat_fields}
+            if row["timeout_s"] is None:
+                row["timeout_s"] = expected[rec["task_id"]]["timeout_s"]
             for name in COUNTERS:
                 row[name] = (rec.get("counters") or {}).get(name)
             writer.writerow(row)
@@ -155,12 +217,16 @@ def main():
         "PASS": not errors,
         "errors": errors,
         "tasks_expected": len(expected),
+        "frozen_task_rows": expected_rows,
+        "frozen_task_shards": task_shards,
+        "duplicate_frozen_task_ids": expected_duplicates,
         "records": len(records),
         "raw_shard_files": len(shard_paths),
         "unique_task_ids": len(set(ids)),
         "missing": len(missing),
         "unexpected": len(unexpected),
         "duplicates": len(duplicate_ids),
+        "task_specification_mismatches": spec_mismatches,
         "execution_status": dict(Counter(r.get("execution_status") for r in records)),
         "analysis_status": dict(Counter(r.get("analysis_status") for r in records)),
         "verdicts": {str(k): v for k, v in Counter(r.get("verdict") for r in records).items()},

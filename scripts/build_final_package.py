@@ -7,6 +7,7 @@ import hashlib
 import json
 import shutil
 import subprocess
+import sys
 import zipfile
 from pathlib import Path
 
@@ -14,6 +15,7 @@ from pathlib import Path
 REPO_SLUG = "Lucas-cs11/tii-26-7248-scalability-v2"
 PILOT_RUN = 42004602864
 FORMAL_RUN = 42040753991
+FORMAL_SHA = "c98c75b21f59b49c89e6a2afe87c6bb01a605909"
 
 
 def run(*args: str, cwd: Path | None = None) -> str:
@@ -32,7 +34,7 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def write_run_metadata(stage: Path, run_id: int) -> None:
+def write_run_metadata(stage: Path, run_id: int, expected_sha: str | None = None) -> None:
     fields = (
         "databaseId,status,conclusion,headSha,headBranch,createdAt,updatedAt,"
         "url,workflowName,event,jobs"
@@ -41,6 +43,12 @@ def write_run_metadata(stage: Path, run_id: int) -> None:
         "gh", "run", "view", str(run_id), "--repo", REPO_SLUG,
         "--json", fields,
     ))
+    if run_data.get("status") != "completed" or run_data.get("conclusion") != "success":
+        raise RuntimeError(f"GitHub run {run_id} is not successfully completed")
+    if expected_sha and run_data.get("headSha") != expected_sha:
+        raise RuntimeError(
+            f"GitHub run {run_id} SHA {run_data.get('headSha')} != {expected_sha}"
+        )
     out = stage / "06_validation" / f"github_run_{run_id}.json"
     out.write_text(json.dumps(run_data, indent=2, sort_keys=True) + "\n")
     artifacts = json.loads(run(
@@ -109,8 +117,13 @@ def main() -> int:
     # Preserve the downloaded artifact directory names and every raw file.
     copytree(args.pilot_artifacts.resolve(), stage / "02_pilot_raw")
     copytree(args.formal_artifacts.resolve(), stage / "03_formal_raw")
-    copytree(args.final_build.resolve() / "03_formal_results",
-             stage / "04_merged_results")
+    merged = stage / "04_merged_results"
+    subprocess.run([
+        sys.executable, str(repo / "scripts/audit_v4_results.py"),
+        "--tasks", str(protocol / "v4_formal_tasks"),
+        "--artifacts", str(stage / "03_formal_raw"),
+        "--out", str(merged),
+    ], cwd=repo, check=True)
 
     # Exact code snapshot, history bundle, and the audit/replot entry points.
     source = stage / "05_source"
@@ -121,12 +134,17 @@ def main() -> int:
         "repository": f"https://github.com/{REPO_SLUG}",
         "branch": branch,
         "commit": commit,
-        "formal_run_commit": "c98c75b21f59b49c89e6a2afe87c6bb01a605909",
+        "formal_run_commit": FORMAL_SHA,
     }, indent=2) + "\n")
-    archive_path = source / "source_snapshot.tar.gz"
+    archive_path = source / "release_source_snapshot.tar.gz"
     with archive_path.open("wb") as fh:
         subprocess.run(
             ["git", "archive", "--format=tar.gz", "--prefix=source/", "HEAD"],
+            cwd=repo, stdout=fh, check=True,
+        )
+    with (source / f"formal_run_source_{FORMAL_SHA[:7]}.tar.gz").open("wb") as fh:
+        subprocess.run(
+            ["git", "archive", "--format=tar.gz", "--prefix=source/", FORMAL_SHA],
             cwd=repo, stdout=fh, check=True,
         )
     subprocess.run(
@@ -144,14 +162,13 @@ def main() -> int:
     # Independent validation, GitHub provenance, and final graphics.
     validation = stage / "06_validation"
     validation.mkdir()
-    shutil.copy2(args.final_build / "03_formal_results/validation.json",
-                 validation / "validation.json")
+    shutil.copy2(merged / "validation.json", validation / "validation.json")
     shutil.copy2(args.final_build / "06_validation/reachable_concurrency.json",
                  validation / "reachable_concurrency.json")
     shutil.copy2(repo / "docs/timing_provenance.md",
                  validation / "timing_provenance.md")
     write_run_metadata(stage, PILOT_RUN)
-    write_run_metadata(stage, FORMAL_RUN)
+    write_run_metadata(stage, FORMAL_RUN, FORMAL_SHA)
     copytree(args.final_build.resolve() / "07_figure6", stage / "07_figure6")
 
     guidance = stage / "08_manuscript_guidance"

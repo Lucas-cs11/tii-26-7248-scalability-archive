@@ -40,12 +40,16 @@ with out.open("a") as fh:
                    "analysis_status": "NOT_RUN", "inconclusive_reason": None,
                    "n_places": None, "n_transitions": None, "counters": None,
                    "runtime_s": None, "L": int(t["L"]), "H": float(t["H"]),
+                   "timeout_s": int(t["timeout_s"]),
                    "params": json.loads(t["params"])}
         except Exception as exc:  # noqa: BLE001
             rec = {"tag": t["task_id"], "mode": t["mode"], "verdict": None,
                    "execution_status": "ERROR", "error": f"{type(exc).__name__}: {exc}",
                    "analysis_status": "NOT_RUN", "inconclusive_reason": None,
-                   "counters": None, "runtime_s": None}
+                   "counters": None, "runtime_s": None,
+                   "L": int(t["L"]), "H": float(t["H"]),
+                   "timeout_s": int(t["timeout_s"]),
+                   "params": json.loads(t["params"])}
         rec.update({"task_id": t["task_id"], "experiment": t["experiment"],
                     "model": t["model"], "seed": int(t["seed"]),
                     "replicate": int(t["replicate"]),

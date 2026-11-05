@@ -30,7 +30,8 @@ invariants, L-sweep sensitivity, and monotone structural x-coordinates.
 - `02_pilot_raw/`: all 30 downloaded pilot shard artifacts.
 - `03_formal_raw/`: all 60 downloaded formal shard artifacts.
 - `04_merged_results/`: independently reconstructed JSONL/CSV and validation.
-- `05_source/`: exact source archive, Git bundle, commit metadata, and scripts.
+- `05_source/`: separate exact archives for the formal-run commit and release
+  commit, a Git bundle, commit metadata, and reproduction scripts.
 - `06_validation/`: release validation, reachable-concurrency evidence, run
   metadata, and timing provenance.
 - `07_figure6/`: combined and separate panels in PDF/SVG/EPS/PNG.
@@ -40,15 +41,15 @@ invariants, L-sweep sensitivity, and monotone structural x-coordinates.
 
 ## Reproduce the audit and figure
 
-From the source snapshot, run:
+From the extracted package root, run (with NumPy and Matplotlib available):
 
 ```text
-python3 scripts/audit_v4_results.py \
+python3 05_source/reproduction_scripts/audit_v4_results.py \
   --tasks 01_protocol/v4_formal_tasks \
   --artifacts 03_formal_raw \
   --out reproduced_results
 
-python3 scripts/plot_figure6_v4.py \
+python3 05_source/reproduction_scripts/plot_figure6_v4.py \
   --records reproduced_results/merged_results.jsonl \
   --out reproduced_figure6
 ```

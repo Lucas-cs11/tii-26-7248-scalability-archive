@@ -54,6 +54,8 @@ def main() -> int:
                      complete_set=(rec["mode"] == "complete"))
         rec["runtime_s"] = time.perf_counter() - t0
         rec["verdict"] = out.get("result")
+        if rec["verdict"] not in {"VER", "AMB", "INC"}:
+            raise ValueError(f"unknown verifier result: {rec['verdict']!r}")
         rec["execution_status"] = "COMPLETED"
         rec["analysis_status"] = (
             "INCONCLUSIVE" if rec["verdict"] == "INC" else "CONCLUSIVE"

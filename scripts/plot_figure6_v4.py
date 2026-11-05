@@ -67,6 +67,13 @@ def panel_a(ax, records):
         ax.plot(xs, medians, "o--" if any(censored) else "o-", color=colors[wip],
                 label=f"WIP = {wip}", zorder=3)
         valid = [i for i, flag in enumerate(censored) if not flag]
+        for i in valid:
+            ax.errorbar(
+                xs[i], medians[i],
+                yerr=[[0], [highs[i] - medians[i]]],
+                color=colors[wip], capsize=1.8, capthick=0.6,
+                linewidth=0.6, zorder=4,
+            )
         if len(valid) >= 2:
             vx = [xs[i] for i in valid]
             ax.fill_between(vx, [lows[i] for i in valid], [highs[i] for i in valid],
