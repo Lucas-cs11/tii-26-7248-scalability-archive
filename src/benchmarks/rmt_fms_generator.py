@@ -87,6 +87,7 @@ def generate_rmt_fms(
     domain_policy: Optional[str] = None,
     candidate_density: Optional[str] = None,
     lp_resolution: Optional[Fraction] = None,
+    inspection_locations: int = 0,
 ) -> Tuple[TPN, int, float]:
     """Generate a parameterized RMT-FMS TPN model.
 
@@ -140,6 +141,14 @@ def generate_rmt_fms(
     nominal) is held fixed.  The Moderate/Narrow tiers are synthetic
     exploratory levels (NOT physical/industrial constraints) — see module
     docstring for the R3-2b semantics.
+
+    inspection_locations selects a deterministic, seed-controlled subset of
+    operations with an optional post-process inspection.  At each selected
+    operation the part may either continue immediately or fire one additional
+    observable inspection transition.  This keeps the model acyclic while
+    creating complete histories at several consecutive observable lengths,
+    which is required for a meaningful controlled L-sweep.  The default zero
+    preserves the v3 generator exactly.
 
     Returns (tpn, L, H).
     """
@@ -202,6 +211,11 @@ def generate_rmt_fms(
 
     # Determine adjustable processing transitions
     total_proc = n_parts * ops_per_part
+    if not 0 <= inspection_locations <= total_proc:
+        raise ValueError(
+            "inspection_locations must be between 0 and "
+            f"n_parts*ops_per_part ({total_proc}), got {inspection_locations}"
+        )
     adjustable_count = max(1, int(total_proc * adjustable_ratio))
     adjustable_indices: Set[int] = set(rng.sample(range(total_proc), adjustable_count))
 
@@ -209,6 +223,12 @@ def generate_rmt_fms(
     total_transfer = n_parts * ops_per_part
     unobs_count = int(total_transfer * unobservable_ratio)
     unobs_transfer_indices: Set[int] = set(rng.sample(range(total_transfer), unobs_count))
+
+    # Sample after all legacy choices so inspection_locations=0 is bit-for-bit
+    # compatible with the v3 generator's model topology and random choices.
+    inspection_indices: Set[int] = set(
+        rng.sample(range(total_proc), inspection_locations)
+    )
 
     # ---------------------------------------------------------------------------
     # Build places and initial marking
@@ -562,8 +582,37 @@ def generate_rmt_fms(
                     )
                 # Preset: part at machine in config c
                 add_arc(at_place_c, t_proc)
-                # Postset: part done, machine cap returned, config returned
-                add_arc(t_proc, end_place)
+                # Postset: part done, machine cap returned, config returned.
+                # Selected operations add an acyclic optional inspection fork,
+                # yielding complete observable histories at multiple lengths.
+                if proc_idx in inspection_indices:
+                    post_place_c = f"p{j}_op{k}_post_m{m}_cfg{c}"
+                    add_place(post_place_c)
+                    add_arc(t_proc, post_place_c)
+
+                    t_finish = f"t_finish_j{j}_op{k}_m{m}_cfg{c}"
+                    add_transition(
+                        t_finish,
+                        label="",
+                        is_fault=False,
+                        is_adjustable=False,
+                        interval=Interval(Fraction(0), Fraction(0)),
+                    )
+                    add_arc(post_place_c, t_finish)
+                    add_arc(t_finish, end_place)
+
+                    t_inspect = f"t_inspect_j{j}_op{k}_m{m}_cfg{c}"
+                    add_transition(
+                        t_inspect,
+                        label=f"inspect_j{j}_op{k}",
+                        is_fault=False,
+                        is_adjustable=False,
+                        interval=Interval(Fraction(1), Fraction(1)),
+                    )
+                    add_arc(post_place_c, t_inspect)
+                    add_arc(t_inspect, end_place)
+                else:
+                    add_arc(t_proc, end_place)
                 add_arc(t_proc, cap_place)
                 add_arc(t_proc, cfg_place)
 
