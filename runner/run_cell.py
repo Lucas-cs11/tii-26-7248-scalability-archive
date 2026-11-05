@@ -59,7 +59,7 @@ def main() -> int:
            "counters": None, "runtime_s": None, "python": platform.python_version(),
            "timeout_s": spec.get("timeout_s", 120),
            "partial_workload": False, "failure_stage": "MODEL_GENERATION",
-           "model_attributes": None}
+           "model_attributes": None, "validation_status": "NOT_RUN"}
     checkpoint_path = os.environ.get("CHECKPOINT_PATH")
 
     def checkpoint(stage, counters=None):
@@ -88,10 +88,12 @@ def main() -> int:
             rec.update({"error": "VALIDATION: " + "; ".join(errs), "verdict": "INC",
                         "execution_status": "VALIDATION_FAILURE",
                         "termination_status": "VALIDATION_FAILURE",
+                        "validation_status": "FAIL",
                         "failure_stage": "MODEL_VALIDATION"})
             print(json.dumps(rec)); return 0
         rec["model_hash"] = model_hash(tpn)
         rec["structure_hash"] = structure_hash(tpn)
+        rec["validation_status"] = "PASS"
         checkpoint("MODEL_VALIDATED")
         t0 = time.perf_counter()
         out = verify(tpn, spec.get("L", L), spec.get("H", H),

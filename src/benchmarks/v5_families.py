@@ -170,6 +170,8 @@ def generate_v5_model(
         "operations_per_part": ops,
         "resource_count": machines,
         "WIP": wip,
+        "verified_reachable_concurrency": wip,
+        "concurrency_proof": "fire any WIP distinct part-release transitions from M0; each consumes one capacity token and no machine token",
         "observable_ratio_target": 1.0 - unobs,
         "processing_observable_ratio": proc_obs,
         "inspection_locations": min(inspections, parts * ops),

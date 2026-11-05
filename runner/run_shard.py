@@ -87,6 +87,7 @@ for i, t in enumerate(tasks, 1):
                     "replicate": int(t["replicate"]),
                     "replicate_id": int(t["replicate"]),
                     "commit_sha": os.environ.get("GITHUB_SHA"),
+                    "source_code_hash": os.environ.get("GITHUB_SHA"),
                     "workflow_run_id": os.environ.get("GITHUB_RUN_ID"),
                     "job_id": os.environ.get("GITHUB_JOB"),
                     "shard_id": int(shard),
