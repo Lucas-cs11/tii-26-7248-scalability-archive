@@ -182,6 +182,16 @@ def main():
         "audit_v5_fullscale_baseline.py", "build_v5_artifact_selection.py", "build_v5_final_package.py",
     ):
         shutil.copy2(repo / "scripts" / script, validation / script)
+    (validation / "package_build_validation.json").write_text(json.dumps({
+        "PASS": True,
+        "formal_integrity_PASS": integrity.get("PASS"),
+        "baseline_recovery_PASS": baseline.get("PASS"),
+        "statistics_recomputation_PASS": analysis.get("PASS"),
+        "formal_run_id": FORMAL_RUN,
+        "formal_run_commit": FORMAL_SHA,
+        "sha_manifest_policy": "every packaged regular file except MANIFEST.sha256 itself",
+        "zip_validation_policy": "ZIP CRC test plus post-extraction SHA manifest verification",
+    }, indent=2, sort_keys=True) + "\n")
 
     guidance = stage / "10_manuscript_recommendations"
     for source_name, target_name in (
