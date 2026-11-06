@@ -1,0 +1,5 @@
+# CPython 3.13 / Ubuntu x86_64 wheels used by the formal v5 workflows.
+numpy==2.3.4 \
+    --hash=sha256:fc8a63918b04b8571789688b2780ab2b4a33ab44bfe8ccea36d3eba51228c953
+scipy==1.16.2 \
+    --hash=sha256:c2275ff105e508942f99d4e3bc56b6ef5e4b3c0af970386ca56b777608ce95b7

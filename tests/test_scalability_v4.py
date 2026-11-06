@@ -1,11 +1,18 @@
 import unittest
+import json
+from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import patch
 
 from scripts.audit_v4_results import task_spec_mismatches
+from scripts.audit_v5_results import timeout_semantics_valid
+from scripts.validate_v5_formal_protocol import prove_generated_semantics
+from runner.run_cell import model_hash
+from runner.shard_state import partition_existing_records
 from src.benchmarks.rmt_fms_generator import generate_rmt_fms
 from src.benchmarks.v5_families import FAMILY_SPECS, generate_v5_model
 from src.model.validation import validate_model
+from src.model.tpn import TPN
 from src.scg.builder import build_scg
 from src.synchronizer.builder import build_synchronizer
 from src.verifier import verify
@@ -26,6 +33,60 @@ BASE_PARAMS = {
 
 
 class ScalabilityV4GeneratorTests(unittest.TestCase):
+    def test_model_hash_includes_adjustment_semantics(self):
+        tpn, _, _, _ = generate_v5_model("F02_sequential_dense", seed=0)
+        name = next(name for name, transition in tpn.transitions.items()
+                    if transition.is_adjustable)
+        changed = dict(tpn.transitions)
+        changed[name] = replace(changed[name], is_adjustable=False)
+        altered = TPN(
+            places=dict(tpn.places), transitions=changed, arcs=list(tpn.arcs),
+            initial_marking=dict(tpn.initial_marking),
+            completion_markings=[dict(marking) for marking in tpn.completion_markings],
+        )
+        self.assertNotEqual(model_hash(tpn), model_hash(altered))
+
+    def test_v5_constructive_witness_reaches_wip_fault_cycle_and_completion(self):
+        tpn, _, _, attributes = generate_v5_model(
+            "F11_resource_cycle", seed=17, n_parts=3, wip_bound=3,
+        )
+        witnesses = prove_generated_semantics(tpn, attributes)
+        self.assertTrue(witnesses["completion_reachable"])
+        self.assertEqual(witnesses["reachable_concurrency"], 3)
+        self.assertGreater(witnesses["fault_transitions_witnessed"], 0)
+        self.assertGreater(witnesses["rework_cycles_witnessed"], 0)
+
+    def test_timeout_requires_truthful_partial_workload_and_stage(self):
+        record = {
+            "verdict": None, "analysis_status": "NOT_RUN", "runtime_s": None,
+            "termination_status": "TIMEOUT_WALL_CLOCK",
+            "failure_stage": "SCG", "counters": {"scg_classes": 19},
+            "partial_workload": True, "validation_status": "PASS",
+        }
+        self.assertTrue(timeout_semantics_valid(record))
+        record["partial_workload"] = False
+        self.assertFalse(timeout_semantics_valid(record))
+        generation_timeout = {
+            "verdict": None, "analysis_status": "NOT_RUN", "runtime_s": None,
+            "termination_status": "TIMEOUT_WALL_CLOCK",
+            "failure_stage": "MODEL_GENERATION", "counters": None,
+            "partial_workload": False, "validation_status": "NOT_RUN",
+        }
+        self.assertTrue(timeout_semantics_valid(generation_timeout))
+
+    def test_retry_reruns_error_but_preserves_completed_and_timeout(self):
+        lines = [
+            json.dumps({"task_id": "ok", "execution_status": "COMPLETED"}),
+            json.dumps({"task_id": "timeout", "execution_status": "TIMEOUT_WALL_CLOCK"}),
+            json.dumps({"task_id": "error", "execution_status": "ERROR"}),
+            json.dumps({"task_id": "invalid", "execution_status": "VALIDATION_FAILURE"}),
+        ]
+        final, superseded = partition_existing_records(lines)
+        self.assertEqual({record["task_id"] for record in final}, {"ok", "timeout"})
+        self.assertEqual(
+            {record["task_id"] for record in superseded}, {"error", "invalid"}
+        )
+
     def test_v5_family_registry_builds_valid_distinct_models(self):
         hashes = set()
         for family in FAMILY_SPECS:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections import deque
 from pathlib import Path
@@ -104,7 +105,13 @@ def main():
         for family in FAMILY_SPECS
         for seed in seeds
     ]
-    result = {"PASS": all(case["PASS"] for case in cases), "cases": cases}
+    result = {
+        "PASS": all(case["PASS"] for case in cases),
+        "scope": "default family parameters for the explicitly listed seeds",
+        "workflow_run_id": os.environ.get("GITHUB_RUN_ID"),
+        "commit_sha": os.environ.get("GITHUB_SHA"),
+        "cases": cases,
+    }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps({

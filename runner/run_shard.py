@@ -4,6 +4,8 @@ from __future__ import annotations
 import csv, hashlib, json, os, subprocess, sys, time
 from pathlib import Path
 
+from shard_state import partition_existing_records
+
 ROOT = Path(__file__).resolve().parents[1]
 TASKS_DIR = Path(__import__("os").environ.get("TASKS_DIR", ROOT / "protocol" / "tasks"))
 HERE = Path(__file__).resolve().parent
@@ -11,16 +13,33 @@ shard = sys.argv[1]
 tasks = list(csv.DictReader(open(TASKS_DIR / f"shard_{int(shard):03d}.csv")))
 outdir = ROOT / "results" / "raw"; outdir.mkdir(parents=True, exist_ok=True)
 checkpoint_dir = ROOT / "results" / "checkpoints"; checkpoint_dir.mkdir(parents=True, exist_ok=True)
+attempt_dir = ROOT / "results" / "attempts"; attempt_dir.mkdir(parents=True, exist_ok=True)
 out = outdir / f"shard_{int(shard):03d}.jsonl"
+attempt_out = attempt_dir / f"shard_{int(shard):03d}.jsonl"
 done = set()
 records = []
+superseded = []
 if out.exists():
-    for line in out.open():
-        try:
-            record = json.loads(line)
-            done.add(record["task_id"])
-            records.append(record)
-        except Exception: pass
+    records, superseded = partition_existing_records(out.open())
+    done.update(record["task_id"] for record in records)
+if superseded:
+    prior = []
+    if attempt_out.exists():
+        prior = [json.loads(line) for line in attempt_out.open() if line.strip()]
+    seen_attempts = {
+        (record.get("task_id"), record.get("workflow_run_id"), record.get("raw_record_hash"))
+        for record in prior
+    }
+    for record in superseded:
+        key = (record.get("task_id"), record.get("workflow_run_id"), record.get("raw_record_hash"))
+        if key not in seen_attempts:
+            prior.append(record)
+            seen_attempts.add(key)
+    tmp_attempt = attempt_out.with_suffix(attempt_out.suffix + ".tmp")
+    tmp_attempt.write_text("".join(
+        json.dumps(record, default=str, sort_keys=True) + "\n" for record in prior
+    ))
+    tmp_attempt.replace(attempt_out)
 fields = ["task_id", "experiment", "model", "seed", "replicate", "L", "H", "mode", "timeout_s"]
 for i, t in enumerate(tasks, 1):
         if t["task_id"] in done:
@@ -37,6 +56,10 @@ for i, t in enumerate(tasks, 1):
                 "timeout_s": int(t["timeout_s"]), "params": json.loads(t["params"])}
         t0 = time.time()
         checkpoint_path = checkpoint_dir / f"{t['task_id']}.json"
+        # Checkpoints are evidence from one attempt, not resumable verifier
+        # state. Never let an earlier attempt contaminate a new timeout record.
+        if checkpoint_path.exists():
+            checkpoint_path.unlink()
         try:
             env = dict(os.environ, CHECKPOINT_PATH=str(checkpoint_path))
             p = subprocess.run([sys.executable, str(HERE / "run_cell.py"), json.dumps(spec)],
@@ -60,6 +83,7 @@ for i, t in enumerate(tasks, 1):
                    "analysis_status": "NOT_RUN", "inconclusive_reason": None,
                    "partial_workload": bool(partial.get("counters")),
                    "failure_stage": partial.get("failure_stage", "MODEL_GENERATION"),
+                   "validation_status": partial.get("validation_status", "NOT_RUN"),
                    "counters": partial.get("counters"),
                    "n_places": partial.get("n_places"),
                    "n_transitions": partial.get("n_transitions"),
@@ -77,6 +101,12 @@ for i, t in enumerate(tasks, 1):
                    "L": int(t["L"]), "H": float(t["H"]),
                    "timeout_s": int(t["timeout_s"]),
                    "params": json.loads(t["params"])}
+        artifact_name = os.environ.get("ARTIFACT_NAME")
+        raw_artifact = (
+            f"{artifact_name}/raw/{out.name}" if artifact_name
+            else f"raw/{out.name}"
+        )
+        executed_source_sha = os.environ.get("EXECUTED_SOURCE_SHA") or os.environ.get("GITHUB_SHA")
         rec.update({"task_id": t["task_id"], "experiment": t["experiment"],
                     "experiment_id": t.get("experiment_id", t["experiment"]),
                     "benchmark_family": t.get("benchmark_family"),
@@ -86,12 +116,17 @@ for i, t in enumerate(tasks, 1):
                     "model": model_value, "seed": int(t["seed"]),
                     "replicate": int(t["replicate"]),
                     "replicate_id": int(t["replicate"]),
-                    "commit_sha": os.environ.get("GITHUB_SHA"),
-                    "source_code_hash": os.environ.get("GITHUB_SHA"),
+                    "commit_sha": executed_source_sha,
+                    "source_code_hash": executed_source_sha,
                     "workflow_run_id": os.environ.get("GITHUB_RUN_ID"),
-                    "job_id": os.environ.get("GITHUB_JOB"),
+                    "job_id": os.environ.get("ACTIONS_JOB_DATABASE_ID"),
+                    "logical_job_key": os.environ.get("GITHUB_JOB"),
+                    "shard_execution_id": (
+                        f"{os.environ.get('GITHUB_RUN_ID')}:{int(shard):03d}"
+                        if os.environ.get("GITHUB_RUN_ID") else None
+                    ),
                     "shard_id": int(shard),
-                    "raw_artifact": f"raw/{out.name}",
+                    "raw_artifact": raw_artifact,
                     "wall_s": round(time.time() - t0, 3)})
         attrs = rec.get("model_attributes") or {}
         counters = rec.get("counters") or {}

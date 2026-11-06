@@ -17,25 +17,50 @@ from src.model.validation import validate_model
 from src.verifier import verify
 
 
+def _interval_record(interval):
+    return {"earliest": str(interval.earliest), "latest": str(interval.latest)}
+
+
+def _transition_record(name, transition):
+    authorized = transition.authorized_range
+    return {
+        "name": name,
+        "label": transition.label,
+        "fault": transition.is_fault,
+        "adjustable": transition.is_adjustable,
+        "interval": _interval_record(transition.interval),
+        "admissible_intervals": [
+            _interval_record(interval) for interval in transition.admissible_intervals
+        ],
+        "authorized_range": None if authorized is None else {
+            "l_min": str(authorized.l_min), "l_max": str(authorized.l_max),
+            "u_min": str(authorized.u_min), "u_max": str(authorized.u_max),
+            "resolution": str(authorized.resolution),
+        },
+    }
+
+
 def model_hash(tpn) -> str:
     data = {"places": sorted(tpn.places.keys()),
-            "transitions": sorted([{"name": n, "label": t.label, "fault": t.is_fault,
-                                    "earliest": str(t.interval.earliest),
-                                    "latest": str(t.interval.latest)}
-                                   for n, t in tpn.transitions.items()], key=lambda x: x["name"]),
+            "transitions": sorted(
+                [_transition_record(n, t) for n, t in tpn.transitions.items()],
+                key=lambda x: x["name"],
+            ),
             "arcs": sorted(f"{a.from_node}->{a.to_node}" for a in tpn.arcs),
             "initial_marking": sorted(tpn.initial_marking.items()),
-            "completion_markings": [sorted(m.items()) for m in tpn.completion_markings]}
+            "completion_markings": sorted(
+                [sorted(m.items()) for m in tpn.completion_markings]
+            )}
     return hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
 
 
 def structure_hash(tpn) -> str:
     """Hash static TPN structure while excluding WIP-dependent markings."""
     data = {"places": sorted(tpn.places.keys()),
-            "transitions": sorted([{"name": n, "label": t.label, "fault": t.is_fault,
-                                    "earliest": str(t.interval.earliest),
-                                    "latest": str(t.interval.latest)}
-                                   for n, t in tpn.transitions.items()], key=lambda x: x["name"]),
+            "transitions": sorted(
+                [_transition_record(n, t) for n, t in tpn.transitions.items()],
+                key=lambda x: x["name"],
+            ),
             "arcs": sorted(f"{a.from_node}->{a.to_node}" for a in tpn.arcs)}
     return hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
 

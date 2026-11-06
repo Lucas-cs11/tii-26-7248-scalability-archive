@@ -1,0 +1,134 @@
+name: scalability-v5-retry
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Formal run containing validated partial shard artifacts"
+        required: true
+        type: string
+      shards_json:
+        description: "Exact failed/missing shard IDs as a JSON array"
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  validate-input:
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.validate.outputs.matrix }}
+      head_sha: ${{ steps.source.outputs.head_sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - id: validate
+        env:
+          SHARDS_JSON: ${{ inputs.shards_json }}
+        run: |
+          python - <<'PY'
+          import json, os
+          shards = json.loads(os.environ["SHARDS_JSON"])
+          if not isinstance(shards, list) or not shards:
+              raise SystemExit("shards_json must be a non-empty JSON list")
+          if len(shards) != len(set(shards)) or any(type(x) is not int or not 0 <= x < 120 for x in shards):
+              raise SystemExit("shard IDs must be unique integers in [0,119]")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write("matrix=" + json.dumps(shards, separators=(",", ":")) + "\n")
+          PY
+      - id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        run: |
+          RUN_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID}")
+          HEAD_SHA=$(jq -r .head_sha <<<"$RUN_JSON")
+          WORKFLOW_PATH=$(jq -r .path <<<"$RUN_JSON")
+          test -n "$HEAD_SHA"
+          test "$WORKFLOW_PATH" = ".github/workflows/scalability_v5_formal.yml"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+  retry:
+    needs: validate-input
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: ${{ fromJSON(needs.validate-input.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ needs.validate-input.outputs.head_sha }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --require-hashes -r requirements-v5.lock
+      - name: Resolve numeric GitHub job ID
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHARD: ${{ matrix.shard }}
+        run: |
+          JOB_DATABASE_ID=$(gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" \
+            --jq '.jobs[] | select(.name == "retry ('"${SHARD}"')") | .id' | head -n 1)
+          [[ "$JOB_DATABASE_ID" =~ ^[0-9]+$ ]]
+          echo "ACTIONS_JOB_DATABASE_ID=$JOB_DATABASE_ID" >> "$GITHUB_ENV"
+      - name: Restore the exact partial shard
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SHARD: ${{ matrix.shard }}
+        run: |
+          mkdir -p restored
+          if ! gh run download "$SOURCE_RUN_ID" \
+              --repo "$GITHUB_REPOSITORY" \
+              --name "v5-formal-${SHARD}-${SOURCE_RUN_ID}" \
+              --dir restored; then
+            echo "No prior artifact for shard ${SHARD}; starting only this declared shard from scratch."
+          fi
+          if [ -d restored/raw ]; then
+            mkdir -p results
+            cp -R restored/. results/
+          fi
+      - env:
+          TASKS_DIR: protocol/v5_formal_tasks
+          ARTIFACT_NAME: v5-formal-retry-${{ matrix.shard }}-${{ github.run_id }}
+          EXECUTED_SOURCE_SHA: ${{ needs.validate-input.outputs.head_sha }}
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+          PYTHONHASHSEED: "0"
+        run: python runner/run_shard.py "${{ matrix.shard }}"
+      - name: Record shard-attempt supersession
+        if: always()
+        env:
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SHARD: ${{ matrix.shard }}
+          SOURCE_HEAD_SHA: ${{ needs.validate-input.outputs.head_sha }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          shard = int(os.environ["SHARD"])
+          source_run = os.environ["SOURCE_RUN_ID"]
+          retry_run = os.environ["GITHUB_RUN_ID"]
+          payload = {
+              "schema": "v5-shard-attempt-1",
+              "shard_id": shard,
+              "source_formal_run_id": source_run,
+              "retry_run_id": retry_run,
+              "source_head_sha": os.environ["SOURCE_HEAD_SHA"],
+              "supersedes_artifact": f"v5-formal-{shard}-{source_run}",
+              "selected_artifact": f"v5-formal-retry-{shard}-{retry_run}",
+          }
+          path = Path("results/attempt_manifest.json")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: v5-formal-retry-${{ matrix.shard }}-${{ github.run_id }}
+          path: results/
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,49 @@
+{
+  "version": "v5-formal-1",
+  "frozen_before_execution": true,
+  "pilot_run_id": "42052597272",
+  "selection_policy": "family-wide grids and preregistered seed strata; no outcome-based case removal or replacement",
+  "tasks": 8280,
+  "unique_configurations": 8280,
+  "distinct_bounded_problems": 7380,
+  "distinct_base_models": 2460,
+  "timing_replicates_beyond_primary": 0,
+  "families": [
+    "F01_sequential_sparse",
+    "F02_sequential_dense",
+    "F03_deep_inspection",
+    "F04_alternative_routes",
+    "F05_routes_inspections",
+    "F06_parallel_parts",
+    "F07_shared_contention",
+    "F08_mixed_visibility",
+    "F09_deep_fault_stages",
+    "F10_bounded_rework",
+    "F11_resource_cycle",
+    "F12_sparse_cycle"
+  ],
+  "shards": 120,
+  "experiments": {
+    "A_structural": 600,
+    "B_wip": 1080,
+    "C_first": 4500,
+    "C_complete_paired": 900,
+    "D_difficult": 1200
+  },
+  "timeout_seconds": {
+    "first": [
+      60,
+      90
+    ],
+    "complete": [
+      90
+    ]
+  },
+  "worst_case_runner_hours": 155.5,
+  "max_tasks_per_shard": 69,
+  "max_timeout_minutes_per_shard": 83.0,
+  "estimated_artifact_mb_from_pilot": 82.14,
+  "runner": "GitHub-hosted ubuntu-22.04 standard runner only",
+  "billing": "repository visibility verified public via gh API; workflow uses only standard hosted labels, never larger or paid runners",
+  "retention_days": 30
+}
