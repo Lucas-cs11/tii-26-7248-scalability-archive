@@ -93,10 +93,19 @@ def main():
     ap.add_argument("--formal-analysis", type=Path, required=True)
     ap.add_argument("--baseline-artifacts", type=Path, required=True)
     ap.add_argument("--baseline-audit", type=Path, required=True)
+    ap.add_argument("--baseline-reference", type=Path, required=True,
+                    help="Recovered 36,450-row reference CSV used by the baseline audit")
     ap.add_argument("--build-root", type=Path, required=True)
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
     repo = args.repo.resolve()
+    # The post-run snapshot must be the same committed source that supplied all
+    # copied scripts/docs.  Untracked work directories are permitted, but a
+    # tracked or staged change would make the claimed source identity false.
+    if subprocess.run(["git", "diff", "--quiet"], cwd=repo).returncode:
+        raise RuntimeError("refusing to package with unstaged tracked source changes")
+    if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo).returncode:
+        raise RuntimeError("refusing to package with staged source changes")
     integrity = json.loads((args.formal_audit / "integrity_validation.json").read_text())
     baseline = json.loads((args.baseline_audit / "baseline_validation.json").read_text())
     analysis = json.loads((args.formal_analysis / "statistics_summary.json").read_text())
@@ -161,6 +170,10 @@ def main():
                  stage / "04_dense_L_sweep/formal_merged_raw.jsonl")
 
     copytree(args.baseline_artifacts, stage / "06_fullscale_baseline/original_proposed_artifacts")
+    reference_dir = stage / "06_fullscale_baseline/original_reference_records"
+    reference_dir.mkdir(parents=True)
+    shutil.copy2(args.baseline_reference,
+                 reference_dir / "fullscale_results_mscg_lp_complete.csv")
     copytree(args.baseline_audit, stage / "06_fullscale_baseline/verified_statistics")
 
     copytree(args.formal_artifacts, stage / "07_github_actions/artifacts")
@@ -182,11 +195,42 @@ def main():
         "audit_v5_fullscale_baseline.py", "build_v5_artifact_selection.py", "build_v5_final_package.py",
     ):
         shutil.copy2(repo / "scripts" / script, validation / script)
+
+    # Re-audit exactly the raw records copied into this archive.  This closes
+    # the chain of custody: a stale PASS file cannot validate substituted input.
+    recomputed_formal = validation / "recomputed_formal_audit"
+    subprocess.run([
+        sys.executable, str(validation / "audit_v5_results.py"),
+        "--manifest", str(stage / "00_readme_and_protocol/protocol/v5_formal_manifest.json"),
+        "--tasks", str(stage / "00_readme_and_protocol/protocol/v5_formal_tasks"),
+        "--artifacts", str(stage / "07_github_actions/artifacts"),
+        "--out", str(recomputed_formal),
+    ], check=True)
+    recomputed_baseline = validation / "recomputed_baseline_audit"
+    subprocess.run([
+        sys.executable, str(validation / "audit_v5_fullscale_baseline.py"),
+        "--artifacts", str(stage / "06_fullscale_baseline/original_proposed_artifacts"),
+        "--reference", str(reference_dir / "fullscale_results_mscg_lp_complete.csv"),
+        "--out", str(recomputed_baseline),
+    ], check=True)
+    recomputed_analysis = validation / "recomputed_formal_analysis"
+    subprocess.run([
+        sys.executable, str(validation / "analyze_v5_formal_results.py"),
+        "--merged", str(recomputed_formal / "merged_results.jsonl"),
+        "--integrity", str(recomputed_formal / "integrity_validation.json"),
+        "--out", str(recomputed_analysis),
+    ], check=True)
+    recomputed_integrity = json.loads((recomputed_formal / "integrity_validation.json").read_text())
+    recomputed_baseline_result = json.loads((recomputed_baseline / "baseline_validation.json").read_text())
+    recomputed_analysis_result = json.loads((recomputed_analysis / "statistics_summary.json").read_text())
+    if not (recomputed_integrity.get("PASS") and recomputed_baseline_result.get("PASS")
+            and recomputed_analysis_result.get("PASS")):
+        raise RuntimeError("archive-contained raw data failed recomputation")
     (validation / "package_build_validation.json").write_text(json.dumps({
         "PASS": True,
-        "formal_integrity_PASS": integrity.get("PASS"),
-        "baseline_recovery_PASS": baseline.get("PASS"),
-        "statistics_recomputation_PASS": analysis.get("PASS"),
+        "formal_integrity_PASS": recomputed_integrity.get("PASS"),
+        "baseline_recovery_PASS": recomputed_baseline_result.get("PASS"),
+        "statistics_recomputation_PASS": recomputed_analysis_result.get("PASS"),
         "formal_run_id": FORMAL_RUN,
         "formal_run_commit": FORMAL_SHA,
         "sha_manifest_policy": "every packaged regular file except MANIFEST.sha256 itself",
