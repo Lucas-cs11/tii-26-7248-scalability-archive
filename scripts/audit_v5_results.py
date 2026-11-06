@@ -377,7 +377,9 @@ def main():
     (args.out / "integrity_validation.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     with (args.out / "merged_results.jsonl").open("w") as fh:
         for record in sorted(records, key=lambda r: r["task_id"]):
-            fh.write(json.dumps(record, sort_keys=True) + "\n")
+            merged = dict(record)
+            merged["base_model_id"] = expected[record["task_id"]]["base_model_id"]
+            fh.write(json.dumps(merged, sort_keys=True) + "\n")
     print(json.dumps({k: summary[k] for k in (
         "PASS", "errors", "tasks", "records", "raw_shards",
         "distinct_model_hashes", "distinct_bounded_problems",
