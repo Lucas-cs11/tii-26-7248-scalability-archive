@@ -1,6 +1,11 @@
 name: scalability-v5-formal
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - scalability-v5-fullscale
+    paths:
+      - .github/workflows/scalability_v5_formal.yml
 permissions:
   contents: read
   actions: read
