@@ -41,6 +41,7 @@ import csv
 import hashlib
 import importlib.util
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -955,7 +956,13 @@ def _download_volume(vol, prefix: str, run_id: str, out_dir: Path,
                      include_checkpoints: bool = False) -> dict:
     from modal.types import FileEntryType  # local import: only needed with Modal
 
-    vol.reload()
+    # NOTE: ``Volume.reload()`` is a container-only operation in Modal SDK 1.x
+    # ("reload() can only be called from within a running function").  The
+    # local orchestrator must never call it.  Everything written by a shard
+    # container is committed on the volume server by the worker (one commit per
+    # final task), and ``batch_upload`` makes the staged protocol durable when
+    # its context exits, so ``Volume.listdir``/``read_file`` below read the
+    # latest committed state directly from the server from a local process.
     out_dir = Path(out_dir)
     if out_dir.exists():
         shutil.rmtree(out_dir)
@@ -1202,7 +1209,8 @@ def _execute(args, kind: str) -> int:
                 print(f"uploaded {upload['files']} protocol/run-metadata files to volume",
                       flush=True)
                 state, monitor = _run_pool(runner, run_id, shard_ids, attempts, args, monitor)
-                vol.reload()
+                # No local ``vol.reload()``: container-side per-task commits are
+                # already durable server-side (see ``_download_volume``).
                 if not args.no_download:
                     download_summary = _download_volume(
                         vol, args.volume_prefix, run_id, download_dir,
@@ -1226,7 +1234,7 @@ def _execute(args, kind: str) -> int:
                 if shard_ids:
                     state, monitor = _run_pool(runner, run_id, shard_ids, attempts,
                                                args, monitor)
-                vol.reload()
+                # No local ``vol.reload()`` for the same reason as above.
                 if not args.no_download:
                     download_summary = _download_volume(
                         vol, args.volume_prefix, run_id, download_dir,
@@ -1280,7 +1288,8 @@ def cmd_status(args) -> int:
     _apply_runner_env(args, creating_resources=False)
     runner = _load_runner_module()
     vol = runner.VOLUME
-    vol.reload()
+    # Read-only local view: ``Volume.reload()`` is container-only, and
+    # ``listdir``/``read_file`` already query the latest committed server state.
     run_id = args.run_id or _latest_run_id(vol, args.volume_prefix)
     if not run_id:
         print(f"no run metadata found under /{args.volume_prefix}/run_metadata", file=sys.stderr)
@@ -1337,7 +1346,8 @@ def cmd_download(args) -> int:
     _apply_runner_env(args, creating_resources=False)
     runner = _load_runner_module()
     vol = runner.VOLUME
-    vol.reload()
+    # Read-only local view: ``Volume.reload()`` is container-only, and
+    # ``listdir``/``read_file`` already query the latest committed server state.
     run_id = args.run_id or _latest_run_id(vol, args.volume_prefix)
     if not run_id:
         print(f"no run metadata found under /{args.volume_prefix}/run_metadata", file=sys.stderr)
@@ -1369,6 +1379,674 @@ def cmd_download(args) -> int:
         ),
     }, indent=2, sort_keys=True))
     return 0
+
+
+# --------------------------------------------------------------------------- #
+# acceptance report: reference comparison + Pilot/recovery summaries
+# (reads a downloaded run only; never touches Modal)
+# --------------------------------------------------------------------------- #
+OOM_PATTERNS = (
+    "memoryerror", "out of memory", "oom-kill", "oom kill", "oom_kill",
+    "cannot allocate memory", "memory limit", "malloc failed", "bad_alloc",
+)
+
+
+def _percentile(values, probability):
+    if not values:
+        return None
+    ordered = sorted(values)
+    return ordered[max(0, math.ceil(probability * len(ordered)) - 1)]
+
+
+def _describe(values):
+    values = [float(value) for value in values if value is not None]
+    if not values:
+        return {"count": 0}
+    return {
+        "count": len(values),
+        "min": round(min(values), 3),
+        "p50": round(_percentile(values, 0.50), 3),
+        "p90": round(_percentile(values, 0.90), 3),
+        "p95": round(_percentile(values, 0.95), 3),
+        "max": round(max(values), 3),
+    }
+
+
+def _looks_like_oom(text: str | None) -> bool:
+    lowered = (text or "").lower()
+    return any(pattern in lowered for pattern in OOM_PATTERNS)
+
+
+def load_pilot_reference(path: Path) -> dict:
+    """Load the frozen Pilot reference cells keyed by ``source_task_id``."""
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    cells = payload.get("cells_detail") if isinstance(payload, dict) else payload
+    if not isinstance(cells, list) or not cells:
+        raise ValueError(f"pilot reference has no cells_detail list: {path}")
+    reference = {}
+    for cell in cells:
+        task_id = (cell.get("source_task_id") or cell.get("task_id")
+                   or cell.get("pilot_task_id"))
+        if not task_id:
+            raise ValueError(f"pilot reference cell without a task id in {path}")
+        reference[str(task_id)] = {
+            "pilot_task_id": cell.get("pilot_task_id"),
+            "stratum": cell.get("stratum"),
+            "benchmark_family": cell.get("benchmark_family"),
+            "experiment": cell.get("experiment"),
+            "mode": cell.get("mode"),
+            "model_hash": cell.get("model_hash"),
+            "reference": dict(cell.get("reference") or {}),
+            "reference_run": cell.get("reference_run"),
+            "protocol": cell.get("protocol"),
+        }
+    return {
+        "protocol": payload.get("protocol") if isinstance(payload, dict) else None,
+        "cells": len(reference),
+        "reference": reference,
+    }
+
+
+def load_download_records(download_dir: Path):
+    """Return (records_by_task, duplicate_paths, invalid_paths)."""
+    records: dict[str, dict] = {}
+    duplicates: dict[str, list[str]] = {}
+    invalid: list[str] = []
+    raw_root = Path(download_dir) / "raw"
+    for path in sorted(raw_root.glob("shard_*/*.json")):
+        try:
+            record = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            invalid.append(str(path))
+            continue
+        if not isinstance(record, dict):
+            invalid.append(str(path))
+            continue
+        task_id = str(record.get("task_id") or path.stem)
+        if task_id in records:
+            duplicates.setdefault(task_id, [str(path)])
+            continue
+        records[task_id] = record
+    return records, duplicates, invalid
+
+
+def load_shard_metrics(download_dir: Path) -> dict:
+    metrics = {}
+    for path in sorted((Path(download_dir) / "metrics").glob("shard_*.json")):
+        try:
+            metrics[path.stem.replace("shard_", "")] = json.loads(
+                path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+    return metrics
+
+
+def expected_task_ids(download_dir: Path, shard_ids: str | None) -> tuple[list[str],
+                                                                        list[str], dict]:
+    manifest_path = Path(download_dir) / "protocol" / "modal_shards_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    shard_task_ids = manifest.get("shard_task_ids") or {}
+    if not shard_task_ids:
+        raise ValueError(f"{manifest_path} has no shard_task_ids")
+    if shard_ids:
+        selected = [f"{int(part):03d}" for part in shard_ids.split(",") if part.strip()]
+        unknown = [shard for shard in selected if shard not in shard_task_ids]
+        if unknown:
+            raise ValueError(f"--shard-ids not in shard manifest: {unknown}")
+    else:
+        selected = sorted(shard_task_ids)
+    ids = [task_id for shard in sorted(set(selected))
+           for task_id in shard_task_ids[shard]]
+    return ids, sorted(set(selected)), manifest
+
+
+def compare_reference(reference_info: dict, records: dict, ids: list[str],
+                      *, cap_s: float) -> dict:
+    """Classify every frozen Pilot cell against its audited reference."""
+    reference = reference_info["reference"]
+    counts = Counter({key: 0 for key in (
+        "match", "boundary_flip", "verdict_mismatch", "timeout_match",
+        "timeout_improved", "modal_error", "missing", "extra")})
+    cells = []
+    boundary_flips = []
+    mismatches = []
+    missing = []
+    present = set()
+    wall_ratios = []
+    for task_id in ids:
+        ref = reference.get(task_id)
+        expected = (ref or {}).get("reference") or {}
+        ref_status = expected.get("execution_status")
+        ref_verdict = expected.get("verdict")
+        ref_wall = expected.get("wall_s")
+        record = records.get(task_id)
+        cell = {
+            "task_id": task_id,
+            "pilot_task_id": (ref or {}).get("pilot_task_id"),
+            "stratum": (ref or {}).get("stratum"),
+            "benchmark_family": (ref or {}).get("benchmark_family"),
+            "experiment": (ref or {}).get("experiment"),
+            "mode": (ref or {}).get("mode"),
+            "reference": {
+                "execution_status": ref_status,
+                "verdict": ref_verdict,
+                "wall_s": ref_wall,
+                "reference_run": (ref or {}).get("reference_run"),
+                "available": ref is not None,
+            },
+        }
+        if record is None:
+            category = "missing"
+            missing.append(task_id)
+        else:
+            present.add(task_id)
+            modal_status = record.get("execution_status")
+            modal_verdict = record.get("verdict")
+            modal_wall = record.get("wall_s")
+            cell["modal"] = {
+                "execution_status": modal_status,
+                "verdict": modal_verdict,
+                "wall_s": modal_wall,
+                "peak_rss_mb": record.get("peak_rss_mb"),
+                "shard": record.get("shard_id"),
+                "attempt": record.get("attempt"),
+                "task_attempt": record.get("task_attempt"),
+                "invocation_id": record.get("invocation_id"),
+            }
+            if ref_status == "COMPLETED" and modal_status == "COMPLETED":
+                category = "match" if modal_verdict == ref_verdict else "verdict_mismatch"
+            elif ref_status == "COMPLETED" and modal_status == "TIMEOUT_WALL_CLOCK":
+                category = "boundary_flip"
+            elif ref_status == "TIMEOUT_WALL_CLOCK" and modal_status == "TIMEOUT_WALL_CLOCK":
+                category = "timeout_match"
+            elif ref_status == "TIMEOUT_WALL_CLOCK" and modal_status == "COMPLETED":
+                category = "timeout_improved"
+            else:
+                # Unexpected transition (ERROR record, reference unavailable, ...)
+                category = "modal_error"
+            if (ref_wall and modal_wall is not None and float(ref_wall) > 0
+                    and ref_status == "COMPLETED" and modal_status == "COMPLETED"):
+                wall_ratios.append(float(modal_wall) / float(ref_wall))
+            if category == "boundary_flip":
+                fraction = (round(float(ref_wall) / cap_s, 4)
+                            if ref_wall is not None else None)
+                boundary_flips.append({
+                    "task_id": task_id,
+                    "reference_wall_s": ref_wall,
+                    "reference_wall_fraction_of_cap": fraction,
+                    "modal_wall_s": modal_wall,
+                    "modal_wall_clock_cap_s": record.get("wall_clock_cap_s", cap_s),
+                    # A cell that the audited reference finished far below the
+                    # cap cannot plausibly flip only because of hardware speed.
+                    "suspect_environment_regression": (
+                        bool(fraction is not None and fraction < 0.5)),
+                })
+            if category == "verdict_mismatch":
+                mismatches.append({
+                    "task_id": task_id,
+                    "reference_verdict": ref_verdict,
+                    "modal_verdict": modal_verdict,
+                    "reference_wall_s": ref_wall,
+                    "modal_wall_s": modal_wall,
+                })
+        cell["category"] = category
+        counts[category] += 1
+        cells.append(cell)
+    extra_ids = sorted(set(records) - set(ids))
+    for task_id in extra_ids:
+        record = records[task_id]
+        counts["extra"] += 1
+        cells.append({
+            "task_id": task_id,
+            "category": "extra",
+            "reference": {"available": task_id in reference},
+            "modal": {
+                "execution_status": record.get("execution_status"),
+                "verdict": record.get("verdict"),
+                "wall_s": record.get("wall_s"),
+                "shard": record.get("shard_id"),
+            },
+        })
+    reference_status = Counter(
+        str((reference.get(task_id) or {}).get("reference", {}).get("execution_status"))
+        for task_id in ids)
+    return {
+        "schema": "v6-modal-reference-comparison-1",
+        "generated_at": utc_now(),
+        "reference_protocol": reference_info.get("protocol"),
+        "reference_cells_in_source": reference_info.get("cells"),
+        "cell_timeout_s": cap_s,
+        "tasks_expected": len(ids),
+        "tasks_with_modal_record": len(present),
+        "counts": dict(counts),
+        "verdict_mismatch_count": counts["verdict_mismatch"],
+        "boundary_flip_count": counts["boundary_flip"],
+        "boundary_flip_suspect_count": sum(
+            1 for item in boundary_flips if item["suspect_environment_regression"]),
+        "timeout_match_count": counts["timeout_match"],
+        "timeout_improved_count": counts["timeout_improved"],
+        "missing_count": counts["missing"],
+        "extra_count": counts["extra"],
+        "reference_status": dict(reference_status),
+        "verdict_consistency_pass": counts["verdict_mismatch"] == 0,
+        "missing": missing,
+        "extra": extra_ids,
+        "verdict_mismatches": mismatches,
+        "boundary_flips": boundary_flips,
+        "wall_comparison_matched_cells": {
+            "modal_over_reference": _describe(wall_ratios),
+            "modal_faster_than_reference": sum(1 for ratio in wall_ratios if ratio < 1.0),
+            "modal_slower_than_reference": sum(1 for ratio in wall_ratios if ratio > 1.0),
+        },
+        "cells": cells,
+        "PASS": (counts["verdict_mismatch"] == 0 and counts["missing"] == 0
+                 and counts["extra"] == 0 and counts["modal_error"] == 0),
+        "note": (
+            "A boundary flip (audited reference COMPLETED -> Modal "
+            "TIMEOUT_WALL_CLOCK) is not a verdict match and not a verdict "
+            "mismatch either: the Modal side has no verdict. Both-sides-timeout "
+            "cells are counted separately as timeout_match and are not a "
+            "verdict match. Only verdict_mismatch blocks consistency."),
+    }
+
+
+def _load_optional_json(path: Path):
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def build_pilot_summary(download_dir: Path, reference_info: dict, comparison: dict,
+                        ids: list[str], records: dict, duplicates: dict,
+                        invalid: list[str], manifest: dict,
+                        shard_ids: list[str], args) -> dict:
+    download_dir = Path(download_dir)
+    run_manifest = _load_optional_json(download_dir / "run_manifest.json") or {}
+    audit = _load_optional_json(download_dir / "audit" / "audit.json")
+    metrics = load_shard_metrics(download_dir)
+    expected = len(ids)
+    final_records = [records[task_id] for task_id in ids if task_id in records]
+    statuses = Counter(str(record.get("execution_status")) for record in final_records)
+    verdicts = Counter(str(record.get("verdict")) for record in final_records)
+    walls = [float(record["wall_s"]) for record in final_records
+             if record.get("wall_s") is not None]
+    rss = [float(record["peak_rss_mb"]) for record in final_records
+           if record.get("peak_rss_mb") is not None]
+    missing = [task_id for task_id in ids if task_id not in records]
+    resource_missing = [
+        task_id for task_id in ids
+        if task_id in records and (
+            records[task_id].get("wall_s") is None
+            or records[task_id].get("peak_rss_mb") is None)
+    ]
+    resource_measurements_recorded = (len(final_records) == expected
+                                      and not resource_missing)
+
+    # OOM events: per-record error strings plus container/shard logs.
+    oom_events = []
+    for record in final_records:
+        if _looks_like_oom(record.get("error")):
+            oom_events.append({
+                "source": "task_record", "task_id": record.get("task_id"),
+                "execution_status": record.get("execution_status"),
+                "error": (record.get("error") or "")[:300],
+            })
+    for path in sorted((download_dir / "logs").glob("shard_*.log")):
+        try:
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            if _looks_like_oom(line):
+                oom_events.append({"source": "shard_log", "shard": path.stem,
+                                   "line": line[:300]})
+                break
+
+    infra_failures = []
+    for record in final_records:
+        if record.get("execution_status") == "ERROR":
+            infra_failures.append({
+                "kind": "task_error", "task_id": record.get("task_id"),
+                "error": (record.get("error") or "")[:500],
+                "failure_stage": record.get("failure_stage"),
+            })
+    for shard, shard_metrics in sorted(metrics.items()):
+        unfinished = int(shard_metrics.get("tasks_unfinished") or 0)
+        if unfinished:
+            infra_failures.append({
+                "kind": "shard_unfinished", "shard": shard,
+                "tasks_unfinished": unfinished,
+                "unfinished_task_ids": (shard_metrics.get("unfinished_task_ids") or [])[:20],
+            })
+        if shard_metrics.get("status") not in (None, "COMPLETED"):
+            infra_failures.append({
+                "kind": "shard_status", "shard": shard,
+                "status": shard_metrics.get("status"),
+                "attempt": shard_metrics.get("attempt"),
+            })
+    for shard, entry in sorted((run_manifest.get("shards") or {}).items()):
+        for attempt in entry.get("attempts") or []:
+            if attempt.get("status") in {"FAILED", "INFRA_FAILURE",
+                                         "WATCHDOG_TIMEOUT", "RETRYING"}:
+                infra_failures.append({
+                    "kind": "attempt", "shard": shard,
+                    "attempt": attempt.get("attempt"),
+                    "status": attempt.get("status"),
+                    "error": (attempt.get("error") or "")[:500],
+                })
+    if audit is not None:
+        for failure in (audit.get("technical_failure_tasks") or [])[:200]:
+            infra_failures.append({"kind": "audit_technical_failure",
+                                   "task_id": failure})
+
+    compute_seconds = sum(walls)
+    cpu_hours = compute_seconds / 3600.0
+    memory_gib = float(run_manifest.get("resources", {}).get("memory_mib") or 0) / 1024.0
+    memory_gib_hours = cpu_hours * memory_gib
+    estimated_usd = (cpu_hours * CPU_HOUR_RATE_USD
+                     + memory_gib_hours * GIB_HOUR_RATE_USD)
+    billing_delta = (run_manifest.get("billing") or {}).get("delta") or {}
+
+    verdict_consistency_pass = comparison["verdict_mismatch_count"] == 0
+    audit_pass = (audit or {}).get("PASS") if audit is not None else None
+    PASS = bool(
+        (audit_pass is not False)
+        and comparison["missing_count"] == 0
+        and comparison["extra_count"] == 0
+        and comparison["counts"]["modal_error"] == 0
+        and not duplicates
+        and not invalid
+        and verdict_consistency_pass
+        and resource_measurements_recorded
+        and not infra_failures
+        and len(final_records) == expected
+    )
+    return {
+        "schema": "v6-modal-pilot-summary-1",
+        "generated_at": utc_now(),
+        "download_dir": str(download_dir),
+        "run_id": run_manifest.get("run_id") or (audit or {}).get("run_id"),
+        "kind": run_manifest.get("kind") or manifest.get("kind"),
+        "source_sha": run_manifest.get("source_sha") or (audit or {}).get("source_sha"),
+        "image": run_manifest.get("image") or {},
+        "image_object_id": run_manifest.get("image_object_id"),
+        "resources": run_manifest.get("resources") or {},
+        "shards_expected": shard_ids,
+        "tasks_expected": expected,
+        "tasks_recorded": len(final_records),
+        "tasks_completed": statuses["COMPLETED"],
+        "tasks_timeout_wall_clock": statuses["TIMEOUT_WALL_CLOCK"],
+        "tasks_error": statuses["ERROR"],
+        "missing": missing,
+        "missing_count": len(missing),
+        "duplicates": duplicates,
+        "duplicate_count": len(duplicates),
+        "invalid_record_files": invalid,
+        "verdicts": dict(verdicts),
+        "verdict_consistency_pass": verdict_consistency_pass,
+        "verdict_mismatch_count": comparison["verdict_mismatch_count"],
+        "verdict_mismatches": comparison["verdict_mismatches"],
+        "verdict_match_count": comparison["counts"]["match"],
+        "boundary_flips": comparison["boundary_flip_count"],
+        "boundary_flip_suspect_count": comparison["boundary_flip_suspect_count"],
+        "boundary_flip_details": comparison["boundary_flips"],
+        "timeout_match_count": comparison["timeout_match_count"],
+        "timeout_improved_count": comparison["timeout_improved_count"],
+        "oom_events": len(oom_events),
+        "oom_event_details": oom_events,
+        "resource_measurements_recorded": resource_measurements_recorded,
+        "resource_measurement_missing": resource_missing,
+        "infra_failures": len(infra_failures),
+        "infra_failure_details": infra_failures,
+        "wall_s": _describe(walls),
+        "peak_rss_mb": _describe(rss),
+        "scg_cache": _counter_from_metrics(metrics, "scg_cache"),
+        "shard_statuses": {shard: shard_metrics.get("status")
+                           for shard, shard_metrics in sorted(metrics.items())},
+        "shard_attempts": {shard: {key: shard_metrics.get(key) for key in (
+            "attempt", "invocation_id", "tasks_executed", "tasks_skipped_resumed",
+            "wall_s", "peak_rss_mb_max")}
+            for shard, shard_metrics in sorted(metrics.items())},
+        "audit": {
+            "path": str(download_dir / "audit" / "audit.json"),
+            "available": audit is not None,
+            "PASS": audit_pass,
+            "tasks_audited": (audit or {}).get("tasks_audited"),
+            "unique_task_ids": (audit or {}).get("unique_task_ids"),
+            "audit_errors": (audit or {}).get("audit_errors"),
+            "audit_findings": (audit or {}).get("audit_findings"),
+            "audit_warnings": (audit or {}).get("audit_warnings"),
+        },
+        "compute": {
+            "observed_task_wall_seconds": round(compute_seconds, 3),
+            "cpu_hours_estimate": round(cpu_hours, 4),
+            "memory_gib_hours_estimate": round(memory_gib_hours, 4),
+            "estimated_usd_from_wall": round(estimated_usd, 6),
+            "note": ("estimated from summed per-task wall at the recorded CPU/"
+                     "memory rates; excludes image build, container startup, "
+                     "volume storage and network egress"),
+        },
+        "billing_delta": billing_delta,
+        "budget_guard": run_manifest.get("budget_guard"),
+        "MODAL_ENVIRONMENT_PASS": PASS,
+        "PASS": PASS,
+        "note": (
+            "tasks_completed counts only COMPLETED records; tasks_recorded "
+            "counts every final record (COMPLETED + TIMEOUT_WALL_CLOCK). A "
+            "boundary flip is allowed for environment portability but is "
+            "counted separately and never treated as a verdict match."),
+    }
+
+
+def _counter_from_metrics(metrics: dict, field: str) -> dict:
+    totals: Counter = Counter()
+    for shard_metrics in metrics.values():
+        for key, value in (shard_metrics.get(field) or {}).items():
+            totals[str(key)] += int(value or 0)
+    return dict(totals)
+
+
+def cmd_report(args) -> int:
+    download_dir = Path(args.download_dir).resolve()
+    out_dir = Path(args.out_dir) if args.out_dir else download_dir
+    out_dir.mkdir(parents=True, exist_ok=True)
+    reference_info = load_pilot_reference(
+        Path(args.pilot_json) if args.pilot_json else PILOT_JSON)
+    ids, shard_ids, manifest = expected_task_ids(download_dir, args.shard_ids)
+    unknown_reference = [task_id for task_id in ids
+                         if task_id not in reference_info["reference"]]
+    if unknown_reference:
+        raise ValueError(f"planned tasks missing from the Pilot reference: "
+                         f"{unknown_reference[:10]}")
+    records, duplicates, invalid = load_download_records(download_dir)
+    cap_s = float(args.cell_timeout or manifest.get("cell_timeout_s") or 60.0)
+    comparison = compare_reference(reference_info, records, ids, cap_s=cap_s)
+    comparison["run_id"] = None
+    run_manifest = _load_optional_json(download_dir / "run_manifest.json") or {}
+    comparison["run_id"] = run_manifest.get("run_id")
+    reference_path = out_dir / "reference_comparison.json"
+    atomic_write_json(reference_path, comparison)
+    summary = build_pilot_summary(
+        download_dir, reference_info, comparison, ids, records, duplicates,
+        invalid, manifest, shard_ids, args)
+    summary_path = out_dir / "pilot_summary.json"
+    atomic_write_json(summary_path, summary)
+    print(json.dumps({
+        "download_dir": str(download_dir),
+        "reference_comparison": str(reference_path),
+        "pilot_summary": str(summary_path),
+        "counts": comparison["counts"],
+        "verdict_consistency_pass": comparison["verdict_consistency_pass"],
+        "boundary_flips": comparison["boundary_flip_count"],
+        "boundary_flip_suspects": comparison["boundary_flip_suspect_count"],
+        "PASS": summary["PASS"],
+    }, indent=2, sort_keys=True))
+    return 0
+
+
+def _load_attempt_markers(attempt_dir: Path, shard: str) -> list[dict]:
+    attempts = []
+    for path in sorted(Path(attempt_dir).glob(f"shard_{shard}_attempt_*.json")):
+        payload = _load_optional_json(path)
+        if payload is not None:
+            attempts.append(payload)
+    return attempts
+
+
+def build_recovery_report(download_dir: Path, discovery_dir: Path | None,
+                          ids: list[str], records: dict, duplicates: dict,
+                          invalid: list[str], manifest: dict, args) -> dict:
+    download_dir = Path(download_dir)
+    id_set = set(ids)
+    records = {task_id: record for task_id, record in records.items()
+               if task_id in id_set}
+    duplicates = {task_id: paths for task_id, paths in duplicates.items()
+                  if task_id in id_set}
+    metrics = load_shard_metrics(download_dir)
+    audit = _load_optional_json(download_dir / "audit" / "audit.json")
+    expected = len(ids)
+    shard_ids = sorted(manifest.get("shard_task_ids") or {})
+    shard = shard_ids[0] if shard_ids else None
+    shard_metrics = metrics.get(shard) if shard else {}
+    attempts = _load_attempt_markers(
+        download_dir / "run_metadata" / "attempts", shard) if shard else []
+    discovery = {"available": False}
+    discovery_missing = None
+    if discovery_dir is not None:
+        discovery_dir = Path(discovery_dir)
+        discovery_manifest = _load_optional_json(discovery_dir / "run_manifest.json")
+        discovery_records, _, _ = load_download_records(discovery_dir)
+        discovery_metrics = load_shard_metrics(discovery_dir)
+        discovery_attempts = _load_attempt_markers(
+            discovery_dir / "run_metadata" / "attempts", shard) if shard else []
+        discovery = {
+            "available": discovery_manifest is not None,
+            "dir": str(discovery_dir),
+            "tasks_recorded": len(discovery_records),
+            "tasks_completed": sum(
+                1 for record in discovery_records.values()
+                if record.get("execution_status") == "COMPLETED"),
+            "tasks_timeout": sum(
+                1 for record in discovery_records.values()
+                if record.get("execution_status") == "TIMEOUT_WALL_CLOCK"),
+            "shard_status": (discovery_metrics.get(shard) or {}).get("status"),
+            "attempts": [
+                {key: marker.get(key) for key in (
+                    "attempt", "invocation_id", "started_at", "tasks_total")}
+                for marker in discovery_attempts],
+            "manifest_totals": (discovery_manifest or {}).get("totals"),
+        }
+        discovery_missing = expected - len(discovery_records)
+    skipped = int(shard_metrics.get("tasks_skipped_resumed") or 0)
+    executed = int(shard_metrics.get("tasks_executed_this_attempt")
+                   or shard_metrics.get("tasks_executed") or 0)
+    # Ledger reconciliation: exactly one final entry per task, SHA = raw file SHA.
+    ledger_path = download_dir / "completion_ledger" / f"shard_{shard}.jsonl" if shard else None
+    ledger_entries = []
+    if ledger_path and ledger_path.is_file():
+        for line in ledger_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line:
+                try:
+                    ledger_entries.append(json.loads(line))
+                except json.JSONDecodeError:
+                    ledger_entries.append({"_invalid": line[:200]})
+    final_by_task: dict[str, list[dict]] = {}
+    for entry in ledger_entries:
+        if entry.get("status") in {"COMPLETED", "TIMEOUT_WALL_CLOCK"}:
+            final_by_task.setdefault(entry.get("task_id"), []).append(entry)
+    ledger_sha_ok = True
+    for task_id, entries in final_by_task.items():
+        last = entries[-1]
+        raw_path = download_dir / (last.get("raw_path") or "")
+        if not raw_path.is_file() or sha256_file(raw_path) != last.get("sha256"):
+            ledger_sha_ok = False
+    ledger_ok = (len(final_by_task) == expected
+                 and all(len(group) == 1 for group in final_by_task.values())
+                 and ledger_sha_ok)
+    no_duplicate_records = (not duplicates and not invalid and ledger_ok
+                            and (audit or {}).get("PASS") is not False)
+    resume_skipped_completed = skipped > 0 and executed + skipped == expected
+    tasks_recovered = executed
+    recovered_matches_discovery = (
+        None if discovery_missing is None else tasks_recovered == discovery_missing)
+    PASS = bool(
+        len(records) == expected
+        and no_duplicate_records
+        and resume_skipped_completed
+        and len(attempts) >= 2
+        and tasks_recovered > 0
+        and (audit or {}).get("PASS") is not False
+        and (discovery_missing is None or recovered_matches_discovery)
+    )
+    return {
+        "schema": "v6-modal-recovery-test-1",
+        "generated_at": utc_now(),
+        "download_dir": str(download_dir),
+        "discovery_dir": str(discovery_dir) if discovery_dir is not None else None,
+        "run_id": (_load_optional_json(download_dir / "run_manifest.json") or {}).get("run_id"),
+        "shard": shard,
+        "tasks_expected": expected,
+        "tasks_recorded_final": len(records),
+        "tasks_recovered": tasks_recovered,
+        "tasks_skipped_resumed": skipped,
+        "tasks_executed_in_resume_attempt": executed,
+        "resume_skipped_completed": resume_skipped_completed,
+        "no_duplicate_records": no_duplicate_records,
+        "ledger_reconciled": ledger_ok,
+        "ledger_final_entries": sum(len(group) for group in final_by_task.values()),
+        "duplicates": duplicates,
+        "invalid_record_files": invalid,
+        "attempts": [
+            {"attempt": marker.get("attempt"), "invocation_id": marker.get("invocation_id"),
+             "started_at": marker.get("started_at"), "tasks_total": marker.get("tasks_total"),
+             "source": "resume_download"}
+            for marker in attempts],
+        "attempt_markers_total": len(attempts),
+        "discovery": discovery,
+        "tasks_missing_after_discovery": discovery_missing,
+        "recovered_matches_discovery_missing": recovered_matches_discovery,
+        "audit": {
+            "path": str(download_dir / "audit" / "audit.json"),
+            "PASS": (audit or {}).get("PASS"),
+            "unique_task_ids": (audit or {}).get("unique_task_ids"),
+            "audit_errors": (audit or {}).get("audit_errors"),
+        },
+        "evidence": {
+            "ledger": str(ledger_path) if ledger_path else None,
+            "audit": str(download_dir / "audit" / "audit.json"),
+            "run_manifest": str(download_dir / "run_manifest.json"),
+            "discovery_manifest": (str(Path(discovery_dir) / "run_manifest.json")
+                                   if discovery_dir is not None else None),
+            "metrics": str(download_dir / "metrics" / f"shard_{shard}.json")
+            if shard else None,
+        },
+        "MODAL_CHECKPOINT_RECOVERY_PASS": PASS,
+        "PASS": PASS,
+    }
+
+
+def cmd_recovery_report(args) -> int:
+    download_dir = Path(args.download_dir).resolve()
+    ids, _shard_ids, manifest = expected_task_ids(download_dir, args.shard_ids)
+    records, duplicates, invalid = load_download_records(download_dir)
+    report = build_recovery_report(
+        download_dir, Path(args.discovery_dir) if args.discovery_dir else None,
+        ids, records, duplicates, invalid, manifest, args)
+    out = Path(args.recovery_out) if args.recovery_out else (
+        download_dir / "recovery_test.json")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    atomic_write_json(out, report)
+    print(json.dumps({
+        "recovery_test": str(out),
+        "PASS": report["PASS"],
+        "tasks_recovered": report["tasks_recovered"],
+        "resume_skipped_completed": report["resume_skipped_completed"],
+        "no_duplicate_records": report["no_duplicate_records"],
+        "attempts": len(report["attempts"]),
+    }, indent=2, sort_keys=True))
+    return 0 if report["PASS"] else 1
 
 
 # --------------------------------------------------------------------------- #
@@ -1885,6 +2563,27 @@ def build_parser() -> argparse.ArgumentParser:
     download.add_argument("--run-id", default=None)
     download.add_argument("--force", action="store_true")
     download.set_defaults(func=cmd_download)
+
+    report = subparsers.add_parser(
+        "report", help="write reference_comparison.json + pilot_summary.json "
+                       "from a downloaded run (no Modal calls)")
+    report.add_argument("--download-dir", type=Path, required=True)
+    report.add_argument("--out-dir", type=Path, default=None)
+    report.add_argument("--pilot-json", type=Path, default=None,
+                        help=f"frozen Pilot reference (default {PILOT_JSON})")
+    report.add_argument("--shard-ids", default=None,
+                        help="comma separated shard ids of a partial run (default: all)")
+    report.add_argument("--cell-timeout", type=float, default=None)
+    report.set_defaults(func=cmd_report)
+
+    recovery = subparsers.add_parser(
+        "recovery-report", help="write recovery_test.json from a killed run + its "
+                                "resumed download (no Modal calls)")
+    recovery.add_argument("--download-dir", type=Path, required=True)
+    recovery.add_argument("--discovery-dir", type=Path, default=None)
+    recovery.add_argument("--shard-ids", default=None)
+    recovery.add_argument("--recovery-out", type=Path, default=None)
+    recovery.set_defaults(func=cmd_recovery_report)
 
     simulate = subparsers.add_parser(
         "simulate", help="free local end-to-end self-test (fake Volume, no Modal calls)")
