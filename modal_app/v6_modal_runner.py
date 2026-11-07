@@ -34,8 +34,16 @@ from pathlib import Path
 import modal
 
 HERE = Path(__file__).resolve().parent
-LOCAL_REPO_ROOT = Path(os.environ.get("V6_REPO_ROOT") or HERE.parent).resolve()
 REMOTE_REPO_ROOT = "/root/v6repo"
+#: Inside a Modal container the entry file is mounted at /root, while the repo
+#: snapshot copied into the image lives at REMOTE_REPO_ROOT.  Resolve the repo
+#: root accordingly so importing the worker and reading the source tree works
+#: in both places.
+IN_CONTAINER = Path(REMOTE_REPO_ROOT).is_dir()
+if IN_CONTAINER:
+    LOCAL_REPO_ROOT = Path(REMOTE_REPO_ROOT)
+else:
+    LOCAL_REPO_ROOT = Path(os.environ.get("V6_REPO_ROOT") or HERE.parent).resolve()
 
 APP_NAME = os.environ.get("V6_APP_NAME", "tii-v6-formal")
 VOLUME_NAME = os.environ.get("V6_VOLUME_NAME", "tii-v6-scalability")
@@ -65,7 +73,11 @@ def _load_worker_module():
     module = sys.modules.get("v6_shard_worker")
     if module is not None:
         return module
-    path = HERE / "v6_shard_worker.py"
+    candidates = [
+        HERE / "v6_shard_worker.py",
+        Path(REMOTE_REPO_ROOT) / "modal_app" / "v6_shard_worker.py",
+    ]
+    path = next((candidate for candidate in candidates if candidate.is_file()), candidates[0])
     spec = importlib.util.spec_from_file_location("v6_shard_worker", path)
     if spec is None or spec.loader is None:
         raise ImportError(f"cannot load shard worker from {path}")
@@ -92,6 +104,10 @@ def _image_ignore(path: Path) -> bool:
 
 
 def _build_image():
+    # Inside the container the image is already materialised; do not try to
+    # rebuild it from a mounted path (add_local_dir would not be valid there).
+    if IN_CONTAINER:
+        return modal.Image.debian_slim(python_version=IMAGE_PYTHON_VERSION)
     image = modal.Image.debian_slim(python_version=IMAGE_PYTHON_VERSION)
     image = image.pip_install(*IMAGE_PACKAGES)
     if LOCAL_REPO_ROOT.is_dir():

@@ -871,6 +871,27 @@ def _run_pool(runner, run_id: str, shard_ids, attempts, args,
                 try:
                     result = item["call"].get(timeout=0)
                 except TimeoutError:
+                    call_budget = float(getattr(args, "function_timeout", 5400)) + 600.0
+                    if time.monotonic() - item["started"] > call_budget:
+                        # A call that never returns (e.g. crash-looping container
+                        # startup) must not hang the run forever.
+                        try:
+                            item["call"].cancel(terminate_containers=True)
+                        except Exception:  # noqa: BLE001
+                            pass
+                        del pending[shard]
+                        finished += 1
+                        progressed = True
+                        state[shard]["attempts"].append({
+                            "attempt": item["attempt"], "call_id": item["call_id"],
+                            "status": "WATCHDOG_TIMEOUT",
+                            "error": f"call wall-clock exceeded {call_budget:.0f}s",
+                            "wall_s": round(time.monotonic() - item["started"], 3),
+                        })
+                        state[shard]["status"] = "FAILED"
+                        print(f"shard {shard} watchdog timeout after {call_budget:.0f}s "
+                              f"(call {item['call_id']}); cancelled", flush=True)
+                        continue
                     if time.monotonic() - last_progress > 120:
                         print(
                             f"waiting: {len(pending)} running, {finished}/{len(shard_ids)} done",
