@@ -812,7 +812,10 @@ def upload_protocol(vol, staging: Path, prefix: str) -> dict:
             batch.put_file(str(path), remote)
             uploaded.append({"local": str(path), "remote": remote,
                              "sha256": sha256_file(path), "bytes": path.stat().st_size})
-    vol.commit()
+    # ``Volume.commit()`` is only valid for a volume mounted inside a container
+    # (Modal SDK >= 1.x).  ``batch_upload`` uploads to the volume server
+    # directly, so the files are durable when the context exits; no local
+    # commit is allowed here.
     return {"files": len(uploaded), "details": uploaded}
 
 
