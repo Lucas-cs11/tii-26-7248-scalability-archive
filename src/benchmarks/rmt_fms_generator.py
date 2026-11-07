@@ -583,23 +583,37 @@ def generate_rmt_fms(
                 # Preset: part at machine in config c
                 add_arc(at_place_c, t_proc)
                 # Postset: part done, machine cap returned, config returned.
-                # Selected operations add an acyclic optional inspection fork,
-                # yielding complete observable histories at multiple lengths.
+                # Inspection is selected by two simultaneous immediate choices.
+                # The inspection duration starts only after that route has been
+                # selected; it therefore does not compete with an urgent skip.
                 if proc_idx in inspection_indices:
                     post_place_c = f"p{j}_op{k}_post_m{m}_cfg{c}"
+                    inspect_place_c = f"p{j}_op{k}_inspect_m{m}_cfg{c}"
                     add_place(post_place_c)
+                    add_place(inspect_place_c)
                     add_arc(t_proc, post_place_c)
 
-                    t_finish = f"t_finish_j{j}_op{k}_m{m}_cfg{c}"
+                    t_choose_skip = f"t_choose_skip_j{j}_op{k}_m{m}_cfg{c}"
                     add_transition(
-                        t_finish,
+                        t_choose_skip,
                         label="",
                         is_fault=False,
                         is_adjustable=False,
                         interval=Interval(Fraction(0), Fraction(0)),
                     )
-                    add_arc(post_place_c, t_finish)
-                    add_arc(t_finish, end_place)
+                    add_arc(post_place_c, t_choose_skip)
+                    add_arc(t_choose_skip, end_place)
+
+                    t_choose_inspect = f"t_choose_inspect_j{j}_op{k}_m{m}_cfg{c}"
+                    add_transition(
+                        t_choose_inspect,
+                        label="",
+                        is_fault=False,
+                        is_adjustable=False,
+                        interval=Interval(Fraction(0), Fraction(0)),
+                    )
+                    add_arc(post_place_c, t_choose_inspect)
+                    add_arc(t_choose_inspect, inspect_place_c)
 
                     t_inspect = f"t_inspect_j{j}_op{k}_m{m}_cfg{c}"
                     add_transition(
@@ -609,7 +623,7 @@ def generate_rmt_fms(
                         is_adjustable=False,
                         interval=Interval(Fraction(1), Fraction(1)),
                     )
-                    add_arc(post_place_c, t_inspect)
+                    add_arc(inspect_place_c, t_inspect)
                     add_arc(t_inspect, end_place)
                 else:
                     add_arc(t_proc, end_place)

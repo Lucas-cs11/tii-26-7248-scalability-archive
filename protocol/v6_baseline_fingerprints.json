@@ -1,0 +1,43 @@
+{
+  "v5_delivery_freeze": {
+    "commit": "97b5d6db32279797580560ffcb82eccfdafd9b32",
+    "tree": "9de3f4d24c133ccaecae03259cf53a99a2475fa4",
+    "archive": "work/v6_freeze/v5_delivery_source_97b5d6db3227.tar.gz",
+    "archive_sha256": "17ee533ab4c271e790a36437ef27c898d6e5bcb8852475d2c737b4b9cd41d04d"
+  },
+  "v5_formal_execution_freeze": {
+    "commit": "dc7cae34310edacd6fdf3df9c2c4382ad715bd77",
+    "tree": "e321a5933f3f6f53e55f27718a12105d66eded38",
+    "archive": "work/v6_freeze/v5_formal_source_dc7cae34310e.tar.gz",
+    "archive_sha256": "a195687e864c508c64d540116e95e30362c8ac8e7ede3ee7b9f808620f5f33c4"
+  },
+  "frozen_inputs": {
+    "requirements-v5.lock": "e4ed3194e577e1ce120f3252480f0d5744d0f113cfd8f092329240440020a6a4",
+    "protocol/v5_formal_manifest.json": "5171a311952da153bd6437f650957fdcc8a7988b588fd586f8b9ddecb55b7ada",
+    ".github/workflows/scalability_v5_formal.yml": "a5f494326ddc272876de39991c9bf48ce2a2503925ac0351adcf2f9b84116832"
+  },
+  "v5_formal_environment": {
+    "runner": "GitHub-hosted ubuntu-22.04 standard runner",
+    "python": "3.13",
+    "numpy": "2.3.4",
+    "scipy": "1.16.2"
+  },
+  "local_diagnostic_environment": {
+    "os": "macOS 26.2 (25C56)",
+    "python": "3.13.5",
+    "numpy": "2.2.6",
+    "scipy": "1.16.2"
+  },
+  "v5_formal_parameters": {
+    "task_count": 8280,
+    "shards": 120,
+    "experiments": {
+      "A_structural": 600,
+      "B_wip": 1080,
+      "C_first": 4500,
+      "C_complete_paired": 900,
+      "D_difficult": 1200
+    },
+    "manifest": "protocol/v5_formal_manifest.json"
+  }
+}

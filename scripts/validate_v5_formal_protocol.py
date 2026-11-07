@@ -41,6 +41,14 @@ def normal_operation_to_end(tpn, marking, part, operation):
     marking = fire_checked(tpn, marking, transfer)
     process = named_transition(tpn, f"t_proc_j{part}_op{operation}_")
     marking = fire_checked(tpn, marking, process)
+    skip_choices = [
+        name for name in tpn.transitions
+        if name.startswith(f"t_choose_skip_j{part}_op{operation}_")
+    ]
+    if skip_choices:
+        if len(skip_choices) != 1:
+            raise ValueError("ambiguous inspection skip choice")
+        marking = fire_checked(tpn, marking, skip_choices[0])
     finish = [
         name for name in tpn.transitions
         if name.startswith(f"t_finish_j{part}_op{operation}_")
@@ -52,11 +60,19 @@ def normal_operation_to_end(tpn, marking, part, operation):
     return marking
 
 
+def choose_continue_if_required(tpn, marking, part, operation):
+    choice = f"t_choose_continue_j{part}_op{operation}"
+    if choice in tpn.transitions:
+        marking = fire_checked(tpn, marking, choice)
+    return marking
+
+
 def marking_at_operation_start(tpn, part, operation):
     marking = dict(tpn.initial_marking)
     marking = fire_checked(tpn, marking, f"t_release_j{part}")
     for prior in range(1, operation):
         marking = normal_operation_to_end(tpn, marking, part, prior)
+        marking = choose_continue_if_required(tpn, marking, part, prior)
         marking = fire_checked(
             tpn, marking, f"t_chain_j{part}_op{prior}_to_op{prior + 1}"
         )
@@ -83,6 +99,9 @@ def prove_generated_semantics(tpn, attrs):
         completion = fire_checked(tpn, completion, f"t_release_j{part}")
         for operation in range(1, operations + 1):
             completion = normal_operation_to_end(tpn, completion, part, operation)
+            completion = choose_continue_if_required(
+                tpn, completion, part, operation
+            )
             if operation < operations:
                 completion = fire_checked(
                     tpn, completion,
@@ -121,6 +140,9 @@ def prove_generated_semantics(tpn, attrs):
         marking = normal_operation_to_end(tpn, marking, part, operation)
         if transition.interval.earliest <= 0:
             raise ValueError(f"non-positive rework cycle {name}")
+        marking = fire_checked(
+            tpn, marking, f"t_choose_rework_j{part}_op{operation}"
+        )
         marking = fire_checked(tpn, marking, name)
         if marking.get(f"p{part}_op{operation}_start", 0) != 1:
             raise ValueError(f"rework {name} does not return to operation start")
@@ -134,6 +156,7 @@ def prove_generated_semantics(tpn, attrs):
         part, operation, _ = map(int, match.group(1, 2, 3))
         marking = marking_at_operation_start(tpn, part, operation)
         marking = normal_operation_to_end(tpn, marking, part, operation)
+        marking = choose_continue_if_required(tpn, marking, part, operation)
         fire_checked(tpn, marking, name)
         route_count += 1
     return {

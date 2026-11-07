@@ -10,12 +10,13 @@ DBM representation:
   Entry DBM[i][j] = upper bound on (x_i - x_j).
   Normalized via Floyd-Warshall.
 
-Following Berthomieu & Menasche (1983) / Berthomieu & Vernadat (2006):
-The zone Z for state class (M, enu) encodes the set of valid ages
-(time-since-enabled) for all transitions enabled at M.
+Following Berthomieu & Menasche (1983) / Berthomieu & Vernadat (2006),
+the zone Z encodes firing dates, relative to entry into the state class, for
+all transitions enabled at M.
 
-The reference variable x_0 represents the current time (= 0 at the class entry).
-For enabled transition u, x_u is its age (clock value).
+The reference variable x_0 is 0 at class entry.  For enabled transition u,
+x_u is a candidate delay until u fires.  Selecting t as the next transition
+therefore requires x_t <= x_u for every other enabled u.
 
 Key DBM entries:
   DBM[u][0] = upper bound on x_u - 0 = x_u   => x_u <= DBM[u][0]  (latest)
@@ -25,9 +26,9 @@ For the initial state class:
   All transitions enabled at M0 have age 0.
   x_u = 0 for all u in E(M0).
 
-After firing transition t with delay d:
-  New ages for persistently enabled u: x_u' = x_u + d
-  New ages for newly enabled v: x_v' = 0
+After firing transition t:
+  Remaining firing dates for persistent u: x_u' = x_u - x_t
+  Newly enabled v receives a fresh firing domain [earliest(v), latest(v)].
 """
 from __future__ import annotations
 
@@ -189,10 +190,9 @@ def _build_initial_class(tpn: TPN) -> StateClass:
 
     Follows Berthomieu & Menasche (1983) / Berthomieu & Vernadat (2006).
 
-    In the SCG zone, x_u represents the age of transition u at the moment
-    the NEXT transition fires (not the current elapsed time).  The initial
-    zone encodes valid firing-age ranges for all enabled transitions assuming
-    they were all enabled at time 0:
+    In the SCG zone, x_u represents a candidate firing date relative to entry
+    into the class. The initial zone is the Cartesian product of the static
+    firing intervals, represented as difference constraints:
 
       DBM[u][0]  = latest(u)    x_u <=  latest(u)   (can't exceed deadline)
       DBM[0][u]  = -earliest(u) x_u >= earliest(u)  (not yet fireable before earliest)
@@ -270,13 +270,25 @@ def _compute_successor(tpn: TPN, cls: StateClass, t_name: str) -> Optional[State
     if t_name not in cls.enabled:
         return None
 
-    t_obj = tpn.transitions[t_name]
-
-    # No explicit feasibility pre-check: the successor zone computation and
-    # normalization naturally yield an empty zone if the firing is infeasible
-    # under strong-time semantics. The DBM cross-differences (set by _build_initial_class
-    # and propagated by the shift) encode urgency constraints. After normalization,
-    # normalized.is_empty() correctly rejects infeasible successors.
+    # DBM variables are candidate firing dates relative to class entry.  Under
+    # strong-time semantics, t can be the next transition only where its firing
+    # date is no later than every other currently enabled transition's firing
+    # date.  This ordering constraint is what prevents a selected transition
+    # from waiting past a competitor's latest firing time, even when firing t
+    # disables that competitor.
+    firing_dbm = DBM(cls.dbm.variables)
+    for i in cls.dbm.variables:
+        for j in cls.dbm.variables:
+            firing_dbm.set(i, j, cls.dbm.get(i, j))
+    for u in cls.enabled:
+        if u == t_name:
+            continue
+        current = firing_dbm.get(t_name, u)
+        if math.isinf(current) or current > 0:
+            firing_dbm.set(t_name, u, Fraction(0))  # theta_t - theta_u <= 0
+    firing_dbm = firing_dbm.normalize()
+    if firing_dbm.is_empty():
+        return None
 
     # Compute new marking
     new_marking = tpn.fire(cls.marking, t_name)
@@ -302,17 +314,17 @@ def _compute_successor(tpn: TPN, cls: StateClass, t_name: str) -> Optional[State
 
     for u in persistent:
         # Check u is actually in old DBM
-        if u in cls.dbm.variables:
-            dbm_u_t = cls.dbm.get(u, t_name)
-            dbm_t_u = cls.dbm.get(t_name, u)
+        if u in firing_dbm.variables:
+            dbm_u_t = firing_dbm.get(u, t_name)
+            dbm_t_u = firing_dbm.get(t_name, u)
             new_dbm.set(u, "0", dbm_u_t)
             new_dbm.set("0", u, dbm_t_u)
 
     # Cross terms between two persistent transitions
     for u1 in persistent:
         for u2 in persistent:
-            if u1 != u2 and u1 in cls.dbm.variables and u2 in cls.dbm.variables:
-                new_dbm.set(u1, u2, cls.dbm.get(u1, u2))
+            if u1 != u2 and u1 in firing_dbm.variables and u2 in firing_dbm.variables:
+                new_dbm.set(u1, u2, firing_dbm.get(u1, u2))
 
     # Newly enabled: x_v = 0 relative to new reference
     # So in [earliest(v), latest(v)] relative to new reference
@@ -324,18 +336,18 @@ def _compute_successor(tpn: TPN, cls: StateClass, t_name: str) -> Optional[State
     # Cross terms: persistent u, newly enabled v
     for u in persistent:
         for v in newly:
-            if u in cls.dbm.variables:
+            if u in firing_dbm.variables:
                 t_v = tpn.transitions[v]
                 # x_u^new - x_v^new: x_v^new in [earliest(v), latest(v)] => -x_v^new in [-latest(v), -earliest(v)]
                 # DBM[u][v] = upper bound on x_u - x_v
                 # x_u <= DBM[u][0] (old, in new coords) => x_u^new - x_v^new <= DBM^new[u][0] - (-DBM[0][v])
                 # i.e., = DBM^new[u][0] + latest(v)
-                ub_u_new = cls.dbm.get(u, t_name)  # = DBM^new[u][0]
+                ub_u_new = firing_dbm.get(u, t_name)  # = DBM^new[u][0]
                 new_dbm.set(u, v, _add(ub_u_new, t_v.interval.latest))
                 # DBM[v][u] = upper bound on x_v - x_u
                 # x_v <= latest(v) and x_u >= DBM^new[0][u] (but negated)
                 # DBM[0][u] in new coords = DBM[t][u] in old
-                lb_u_new = cls.dbm.get(t_name, u)  # upper bound on x_t - x_u => -x_u <= lb_u_new => x_u >= -lb_u_new
+                lb_u_new = firing_dbm.get(t_name, u)  # upper bound on x_t - x_u => -x_u <= lb_u_new => x_u >= -lb_u_new
                 new_dbm.set(v, u, _add(t_v.interval.latest, lb_u_new))
 
     # Cross terms: newly enabled v1, newly enabled v2

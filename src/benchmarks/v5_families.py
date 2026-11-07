@@ -13,7 +13,7 @@ from fractions import Fraction
 from typing import Dict, Tuple
 
 from .rmt_fms_generator import generate_rmt_fms
-from ..model.tpn import Arc, Interval, TPN, Transition
+from ..model.tpn import Arc, Interval, Place, TPN, Transition
 
 
 FAMILY_SPECS: Dict[str, dict] = {
@@ -81,11 +81,43 @@ def _with_structural_features(
         for arc in [arc for arc in arcs if arc.from_node == name]:
             arcs.append(Arc(alt, arc.to_node))
 
-    # Positive-time rework cycles: after an operation finishes and releases its
-    # machine resource, a part may repeat that same operation before completion.
+    # Positive-time rework cycles. Route selection is immediate; reprocessing
+    # time begins only inside the selected rework branch. This prevents the
+    # rework action from competing with an urgent continuation transition.
     operations = [(j, k) for j in range(1, n_parts + 1) for k in range(1, ops_per_part + 1)]
     selected_reworks = rng.sample(operations, min(rework_locations, len(operations)))
     for j, k in selected_reworks:
+        end_place = f"p{j}_op{k}_end"
+        continue_place = f"p{j}_op{k}_continue_selected"
+        rework_place = f"p{j}_op{k}_rework_selected"
+        places[continue_place] = Place(continue_place)
+        places[rework_place] = Place(rework_place)
+
+        continuation_arcs = [arc for arc in arcs if arc.from_node == end_place]
+        if not continuation_arcs:
+            raise ValueError(
+                f"expected at least one continuation from {end_place}"
+            )
+        for continuation in continuation_arcs:
+            arcs.remove(continuation)
+            arcs.append(Arc(continue_place, continuation.to_node))
+
+        choose_continue = f"t_choose_continue_j{j}_op{k}"
+        transitions[choose_continue] = Transition(
+            name=choose_continue, label="", is_fault=False, is_adjustable=False,
+            interval=Interval(Fraction(0), Fraction(0)),
+        )
+        arcs.append(Arc(end_place, choose_continue))
+        arcs.append(Arc(choose_continue, continue_place))
+
+        choose_rework = f"t_choose_rework_j{j}_op{k}"
+        transitions[choose_rework] = Transition(
+            name=choose_rework, label="", is_fault=False, is_adjustable=False,
+            interval=Interval(Fraction(0), Fraction(0)),
+        )
+        arcs.append(Arc(end_place, choose_rework))
+        arcs.append(Arc(choose_rework, rework_place))
+
         name = f"t_rework_j{j}_op{k}"
         transitions[name] = Transition(
             name=name,
@@ -94,7 +126,7 @@ def _with_structural_features(
             is_adjustable=False,
             interval=Interval(Fraction(1), Fraction(2)),
         )
-        arcs.append(Arc(f"p{j}_op{k}_end", name))
+        arcs.append(Arc(rework_place, name))
         arcs.append(Arc(name, f"p{j}_op{k}_start"))
 
     return TPN(
