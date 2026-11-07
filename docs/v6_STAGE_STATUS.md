@@ -11,10 +11,11 @@ to GitHub Actions; the formal matrix runs only on Modal.
 | Differential v2 (Layer A/B/C) | **GO** | `docs/v6_differential_v2_acceptance_report.md`, `work/v6_differential_v2_acceptance/acceptance.json` |
 | Pilot performance audit | PASS | `work/v6_baseline_pilot_audit/`, `work/v6_optimized_pilot_audit/` |
 | Formal grid readiness | PASS | 8,280 tasks / 120×69 / 7,380 bounded problems, `work/v6_formal_protocol_validation/validation.json` |
-| Modal environment | in progress | pilot + reference comparison (Modal, background) |
-| Modal checkpoint recovery | in progress | crash/resume test (Modal, background) |
-| Modal budget policy | PASS pending spend check | cap $10, spent ≈ $0.02, guard at $9.50 |
-| Formal protocol frozen | **not yet** | waits for the three Modal gates |
+| Modal environment | **PASS** | 6/6 shards, 64/64 unique tasks, match 53 + timeout_match 11, 0 mismatch, 0 OOM; `work/v6_modal_pilot/` |
+| Modal checkpoint recovery | **PASS** | 120 s kill mid-shard, resume skipped 2 / executed 10, 12 unique records, no duplicates; `work/v6_modal_recovery/recovery_test.json` |
+| Modal budget policy | **PASS** | cap $10, spent $0.100005, projection $4.33 measured / $6.47 conservative, guard at $9.50 |
+| Formal protocol frozen | **PASS** | `protocol/scalability_v6_frozen_protocol.yaml/.json` (8,280 tasks, verifier commit 953ec0f, image im-O631HG8VDiyq7gCt22I3bq) |
+| Historical COMPLETE_SET | **FINAL** | GitHub Actions run 42366299274: 1,956/1,956 rows, 1,136 completed / 820 timeout; report final |
 
 ## What changed in this round
 
@@ -45,11 +46,11 @@ to GitHub Actions; the formal matrix runs only on Modal.
 
 ## Exact next steps (automatic)
 
-1. Modal pilot PASS + recovery PASS → `scripts/evaluate_v6_formal_gates.py` GO.
-2. Regenerate the shard manifest, freeze
-   `protocol/scalability_v6_frozen_protocol.yaml` (`scripts/build_v6_frozen_protocol.py`).
-3. Clean the smoke/pilot records from the formal volume prefix, launch
-   `scripts/run_v6_modal.py run --confirm-budget --max-parallel 20`.
+1. ~~Modal pilot PASS + recovery PASS → `scripts/evaluate_v6_formal_gates.py` GO.~~ **DONE — all 11 gates GO.**
+2. ~~Regenerate the shard manifest, freeze `protocol/scalability_v6_frozen_protocol.yaml`.~~ **DONE (frozen, json SHA-256 39285ebb…).**
+3. ~~Clean the smoke/pilot records from the formal volume prefix, launch
+   `scripts/run_v6_modal.py run --confirm-budget --max-parallel 20`.~~ **LAUNCHED:
+   run `run-5038d2a9-20261107T113535Z`, 20 containers active, 120 shards staged.**
 4. Download raw records, publish them as a GitHub release asset, dispatch the
    audit workflow, collect the audited statistics and Figure 6.
 5. Assemble `TII_Scalability_Benchmark_v6_Modal_FullScale_Results.zip` with
