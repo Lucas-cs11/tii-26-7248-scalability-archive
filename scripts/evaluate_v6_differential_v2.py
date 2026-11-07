@@ -139,16 +139,26 @@ def main() -> int:
     v1_censoring = v1.get("censoring_breakdown") or {}
     transition_pass = bool(transition.get("PASS"))
     transition_cells = int(transition.get("cells_checked") or 0)
+    transition_censored_cells = transition.get("censored_cells") or []
+    transition_censored = int(transition.get("cells_censored") or 0)
     transition_expected = int(
         ((protocol.get("layer_b") or {}).get("expected_cells"))
         or (v1_matched + v1_censored)
+    )
+    censored_reasons_ok = (
+        len(transition_censored_cells) == transition_censored
+        and all(
+            entry.get("reason") or entry.get("reason_detail")
+            for entry in transition_censored_cells
+        )
     )
 
     complete_cases_pass = (
         v1_mismatched == 0
         and v1_matched == 30
         and transition_pass
-        and transition_cells >= transition_expected
+        and (transition_cells + transition_censored) == transition_expected
+        and censored_reasons_ok
         and transition.get("mismatch_count", 0) == 0
         and transition.get("graph_reconstruction_pass") is True
         and agreement["completed_both"] == 126
