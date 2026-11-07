@@ -75,6 +75,38 @@ def peak_rss_mb() -> float:
     return round(value / divisor, 3)
 
 
+
+SCG_COUNTERS = ("scg_classes", "scg_edges", "runtime_scg")
+SYNC_COUNTERS = (
+    "sync_states", "sync_edges", "candidate_words",
+    "sync_transition_calls", "sync_successors_calls", "sync_words_explored",
+    "sync_closure_N_calls", "sync_closure_F_calls", "sync_closure_any_calls",
+    "runtime_sync", "runtime_unobservable_closure",
+)
+EXPANSION_COUNTERS = (
+    "temporal_states", "trace_records", "terminal_pairs",
+    "exp_nodes_created", "exp_edges", "exp_record_checks", "exp_worklist_pops",
+    "runtime_expansion", "runtime_certificate",
+)
+LP_COUNTERS = (
+    "lp_calls", "lp_builds", "lp_solves", "lp_feasible", "lp_infeasible",
+    "lp_unknown", "confirmed_critical_pairs",
+    "runtime_lp", "runtime_lp_build", "runtime_lp_solve",
+)
+STAGE_KEYS = (
+    "scg_classes", "scg_edges", "sync_states", "sync_edges", "candidate_words",
+    "temporal_states", "trace_records", "terminal_pairs", "lp_calls",
+    "confirmed_critical_pairs",
+    "sync_transition_calls", "sync_successors_calls", "sync_words_explored",
+    "sync_closure_N_calls", "sync_closure_F_calls", "sync_closure_any_calls",
+    "exp_nodes_created", "exp_edges", "exp_record_checks", "exp_worklist_pops",
+    "lp_builds", "lp_solves", "lp_feasible", "lp_infeasible", "lp_unknown",
+    "runtime_scg", "runtime_sync", "runtime_unobservable_closure",
+    "runtime_expansion", "runtime_certificate", "runtime_lp",
+    "runtime_lp_build", "runtime_lp_solve",
+)
+
+
 def normalized_counters(out):
     stats = out.get("stats", {})
     reason = out.get("inconclusive_reason")
@@ -83,21 +115,24 @@ def normalized_counters(out):
     }
     candidate_words = stats.get("candidate_words")
     expansion_ran = not scg_only and candidate_words not in (None, 0)
-    return {
-        "scg_classes": stats.get("scg_classes"),
-        "scg_edges": stats.get("scg_edges"),
-        "sync_states": None if scg_only else stats.get("sync_states"),
-        "candidate_words": None if scg_only else candidate_words,
-        "temporal_states": stats.get("temporal_states") if expansion_ran else None,
-        "trace_records": stats.get("trace_records") if expansion_ran else None,
-        "terminal_pairs": stats.get("terminal_pairs") if expansion_ran else None,
-        "lp_calls": stats.get("lp_calls") if expansion_ran else None,
-        "confirmed_critical_pairs": stats.get("confirmed_critical_pairs") if expansion_ran else None,
-        "runtime_scg": stats.get("runtime_scg"),
-        "runtime_sync": None if scg_only else stats.get("runtime_sync"),
-        "runtime_expansion": stats.get("runtime_expansion") if expansion_ran else None,
-        "runtime_lp": stats.get("runtime_lp") if expansion_ran else None,
-    }
+    counters = {key: stats.get(key) for key in STAGE_KEYS}
+    counters["confirmed_critical_pairs"] = (
+        len(out.get("certificates") or []) if expansion_ran else None
+    )
+    if scg_only:
+        for key in SYNC_COUNTERS + EXPANSION_COUNTERS + LP_COUNTERS:
+            if key in counters:
+                counters[key] = None
+        counters["scg_classes"] = stats.get("scg_classes")
+        counters["scg_edges"] = stats.get("scg_edges")
+        counters["runtime_scg"] = stats.get("runtime_scg")
+    elif not expansion_ran:
+        # Synchronizer ran but no candidate word survived: expansion/LP did not
+        # execute.  Their counters must be null, not zero.
+        for key in EXPANSION_COUNTERS + LP_COUNTERS:
+            if key in counters:
+                counters[key] = None
+    return counters
 
 
 def checkpoint_counters(stage, counters):
@@ -106,19 +141,42 @@ def checkpoint_counters(stage, counters):
         return None
     result = dict(counters)
     if stage == "SCG_COMPLETE":
-        for key in (
-            "sync_states", "candidate_words", "candidate_words_processed",
-            "temporal_states", "trace_records", "terminal_pairs", "lp_calls",
-            "runtime_sync", "runtime_expansion", "runtime_lp",
-        ):
-            result[key] = None
+        for key in SYNC_COUNTERS + EXPANSION_COUNTERS + LP_COUNTERS:
+            if key in result:
+                result[key] = None
     elif stage == "SYNCHRONIZER_COMPLETE":
-        for key in (
-            "candidate_words_processed", "temporal_states", "trace_records",
-            "terminal_pairs", "lp_calls", "runtime_expansion", "runtime_lp",
-        ):
-            result[key] = None
+        for key in EXPANSION_COUNTERS + LP_COUNTERS:
+            if key in result:
+                result[key] = None
     return result
+
+
+def apply_stage_fields(rec, counters):
+    """Mirror stage counters into the top-level record fields required by the protocol."""
+    if not counters:
+        return
+    rec["scg_classes"] = counters.get("scg_classes")
+    rec["scg_edges"] = counters.get("scg_edges")
+    rec["sync_states"] = counters.get("sync_states")
+    rec["sync_edges"] = counters.get("sync_edges")
+    rec["history_prefixes"] = counters.get("candidate_words")
+    rec["retained_histories"] = counters.get("trace_records")
+    rec["critical_pair_candidates"] = counters.get("terminal_pairs")
+    rec["lp_calls"] = counters.get("lp_calls")
+    rec["lp_infeasible"] = counters.get("lp_infeasible")
+    rec["lp_feasible"] = counters.get("lp_feasible")
+    rec["runtime_synchronizer_s"] = counters.get("runtime_sync")
+    rec["runtime_unobservable_closure_s"] = counters.get("runtime_unobservable_closure")
+    rec["runtime_history_expansion_s"] = counters.get("runtime_expansion")
+    rec["runtime_critical_pair_generation_s"] = counters.get("runtime_certificate")
+    rec["runtime_certificate_s"] = counters.get("runtime_certificate")
+    rec["runtime_lp_build_s"] = counters.get("runtime_lp_build")
+    rec["runtime_lp_solve_s"] = counters.get("runtime_lp_solve")
+    rec["runtime_synchronizer_s"] = counters.get("runtime_sync")
+
+
+def checkpoint_counters_placeholder():
+    return None
 
 
 def main() -> int:
@@ -145,14 +203,28 @@ def main() -> int:
            "peak_rss_mb": None,
            "scg_cache_status": None, "scg_cache_key": None,
            "scg_cache_provenance": None,
-           "runtime_scg_build_s": None, "runtime_scg_load_s": None}
+           "runtime_scg_build_s": None, "runtime_scg_load_s": None,
+           "scg_classes": None, "scg_edges": None, "sync_states": None,
+           "sync_edges": None, "history_prefixes": None,
+           "retained_histories": None, "critical_pair_candidates": None,
+           "lp_calls": None, "lp_infeasible": None, "lp_feasible": None,
+           "runtime_synchronizer_s": None,
+           "runtime_unobservable_closure_s": None,
+           "runtime_history_expansion_s": None,
+           "runtime_critical_pair_generation_s": None,
+           "runtime_certificate_s": None,
+           "runtime_lp_build_s": None, "runtime_lp_solve_s": None,
+           "runtime_total_s": None, "peak_rss_mib": None,
+           "cache_hits": None, "cache_misses": None, "timeout_reason": None}
     checkpoint_path = os.environ.get("CHECKPOINT_PATH")
 
     def checkpoint(stage, counters=None):
         rec["failure_stage"] = stage
         if counters is not None:
             rec["counters"] = checkpoint_counters(stage, counters)
+            apply_stage_fields(rec, rec["counters"])
         rec["peak_rss_mb"] = peak_rss_mb()
+        rec["peak_rss_mib"] = rec["peak_rss_mb"]
         if not checkpoint_path:
             return
         path = Path(checkpoint_path)
@@ -234,12 +306,20 @@ def main() -> int:
                 )
                 rec["scg_cache_provenance"] = cache_provenance
             checkpoint("MODEL_VALIDATED")
+        # Stage-level instrumentation is on by default; it only accumulates
+        # counters/timings and never changes the search order or results.
+        profile_enabled = (
+            os.environ.get("V6_PROFILE", "1").strip().lower()
+            not in {"0", "false", "no"}
+        )
+        profile = {} if profile_enabled else None
         t0 = time.perf_counter()
         out = verify(tpn, spec.get("L", L), spec.get("H", H),
                      complete_set=(rec["mode"] == "complete"),
                      progress_hook=checkpoint,
                      prebuilt_scg=prebuilt_scg,
-                     scg_build_seconds=scg_build_seconds)
+                     scg_build_seconds=scg_build_seconds,
+                     profile=profile)
         rec["runtime_s"] = time.perf_counter() - t0
         rec["verdict"] = out.get("result")
         if rec["verdict"] not in {"VER", "AMB", "INC"}:
@@ -263,6 +343,13 @@ def main() -> int:
         rec["critical_pair_count"] = len(out.get("certificates", []) or [])
         st = out.get("stats", {})
         rec["counters"] = normalized_counters(out)
+        apply_stage_fields(rec, rec["counters"])
+        rec["runtime_total_s"] = st.get("runtime_total")
+        rec["runtime_scg_build_s"] = rec.get("runtime_scg_build_s")
+        if rec.get("scg_cache_status") == "hit":
+            rec["cache_hits"] = 1
+        elif rec.get("scg_cache_status") == "miss":
+            rec["cache_misses"] = 1
     except Exception as exc:  # noqa: BLE001
         rec["error"] = f"{type(exc).__name__}: {exc}"
         rec["termination_status"] = "ERROR"

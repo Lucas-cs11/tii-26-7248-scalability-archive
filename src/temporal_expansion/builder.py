@@ -43,6 +43,7 @@ from fractions import Fraction
 from typing import Dict, FrozenSet, List, Optional, Set, Tuple, Union
 
 from ..model.tpn import INF, TPN
+from ..profiling import Profile, bump
 
 
 # A residual interval for one transition: (earliest_res, latest_res)
@@ -121,8 +122,9 @@ class TraceRecord:
 class TemporalExpansion:
     """The constructed temporal expansion graph for one candidate word phi."""
 
-    def __init__(self, phi: Tuple[str, ...]):
+    def __init__(self, phi: Tuple[str, ...], profile: Profile | None = None):
         self.phi = phi
+        self.profile = profile
         self.nodes: List[ExpansionNode] = []
         self.node_data: Dict[int, Tuple[Dict[str, int], BoxDict]] = {}  # id -> (marking, box)
         self.edges: List[Tuple[int, str, int]] = []
@@ -139,8 +141,11 @@ class TemporalExpansion:
         box: BoxDict,
     ) -> Tuple[int, bool]:
         """Return (node_id, is_new)."""
+        bump(self.profile, "exp_node_lookups")
         if node in self._node_index:
+            bump(self.profile, "exp_node_reuses")
             return self._node_index[node], False
+        bump(self.profile, "exp_nodes_created")
         nid = self._next_id
         self._next_id += 1
         self.nodes.append(node)
@@ -151,8 +156,11 @@ class TemporalExpansion:
 
     def add_record(self, node_id: int, record: TraceRecord) -> bool:
         """Add record if sigma not already present. Returns True if added."""
+        bump(self.profile, "exp_record_adds")
         for r in self.records[node_id]:
+            bump(self.profile, "exp_record_checks")
             if r.sigma == record.sigma:
+                bump(self.profile, "exp_record_dedup_hits")
                 return False
         self.records[node_id].append(record)
         return True
@@ -163,6 +171,7 @@ def build_expansion(
     phi: Tuple[str, ...],
     H: float,
     budget: Optional[int] = None,
+    profile: Profile | None = None,
 ) -> Union[TemporalExpansion, str]:
     """Algorithm S3.2: observation-conditioned temporal expansion.
 
@@ -173,7 +182,7 @@ def build_expansion(
     m = len(phi)
     H_frac = Fraction(H) if not math.isinf(H) else INF
 
-    exp = TemporalExpansion(phi)
+    exp = TemporalExpansion(phi, profile)
 
     # Initial node
     marking0 = dict(tpn.initial_marking)
@@ -204,6 +213,7 @@ def build_expansion(
             return "INC"
 
         curr_id, sigma, J_hat = queue.popleft()
+        bump(profile, "exp_worklist_pops")
         curr_node = exp.nodes[curr_id]
         marking, box = exp.node_data[curr_id]
 
@@ -314,6 +324,7 @@ def build_expansion(
 
             succ_id, is_new = exp.get_or_create_node(succ_node, new_marking, new_box)
             exp.edges.append((curr_id, t_name, succ_id))
+            bump(profile, "exp_edges")
 
             # Add trace record if not already present
             record = TraceRecord(sigma=sigma_prime, J_hat=j_hat_prime)

@@ -18,14 +18,17 @@ All Fraction endpoints are converted to float for LP.
 from __future__ import annotations
 
 import math
+import time
 from dataclasses import dataclass
 from enum import Enum
 from fractions import Fraction
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+from scipy.optimize import linprog
 
 from ..model.tpn import INF, TPN
+from ..profiling import Profile, bump, timed
 
 
 class LPStatus(str, Enum):
@@ -233,45 +236,48 @@ def _solve_lp(
     minimize: bool,
     feasibility_tolerance: float = DEFAULT_FEASIBILITY_TOLERANCE,
     optimality_tolerance: float = DEFAULT_OPTIMALITY_TOLERANCE,
+    profile: Profile | None = None,
 ) -> LPResult:
     """Solve path polytope LP. Returns LPResult with status and optimal value (or None)."""
-    from scipy.optimize import linprog
 
     if not sigma:
         # Empty sequence: duration is 0
         return LPResult(status=LPStatus.OPTIMAL, value=0.0)
 
-    var_names, var_idx, markings, E_p_list, E_n_list = _build_lp_variables(
-        tpn, sigma
-    )
+    with timed(profile, "runtime_lp_build"):
+        var_names, var_idx, markings, E_p_list, E_n_list = _build_lp_variables(
+            tpn, sigma
+        )
+        A_ub, b_ub, A_eq, b_eq, bounds = _build_constraints(
+            tpn, sigma, H, var_names, var_idx, markings, E_p_list, E_n_list
+        )
+    bump(profile, "lp_builds")
     n = len(sigma)
     n_vars = len(var_names)
-
-    A_ub, b_ub, A_eq, b_eq, bounds = _build_constraints(
-        tpn, sigma, H, var_names, var_idx, markings, E_p_list, E_n_list
-    )
 
     # Objective: minimize or maximize sum(d_i)
     c = np.zeros(n_vars)
     for i in range(n):
         c[var_idx[f"d_{i}"]] = 1.0 if minimize else -1.0
 
-    result = linprog(
-        c,
-        A_ub=A_ub if A_ub.shape[0] > 0 else None,
-        b_ub=b_ub if b_ub.shape[0] > 0 else None,
-        A_eq=A_eq if A_eq.shape[0] > 0 else None,
-        b_eq=b_eq if b_eq.shape[0] > 0 else None,
-        bounds=bounds,
-        method="highs",
-        options={
-            "presolve": True,
-            "disp": False,
-            "dual_feasibility_tolerance": feasibility_tolerance,
-            "primal_feasibility_tolerance": feasibility_tolerance,
-            "ipm_optimality_tolerance": optimality_tolerance,
-        },
-    )
+    with timed(profile, "runtime_lp_solve"):
+        result = linprog(
+            c,
+            A_ub=A_ub if A_ub.shape[0] > 0 else None,
+            b_ub=b_ub if b_ub.shape[0] > 0 else None,
+            A_eq=A_eq if A_eq.shape[0] > 0 else None,
+            b_eq=b_eq if b_eq.shape[0] > 0 else None,
+            bounds=bounds,
+            method="highs",
+            options={
+                "presolve": True,
+                "disp": False,
+                "dual_feasibility_tolerance": feasibility_tolerance,
+                "primal_feasibility_tolerance": feasibility_tolerance,
+                "ipm_optimality_tolerance": optimality_tolerance,
+            },
+        )
+    bump(profile, "lp_solves")
 
     lp_status = _scipy_status_to_lp_status(result.status)
     if lp_status == LPStatus.OPTIMAL:
@@ -286,6 +292,7 @@ def compute_completion_time_interval(
     H: float,
     feasibility_tolerance: float = DEFAULT_FEASIBILITY_TOLERANCE,
     optimality_tolerance: float = DEFAULT_OPTIMALITY_TOLERANCE,
+    profile: Profile | None = None,
 ) -> Optional[Tuple[Fraction, object]]:
     """Compute [t_min, t_max] for firing sequence sigma.
 
@@ -299,6 +306,7 @@ def compute_completion_time_interval(
         minimize=True,
         feasibility_tolerance=feasibility_tolerance,
         optimality_tolerance=optimality_tolerance,
+        profile=profile,
     )
     if min_result.status != LPStatus.OPTIMAL:
         return None
@@ -310,6 +318,7 @@ def compute_completion_time_interval(
         minimize=False,
         feasibility_tolerance=feasibility_tolerance,
         optimality_tolerance=optimality_tolerance,
+        profile=profile,
     )
     if max_result.status == LPStatus.OPTIMAL:
         t_max_f = max_result.value
@@ -331,6 +340,7 @@ def confirm_ambiguity(
     H: float,
     feasibility_tolerance: float = DEFAULT_FEASIBILITY_TOLERANCE,
     optimality_tolerance: float = DEFAULT_OPTIMALITY_TOLERANCE,
+    profile: Profile | None = None,
 ) -> Optional[Dict]:
     """Solve coupled polytope to confirm ambiguity.
 
@@ -339,10 +349,10 @@ def confirm_ambiguity(
 
     Returns {'overlap': (t_min, t_max)} if feasible, None if infeasible.
     """
-    from scipy.optimize import linprog
 
     n_N = len(sigma_N)
     n_F = len(sigma_F)
+    _build_started = time.perf_counter() if profile is not None else 0.0
 
     # Build variables for each path independently, with prefixes
     var_names_N, var_idx_N, markings_N, E_p_N, E_n_N = _build_lp_variables(
@@ -424,6 +434,12 @@ def confirm_ambiguity(
         if vname in all_var_idx:
             c_min[all_var_idx[vname]] = 1.0
 
+    if profile is not None:
+        profile["runtime_lp_build"] = profile.get("runtime_lp_build", 0.0) + (
+            time.perf_counter() - _build_started
+        )
+        bump(profile, "lp_builds")
+    _solve_started = time.perf_counter() if profile is not None else 0.0
     result_min = linprog(
         c_min,
         A_ub=A_ub_combined if A_ub_combined.shape[0] > 0 else None,
@@ -441,6 +457,11 @@ def confirm_ambiguity(
         },
     )
 
+    if profile is not None:
+        profile["runtime_lp_solve"] = profile.get("runtime_lp_solve", 0.0) + (
+            time.perf_counter() - _solve_started
+        )
+        bump(profile, "lp_solves")
     min_status = _scipy_status_to_lp_status(result_min.status)
 
     if min_status == LPStatus.INFEASIBLE:
@@ -453,6 +474,7 @@ def confirm_ambiguity(
 
     # Maximize total duration
     c_max = -c_min
+    _solve_started = time.perf_counter() if profile is not None else 0.0
     result_max = linprog(
         c_max,
         A_ub=A_ub_combined if A_ub_combined.shape[0] > 0 else None,
@@ -470,6 +492,11 @@ def confirm_ambiguity(
         },
     )
 
+    if profile is not None:
+        profile["runtime_lp_solve"] = profile.get("runtime_lp_solve", 0.0) + (
+            time.perf_counter() - _solve_started
+        )
+        bump(profile, "lp_solves")
     max_status = _scipy_status_to_lp_status(result_max.status)
     if max_status == LPStatus.OPTIMAL:
         t_max_f = sum(result_max.x[all_var_idx[f"N_d_{i}"]] for i in range(n_N) if f"N_d_{i}" in all_var_idx)

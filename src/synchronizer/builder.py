@@ -17,14 +17,21 @@ Synchronizer transition (Definition S2.2):
   delta((X_N, X_F), e):
     X_N' = reach_N(X_N, e)
     X_F' = reach_star(X_F, e) union reach_F(X_N, e)
+
+The construction is deterministic: the successor of a synchronizer state
+depends only on that state and the observable label.  ``profile`` is an
+optional instrumentation dict; when it is ``None`` every hook is a no-op and
+the produced automaton is bit-for-bit identical.
 """
 from __future__ import annotations
 
+import time
 from collections import deque
 from dataclasses import dataclass
 from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
 from ..model.tpn import TPN
+from ..profiling import Profile, bump
 from ..scg.builder import SCG, StateClass
 
 
@@ -43,45 +50,63 @@ class SyncState:
         return (self.X_N, self.X_F)
 
 
+def _successors(scg: SCG, class_id: int, profile: Optional[Profile]):
+    """Counted SCG successor lookup (identical result to ``scg.successors``)."""
+    bump(profile, "sync_successors_calls")
+    return scg.successors(class_id)
+
+
 def _unobservable_closure_N(
-    scg: SCG, tpn: TPN, source_ids: FrozenSet[int]
+    scg: SCG, tpn: TPN, source_ids: FrozenSet[int], profile: Optional[Profile] = None
 ) -> FrozenSet[int]:
     """Reach all classes from source_ids via zero or more unobservable,
     non-fault transitions. (Normal reachability with epsilon label.)"""
+    bump(profile, "sync_closure_N_calls")
+    _started = time.perf_counter() if profile is not None else 0.0
     visited: Set[int] = set(source_ids)
     queue = deque(source_ids)
     while queue:
         curr = queue.popleft()
-        for (t_name, succ_id) in scg.successors(curr):
+        for (t_name, succ_id) in _successors(scg, curr, profile):
             t = tpn.transitions[t_name]
             # Unobservable and not fault
             if not t.is_observable and not t.is_fault:
                 if succ_id not in visited:
                     visited.add(succ_id)
                     queue.append(succ_id)
+    if profile is not None:
+        profile["runtime_unobservable_closure"] = profile.get(
+            "runtime_unobservable_closure", 0.0
+        ) + (time.perf_counter() - _started)
     return frozenset(visited)
 
 
 def _unobservable_closure_any(
-    scg: SCG, tpn: TPN, source_ids: FrozenSet[int]
+    scg: SCG, tpn: TPN, source_ids: FrozenSet[int], profile: Optional[Profile] = None
 ) -> FrozenSet[int]:
     """Reach all classes from source_ids via zero or more unobservable
     transitions (may include fault transitions). (Any fault class.)"""
+    bump(profile, "sync_closure_any_calls")
+    _started = time.perf_counter() if profile is not None else 0.0
     visited: Set[int] = set(source_ids)
     queue = deque(source_ids)
     while queue:
         curr = queue.popleft()
-        for (t_name, succ_id) in scg.successors(curr):
+        for (t_name, succ_id) in _successors(scg, curr, profile):
             t = tpn.transitions[t_name]
             if not t.is_observable:
                 if succ_id not in visited:
                     visited.add(succ_id)
                     queue.append(succ_id)
+    if profile is not None:
+        profile["runtime_unobservable_closure"] = profile.get(
+            "runtime_unobservable_closure", 0.0
+        ) + (time.perf_counter() - _started)
     return frozenset(visited)
 
 
 def _unobservable_closure_F(
-    scg: SCG, tpn: TPN, source_ids: FrozenSet[int]
+    scg: SCG, tpn: TPN, source_ids: FrozenSet[int], profile: Optional[Profile] = None
 ) -> FrozenSet[int]:
     """Reach classes from source_ids via paths using only unobservable
     transitions where at least one fault transition occurs.
@@ -89,6 +114,8 @@ def _unobservable_closure_F(
     Returns the set of classes reachable via such fault-containing
     unobservable paths from source_ids.
     """
+    bump(profile, "sync_closure_F_calls")
+    _started = time.perf_counter() if profile is not None else 0.0
     # BFS tracking whether a fault has been seen
     # State: (class_id, has_fault)
     # We want all class_ids where has_fault=True is reachable
@@ -101,7 +128,7 @@ def _unobservable_closure_F(
         curr_id, has_fault = queue.popleft()
         if has_fault:
             fault_reached.add(curr_id)
-        for (t_name, succ_id) in scg.successors(curr_id):
+        for (t_name, succ_id) in _successors(scg, curr_id, profile):
             t = tpn.transitions[t_name]
             if not t.is_observable:
                 new_fault = has_fault or t.is_fault
@@ -109,10 +136,20 @@ def _unobservable_closure_F(
                 if state not in visited:
                     visited.add(state)
                     queue.append(state)
+    if profile is not None:
+        profile["runtime_unobservable_closure"] = profile.get(
+            "runtime_unobservable_closure", 0.0
+        ) + (time.perf_counter() - _started)
     return frozenset(fault_reached)
 
 
-def reach_N(scg: SCG, tpn: TPN, source_ids: FrozenSet[int], alpha: str) -> FrozenSet[int]:
+def reach_N(
+    scg: SCG,
+    tpn: TPN,
+    source_ids: FrozenSet[int],
+    alpha: str,
+    profile: Optional[Profile] = None,
+) -> FrozenSet[int]:
     """Classes reachable from source_ids via paths with observable projection
     alpha and fault_class=N (no fault transitions used).
 
@@ -120,8 +157,9 @@ def reach_N(scg: SCG, tpn: TPN, source_ids: FrozenSet[int], alpha: str) -> Froze
     alpha = e (single label): paths with exactly one observable transition
       labeled e (non-fault), with non-fault unobservable transitions before/after.
     """
+    bump(profile, "sync_reach_N_calls")
     if alpha == "":
-        return _unobservable_closure_N(scg, tpn, source_ids)
+        return _unobservable_closure_N(scg, tpn, source_ids, profile)
 
     # alpha is a single observable label e
     # Step 1: expand via non-fault unobservable transitions
@@ -130,12 +168,12 @@ def reach_N(scg: SCG, tpn: TPN, source_ids: FrozenSet[int], alpha: str) -> Froze
     result: Set[int] = set()
 
     # Pre-closure: reach via non-fault unobservable transitions
-    pre_closed = _unobservable_closure_N(scg, tpn, source_ids)
+    pre_closed = _unobservable_closure_N(scg, tpn, source_ids, profile)
 
     # Take one observable transition labeled alpha (non-fault)
     mid: Set[int] = set()
     for curr_id in pre_closed:
-        for (t_name, succ_id) in scg.successors(curr_id):
+        for (t_name, succ_id) in _successors(scg, curr_id, profile):
             t = tpn.transitions[t_name]
             if t.is_observable and t.label == alpha and not t.is_fault:
                 mid.add(succ_id)
@@ -144,11 +182,17 @@ def reach_N(scg: SCG, tpn: TPN, source_ids: FrozenSet[int], alpha: str) -> Froze
         return frozenset()
 
     # Post-closure: reach via non-fault unobservable transitions
-    post_closed = _unobservable_closure_N(scg, tpn, frozenset(mid))
+    post_closed = _unobservable_closure_N(scg, tpn, frozenset(mid), profile)
     return post_closed
 
 
-def reach_F(scg: SCG, tpn: TPN, source_ids: FrozenSet[int], alpha: str) -> FrozenSet[int]:
+def reach_F(
+    scg: SCG,
+    tpn: TPN,
+    source_ids: FrozenSet[int],
+    alpha: str,
+    profile: Optional[Profile] = None,
+) -> FrozenSet[int]:
     """Classes reachable from source_ids via paths with observable projection
     alpha and fault_class=F (at least one fault transition used).
 
@@ -158,8 +202,9 @@ def reach_F(scg: SCG, tpn: TPN, source_ids: FrozenSet[int], alpha: str) -> Froze
       labeled e, with unobservable transitions (some possibly fault) before/after,
       and at least one fault transition overall.
     """
+    bump(profile, "sync_reach_F_calls")
     if alpha == "":
-        return _unobservable_closure_F(scg, tpn, source_ids)
+        return _unobservable_closure_F(scg, tpn, source_ids, profile)
 
     # alpha is a single observable label e
     # We need paths where:
@@ -186,7 +231,7 @@ def reach_F(scg: SCG, tpn: TPN, source_ids: FrozenSet[int], alpha: str) -> Froze
         if phase == 1 and has_fault:
             result.add(curr_id)
 
-        for (t_name, succ_id) in scg.successors(curr_id):
+        for (t_name, succ_id) in _successors(scg, curr_id, profile):
             t = tpn.transitions[t_name]
 
             if phase == 0:
@@ -217,20 +262,35 @@ def reach_F(scg: SCG, tpn: TPN, source_ids: FrozenSet[int], alpha: str) -> Froze
     return frozenset(result)
 
 
-def reach_star(scg: SCG, tpn: TPN, source_ids: FrozenSet[int], alpha: str) -> FrozenSet[int]:
+def reach_star(
+    scg: SCG,
+    tpn: TPN,
+    source_ids: FrozenSet[int],
+    alpha: str,
+    profile: Optional[Profile] = None,
+) -> FrozenSet[int]:
     """reach_N union reach_F."""
-    return reach_N(scg, tpn, source_ids, alpha) | reach_F(scg, tpn, source_ids, alpha)
+    return reach_N(scg, tpn, source_ids, alpha, profile) | reach_F(
+        scg, tpn, source_ids, alpha, profile
+    )
 
 
 def synchronizer_transition(
-    scg: SCG, tpn: TPN, state: SyncState, e: str
+    scg: SCG,
+    tpn: TPN,
+    state: SyncState,
+    e: str,
+    profile: Optional[Profile] = None,
 ) -> SyncState:
     """delta((X_N, X_F), e):
     X_N' = reach_N(X_N, e)
     X_F' = reach_star(X_F, e) union reach_F(X_N, e)
     """
-    x_n_prime = reach_N(scg, tpn, state.X_N, e)
-    x_f_prime = reach_star(scg, tpn, state.X_F, e) | reach_F(scg, tpn, state.X_N, e)
+    bump(profile, "sync_transition_calls")
+    x_n_prime = reach_N(scg, tpn, state.X_N, e, profile)
+    x_f_prime = reach_star(scg, tpn, state.X_F, e, profile) | reach_F(
+        scg, tpn, state.X_N, e, profile
+    )
     return SyncState(X_N=x_n_prime, X_F=x_f_prime)
 
 
@@ -250,7 +310,12 @@ class ObservationSynchronizer:
     candidate_words: List[Tuple[str, ...]]
 
 
-def build_synchronizer(tpn: TPN, scg_truncated: SCG, L: int) -> ObservationSynchronizer:
+def build_synchronizer(
+    tpn: TPN,
+    scg_truncated: SCG,
+    L: int,
+    profile: Optional[Profile] = None,
+) -> ObservationSynchronizer:
     """Algorithm S2.1: BFS over label-prefix tree up to depth L.
 
     A word phi is candidate if X_N(phi) intersect C_fin != empty
@@ -262,10 +327,10 @@ def build_synchronizer(tpn: TPN, scg_truncated: SCG, L: int) -> ObservationSynch
 
     # Initial synchronizer state
     initial_x_n = reach_N(
-        scg_truncated, tpn, frozenset({scg_truncated.initial_id}), ""
+        scg_truncated, tpn, frozenset({scg_truncated.initial_id}), "", profile
     )
     initial_x_f = reach_F(
-        scg_truncated, tpn, frozenset({scg_truncated.initial_id}), ""
+        scg_truncated, tpn, frozenset({scg_truncated.initial_id}), "", profile
     )
     initial_state = SyncState(X_N=initial_x_n, X_F=initial_x_f)
     initial_key = initial_state.key()
@@ -282,6 +347,7 @@ def build_synchronizer(tpn: TPN, scg_truncated: SCG, L: int) -> ObservationSynch
 
     while queue:
         word, curr_key = queue.popleft()
+        bump(profile, "sync_words_explored")
         curr_state = states[curr_key]
 
         # Check if candidate
@@ -290,13 +356,14 @@ def build_synchronizer(tpn: TPN, scg_truncated: SCG, L: int) -> ObservationSynch
             and curr_state.X_F & c_fin
         ):
             candidate_words.append(word)
+            bump(profile, "sync_candidate_words")
 
         # Prune if X_N is empty or at depth limit
         if not curr_state.X_N or len(word) >= L:
             continue
 
         for e in sorted(sigma):  # sorted for determinism
-            next_state = synchronizer_transition(scg_truncated, tpn, curr_state, e)
+            next_state = synchronizer_transition(scg_truncated, tpn, curr_state, e, profile)
             next_key = next_state.key()
 
             # Only enqueue if X_N' is nonempty (pruning condition)
@@ -311,6 +378,9 @@ def build_synchronizer(tpn: TPN, scg_truncated: SCG, L: int) -> ObservationSynch
             next_word = word + (e,)
             queue.append((next_word, next_key))
 
+    bump(profile, "sync_states_final", len(states))
+    bump(profile, "sync_edges_final", len(edges))
+    bump(profile, "sync_words_final", len(candidate_words))
     return ObservationSynchronizer(
         states=states,
         edges=edges,

@@ -21,6 +21,7 @@ from .scg.builder import build_scg, SCG
 from .synchronizer.builder import build_synchronizer
 from .temporal_expansion.builder import build_expansion, TemporalExpansion
 from .exact_confirmation.lp_solver import confirm_ambiguity
+from .profiling import Profile
 from .repair.algorithm import Certificate
 
 
@@ -33,6 +34,7 @@ def verify(
     progress_hook: Optional[Callable[[str, Dict], None]] = None,
     prebuilt_scg=None,
     scg_build_seconds: Optional[float] = None,
+    profile: Optional[Profile] = None,
 ) -> Dict:
     """Full verification pipeline.
 
@@ -88,12 +90,21 @@ def verify(
         "enclosure_rejected_pairs": 0,
         "terminal_normal_records": 0,
         "terminal_faulty_records": 0,
+        "lp_feasible": 0,
+        "lp_infeasible": 0,
+        "lp_unknown": 0,
+        "runtime_certificate": 0.0,
         "runtime_scg": 0.0,
         "runtime_sync": 0.0,
         "runtime_expansion": 0.0,
         "runtime_lp": 0.0,
         "runtime_total": 0.0,
     }
+
+    # When profiling is requested the counters are accumulated directly in
+    # ``stats`` so that every checkpoint (including the one written just before
+    # a wall-clock kill) carries the complete stage evidence.
+    prof = stats if profile is not None else None
 
     certificates: List[Certificate] = []
     any_inconclusive = False
@@ -164,9 +175,10 @@ def verify(
 
     # Step 3: Build synchronizer -> candidate words
     t0 = time.perf_counter()
-    sync = build_synchronizer(tpn, scg_truncated, L)
+    sync = build_synchronizer(tpn, scg_truncated, L, prof)
     stats["runtime_sync"] = time.perf_counter() - t0
     stats["sync_states"] = len(sync.states)
+    stats["sync_edges"] = len(sync.edges)
     stats["candidate_words"] = len(sync.candidate_words)
     progress("SYNCHRONIZER_COMPLETE")
 
@@ -186,6 +198,7 @@ def verify(
     # Step 4 & 5: For each candidate word, build temporal expansion and check pairs
     t_exp_total = 0.0
     t_lp_total = 0.0
+    t_cert_total = 0.0
     total_temporal_states = 0
     total_trace_records = 0
     total_terminal_pairs = 0
@@ -194,7 +207,7 @@ def verify(
 
     for phi in sync.candidate_words:
         t0 = time.perf_counter()
-        expansion = build_expansion(tpn, phi, H, budget=budget)
+        expansion = build_expansion(tpn, phi, H, budget=budget, profile=prof)
         t_exp_total += time.perf_counter() - t0
         words_processed += 1
 
@@ -218,6 +231,8 @@ def verify(
             continue
 
         # Step 5: Check overlapping enclosures, then LP confirmation
+        t_word_pairs = time.perf_counter()
+        t_word_lp = 0.0
         found_cert_this_word = False
         for (nid_n, rec_n) in terminal_normal:
             J_n = rec_n.J_hat
@@ -238,10 +253,20 @@ def verify(
                 total_terminal_pairs += 1
 
                 # Exact LP confirmation
-                t0 = time.perf_counter()
-                result = confirm_ambiguity(tpn, rec_n.sigma, rec_f.sigma, H)
-                t_lp_total += time.perf_counter() - t0
+                t_lp_start = time.perf_counter()
+                result = confirm_ambiguity(
+                    tpn, rec_n.sigma, rec_f.sigma, H, profile=prof
+                )
+                elapsed_lp = time.perf_counter() - t_lp_start
+                t_lp_total += elapsed_lp
+                t_word_lp += elapsed_lp
                 total_lp_calls += 1
+                if result is None:
+                    stats["lp_infeasible"] += 1
+                elif result.get("status") == "SOLVER_UNKNOWN":
+                    stats["lp_unknown"] += 1
+                else:
+                    stats["lp_feasible"] += 1
 
                 if result is None:
                     # LP proved infeasible: no ambiguity for this pair
@@ -263,6 +288,7 @@ def verify(
 
                     if not complete_set:
                         # FIRST_CERTIFICATE mode: return immediately
+                        t_cert_total += (time.perf_counter() - t_word_pairs) - t_word_lp
                         stats["candidate_words_processed"] = words_processed
                         stats["terminal_pairs"] = total_terminal_pairs
                         stats["lp_calls"] = total_lp_calls
@@ -270,6 +296,7 @@ def verify(
                         stats["trace_records"] = total_trace_records
                         stats["runtime_expansion"] = t_exp_total
                         stats["runtime_lp"] = t_lp_total
+                        stats["runtime_certificate"] = t_cert_total
                         stats["runtime_total"] = time.perf_counter() - t_start
                         progress("FIRST_CERTIFICATE_COMPLETE")
                         return {
@@ -283,6 +310,7 @@ def verify(
 
             if found_cert_this_word and not complete_set:
                 break  # inner loop already returned above; this is belt-and-suspenders
+        t_cert_total += (time.perf_counter() - t_word_pairs) - t_word_lp
         stats["candidate_words_processed"] = words_processed
         stats["temporal_states"] = total_temporal_states
         stats["trace_records"] = total_trace_records
@@ -303,6 +331,7 @@ def verify(
     stats["trace_records"] = total_trace_records
     stats["runtime_expansion"] = t_exp_total
     stats["runtime_lp"] = t_lp_total
+    stats["runtime_certificate"] = t_cert_total
     stats["runtime_total"] = time.perf_counter() - t_start
     progress("VERIFICATION_COMPLETE")
 
