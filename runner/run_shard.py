@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Execute every task of one shard with a per-cell subprocess timeout."""
 from __future__ import annotations
-import csv, hashlib, json, os, subprocess, sys, time
+import csv, hashlib, json, os, signal, subprocess, sys, time
 from pathlib import Path
 
 from shard_state import partition_existing_records
@@ -41,11 +41,46 @@ if superseded:
     ))
     tmp_attempt.replace(attempt_out)
 fields = ["task_id", "experiment", "model", "seed", "replicate", "L", "H", "mode", "timeout_s"]
+
+
+def process_rss_mb(pid):
+    status = Path(f"/proc/{pid}/status")
+    if not status.is_file():
+        return None
+    for line in status.read_text().splitlines():
+        if line.startswith("VmRSS:"):
+            return round(int(line.split()[1]) / 1024, 3)
+    return None
+
+
+def run_monitored(command, env, timeout):
+    process = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+        env=env, start_new_session=True,
+    )
+    deadline = time.monotonic() + timeout
+    peak = 0.0
+    while process.poll() is None:
+        sample = process_rss_mb(process.pid)
+        if sample is not None:
+            peak = max(peak, sample)
+        if time.monotonic() >= deadline:
+            os.killpg(process.pid, signal.SIGKILL)
+            stdout, stderr = process.communicate()
+            error = subprocess.TimeoutExpired(command, timeout, output=stdout, stderr=stderr)
+            error.peak_rss_mb = peak or None
+            raise error
+        time.sleep(0.1)
+    stdout, stderr = process.communicate()
+    return process.returncode, stdout, stderr, peak or None
+
+
 for i, t in enumerate(tasks, 1):
         if t["task_id"] in done:
             continue
         model_value = t.get("model") or t.get("model_id")
-        spec = {"tag": t["task_id"], "experiment_id": t.get("experiment_id", t["experiment"]),
+        spec = {"tag": t["task_id"], "protocol_version": t.get("protocol_version"),
+                "experiment_id": t.get("experiment_id", t["experiment"]),
                 "benchmark_family": t.get("benchmark_family"),
                 "model_id": t.get("model_id") or model_value,
                 "bounded_problem_id": t.get("bounded_problem_id"),
@@ -53,7 +88,9 @@ for i, t in enumerate(tasks, 1):
                 "experiment": t["experiment"], "model": model_value,
                 "seed": int(t["seed"]), "replicate": int(t["replicate"]),
                 "L": int(t["L"]), "H": float(t["H"]), "mode": t["mode"],
-                "timeout_s": int(t["timeout_s"]), "params": json.loads(t["params"])}
+                "timeout_s": int(t["timeout_s"]), "params": json.loads(t["params"]),
+                "expected_model_hash": t.get("expected_model_hash"),
+                "expected_structure_hash": t.get("expected_structure_hash")}
         t0 = time.time()
         checkpoint_path = checkpoint_dir / f"{t['task_id']}.json"
         # Checkpoints are evidence from one attempt, not resumable verifier
@@ -62,14 +99,19 @@ for i, t in enumerate(tasks, 1):
             checkpoint_path.unlink()
         try:
             env = dict(os.environ, CHECKPOINT_PATH=str(checkpoint_path))
-            p = subprocess.run([sys.executable, str(HERE / "run_cell.py"), json.dumps(spec)],
-                               capture_output=True, text=True, timeout=int(t["timeout_s"]), env=env)
-            if p.returncode != 0 or not p.stdout.strip():
+            returncode, stdout, stderr, sampled_peak = run_monitored(
+                [sys.executable, str(HERE / "run_cell.py"), json.dumps(spec)],
+                env, int(t["timeout_s"]),
+            )
+            if returncode != 0 or not stdout.strip():
                 raise RuntimeError(
-                    f"run_cell exit={p.returncode}; stderr={p.stderr[-1000:]}"
+                    f"run_cell exit={returncode}; stderr={stderr[-1000:]}"
                 )
-            rec = json.loads(p.stdout.strip().splitlines()[-1])
-        except subprocess.TimeoutExpired:
+            rec = json.loads(stdout.strip().splitlines()[-1])
+            rec["peak_rss_mb"] = max(
+                value for value in (rec.get("peak_rss_mb"), sampled_peak) if value is not None
+            )
+        except subprocess.TimeoutExpired as timeout_error:
             partial = {}
             if checkpoint_path.is_file():
                 try:
@@ -88,7 +130,8 @@ for i, t in enumerate(tasks, 1):
                    "n_places": partial.get("n_places"),
                    "n_transitions": partial.get("n_transitions"),
                    "n_arcs": partial.get("n_arcs"),
-                   "runtime_s": None, "L": int(t["L"]), "H": float(t["H"]),
+                   "runtime_s": None, "peak_rss_mb": getattr(timeout_error, "peak_rss_mb", None),
+                   "L": int(t["L"]), "H": float(t["H"]),
                    "timeout_s": int(t["timeout_s"]),
                    "params": json.loads(t["params"])}
         except Exception as exc:  # noqa: BLE001
@@ -108,6 +151,7 @@ for i, t in enumerate(tasks, 1):
         )
         executed_source_sha = os.environ.get("EXECUTED_SOURCE_SHA") or os.environ.get("GITHUB_SHA")
         rec.update({"task_id": t["task_id"], "experiment": t["experiment"],
+                    "protocol_version": t.get("protocol_version"),
                     "experiment_id": t.get("experiment_id", t["experiment"]),
                     "benchmark_family": t.get("benchmark_family"),
                     "model_id": t.get("model_id") or model_value,

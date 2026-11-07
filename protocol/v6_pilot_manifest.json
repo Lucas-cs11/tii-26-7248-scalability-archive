@@ -1,0 +1,92 @@
+{
+  "artifact_retention_days": 30,
+  "billing": "public repository standard runner; no larger or paid runner",
+  "cell_timeout_seconds": 60,
+  "distinct_bounded_problems": 280,
+  "distinct_model_hashes": 232,
+  "duplicate_configurations": 0,
+  "experiments": {
+    "A_structural": 120,
+    "B_wip": 72,
+    "C_Lsweep": 72,
+    "D_difficult": 24
+  },
+  "families": [
+    "F01_sequential_sparse",
+    "F02_sequential_dense",
+    "F03_deep_inspection",
+    "F04_alternative_routes",
+    "F05_routes_inspections",
+    "F06_parallel_parts",
+    "F07_shared_contention",
+    "F08_mixed_visibility",
+    "F09_deep_fault_stages",
+    "F10_bounded_rework",
+    "F11_resource_cycle",
+    "F12_sparse_cycle"
+  ],
+  "frozen_before_execution": true,
+  "job_timeout_minutes": 30,
+  "max_parallel": 6,
+  "runner": "GitHub-hosted ubuntu-22.04 standard runner only",
+  "seeds": {
+    "F01_sequential_sparse": [
+      28968,
+      74943
+    ],
+    "F02_sequential_dense": [
+      720,
+      60977
+    ],
+    "F03_deep_inspection": [
+      38924,
+      23516
+    ],
+    "F04_alternative_routes": [
+      20135,
+      75714
+    ],
+    "F05_routes_inspections": [
+      72541,
+      74362
+    ],
+    "F06_parallel_parts": [
+      37311,
+      40657
+    ],
+    "F07_shared_contention": [
+      35307,
+      339
+    ],
+    "F08_mixed_visibility": [
+      29720,
+      46072
+    ],
+    "F09_deep_fault_stages": [
+      73088,
+      90316
+    ],
+    "F10_bounded_rework": [
+      31989,
+      68653
+    ],
+    "F11_resource_cycle": [
+      52855,
+      66025
+    ],
+    "F12_sparse_cycle": [
+      1524,
+      4292
+    ]
+  },
+  "selection_rule": "12 families x 2 deterministic seeds x 12 preregistered strata; no verdict-based selection",
+  "selection_uses_verdicts": false,
+  "semantics_gate": "protocol/v6_semantics_gate.json",
+  "shards": 24,
+  "tasks": 288,
+  "tasks_per_family": 24,
+  "tasks_per_shard": 12,
+  "unique_configurations": 288,
+  "version": "v6-pilot-1",
+  "worst_case_compute_runner_minutes": 288.0
+}

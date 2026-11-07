@@ -1,0 +1,18 @@
+{
+  "PASS": true,
+  "gate_names": [
+    "SCG_STRONG_TIME_PASS",
+    "SCG_SOUNDNESS_AND_COMPLETENESS_PASS",
+    "DBM_NORMALIZATION_PASS",
+    "ALL_12_FAMILIES_SEMANTIC_PASS"
+  ],
+  "semantics_source_sha": "b1ac5a024e79ac83b292ffc13005744a6511d0c9",
+  "github_run_id": "42322708113",
+  "github_job_id": "128250766878",
+  "artifact_id": "13554145215",
+  "artifact_name": "v6-semantics-42322708113",
+  "runner": "GitHub-hosted ubuntu-22.04 standard runner",
+  "families_checked": 12,
+  "families_passed": 12,
+  "unit_tests_passed": 32
+}
