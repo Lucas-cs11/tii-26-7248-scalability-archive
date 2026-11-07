@@ -29,6 +29,7 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
+          cache-dependency-path: requirements-v5.lock
       - name: Install frozen dependencies
         run: python -m pip install --require-hashes -r requirements-v5.lock
       - name: Run complete regression suite
