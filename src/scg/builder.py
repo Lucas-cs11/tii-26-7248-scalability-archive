@@ -86,25 +86,44 @@ class DBM:
         ]
         for i in range(n):
             self._mat[i][i] = Fraction(0)
+        self._hash: Optional[int] = None
 
     def get(self, i: str, j: str) -> object:
         return self._mat[self._idx[i]][self._idx[j]]
 
     def set(self, i: str, j: str, val: object):
         self._mat[self._idx[i]][self._idx[j]] = val
+        self._hash = None
 
     def normalize(self) -> "DBM":
-        """Return a new normalized DBM via Floyd-Warshall."""
+        """Return a new normalized DBM via Floyd-Warshall.
+
+        Entries are either ``Fraction`` (finite bound) or the infinity sentinel
+        (float).  The inner loops compare the types directly instead of calling
+        ``math.isinf`` on every entry: ``math.isinf(Fraction)`` converts the
+        rational to float first and dominated the SCG construction profile.
+        The update rule is unchanged: a finite candidate replaces the entry when
+        the entry is infinite or strictly larger.
+        """
         n = len(self._vars_list)
-        # Copy
         mat = [row[:] for row in self._mat]
-        # Floyd-Warshall: tighten all pairs through intermediate k
+        fraction_type = Fraction
         for k in range(n):
+            row_k = mat[k]
             for i in range(n):
+                row_i = mat[i]
+                a_ik = row_i[k]
+                if type(a_ik) is not fraction_type:
+                    # infinite distance to k: no tightening possible
+                    continue
                 for j in range(n):
-                    candidate = _add(mat[i][k], mat[k][j])
-                    if _leq(candidate, mat[i][j]):
-                        mat[i][j] = candidate
+                    a_kj = row_k[j]
+                    if type(a_kj) is not fraction_type:
+                        continue
+                    candidate = a_ik + a_kj
+                    current = row_i[j]
+                    if type(current) is not fraction_type or candidate < current:
+                        row_i[j] = candidate
         result = DBM(self.variables)
         result._mat = mat
         result._vars_list = self._vars_list
@@ -123,27 +142,29 @@ class DBM:
             return False
         if self.variables != other.variables:
             return False
-        for i in self._vars_list:
-            for j in self._vars_list:
-                a = self.get(i, j)
-                b = other.get(i, j)
-                if math.isinf(a) and math.isinf(b):
-                    continue
-                if math.isinf(a) or math.isinf(b):
-                    return False
-                if a != b:
-                    return False
-        return True
+        # Both matrices are indexed by the same sorted variable list, so exact
+        # list equality is equivalent to the pairwise bound comparison (the
+        # infinity sentinel only ever compares equal to itself).
+        if self._vars_list != other._vars_list:
+            return False
+        return self._mat == other._mat
 
     def __hash__(self) -> int:
+        cached = self._hash
+        if cached is not None:
+            return cached
+        fraction_type = Fraction
         h = hash(self.variables)
-        for i in self._vars_list:
-            for j in self._vars_list:
-                v = self.get(i, j)
-                if math.isinf(v):
-                    h = hash((h, i, j, "inf"))
+        mat = self._mat
+        for i, name_i in enumerate(self._vars_list):
+            row = mat[i]
+            for j, name_j in enumerate(self._vars_list):
+                value = row[j]
+                if type(value) is not fraction_type:
+                    h = hash((h, name_i, name_j, "inf"))
                 else:
-                    h = hash((h, i, j, v))
+                    h = hash((h, name_i, name_j, value))
+        self._hash = h
         return h
 
     def __repr__(self) -> str:
@@ -235,7 +256,9 @@ def _build_initial_class(tpn: TPN) -> StateClass:
     )
 
 
-def _compute_successor(tpn: TPN, cls: StateClass, t_name: str) -> Optional[StateClass]:
+def _compute_successor(
+    tpn: TPN, cls: StateClass, t_name: str, cache: Optional[Dict] = None
+) -> Optional[StateClass]:
     """Compute successor state class after firing t_name from cls.
 
     Returns None if t_name is not enabled or the resulting zone is empty.
@@ -277,29 +300,40 @@ def _compute_successor(tpn: TPN, cls: StateClass, t_name: str) -> Optional[State
     # from waiting past a competitor's latest firing time, even when firing t
     # disables that competitor.
     firing_dbm = DBM(cls.dbm.variables)
-    for i in cls.dbm.variables:
-        for j in cls.dbm.variables:
-            firing_dbm.set(i, j, cls.dbm.get(i, j))
+    firing_dbm._mat = [row[:] for row in cls.dbm._mat]
+    _idx = firing_dbm._idx
+    _mat = firing_dbm._mat
+    _t = _idx[t_name]
     for u in cls.enabled:
         if u == t_name:
             continue
-        current = firing_dbm.get(t_name, u)
-        if math.isinf(current) or current > 0:
-            firing_dbm.set(t_name, u, Fraction(0))  # theta_t - theta_u <= 0
+        j = _idx[u]
+        current = _mat[_t][j]
+        if type(current) is not Fraction or current > 0:
+            _mat[_t][j] = Fraction(0)  # theta_t - theta_u <= 0
     firing_dbm = firing_dbm.normalize()
     if firing_dbm.is_empty():
         return None
 
-    # Compute new marking
-    new_marking = tpn.fire(cls.marking, t_name)
-
-    # Compute persistent and newly enabled sets
-    before_set = cls.enabled  # enabled at current marking
-    after_set = frozenset(tpn.enabled_set(new_marking))
-
-    # Persistent: enabled before and after, EXCLUDING t if it re-enables itself
-    persistent = tpn.persistent_enabled(cls.marking, t_name)
-    newly = tpn.newly_enabled(cls.marking, t_name)
+    # Compute new marking and enabled sets.  These are pure functions of
+    # (marking, fired transition), so the same values are reused when another
+    # successor candidate fires the same transition from the same class.
+    cache_key = None if cache is None else (cls.marking_key, t_name)
+    cached = None if cache is None else cache.get(cache_key)
+    if cached is not None:
+        new_marking, after_set, persistent, newly = cached
+    else:
+        new_marking = tpn.fire(cls.marking, t_name)
+        after_set = frozenset(tpn.enabled_set(new_marking))
+        # Same sets as tpn.persistent_enabled / tpn.newly_enabled, computed
+        # from the already known before/after enabled sets.
+        persistent = (cls.enabled & after_set) - {t_name}
+        newly = after_set - cls.enabled
+        if t_name in after_set:
+            # self-reenabling transition: treat as newly enabled
+            newly = newly | {t_name}
+        if cache is not None:
+            cache[cache_key] = (new_marking, after_set, persistent, newly)
 
     # Variables in new DBM: {0} | after_set
     new_variables = frozenset({"0"} | after_set)
@@ -428,6 +462,10 @@ class SCG:
         self._next_id: int = 0
         self.has_zero_time_unobservable_cycle: bool = False
         self.scg_state_limit_reached: bool = False
+        # Lazily built adjacency index: class id -> [(transition, successor id)]
+        # in the same order as ``self.edges``.  Kept out of the constructor
+        # because edges are appended while the graph is being built.
+        self._succ_index: Optional[Dict[int, List[Tuple[str, int]]]] = None
 
     def _get_or_add_class(self, cls: StateClass) -> Tuple[int, bool]:
         """Return (id, is_new). is_new=True if newly added."""
@@ -457,8 +495,19 @@ class SCG:
         return truncated
 
     def successors(self, class_id: int) -> List[Tuple[str, int]]:
-        """Return list of (transition_name, successor_id) from class_id."""
-        return [(t, dst) for (src, t, dst) in self.edges if src == class_id]
+        """Return list of (transition_name, successor_id) from class_id.
+
+        The adjacency index is built once on first use (O(E)) and then every
+        lookup is O(out-degree).  The returned list preserves the original
+        edge order, so all downstream BFS orders are unchanged.
+        """
+        index = self._succ_index
+        if index is None:
+            index = {}
+            for (src, t, dst) in self.edges:
+                index.setdefault(src, []).append((t, dst))
+            self._succ_index = index
+        return index.get(class_id, [])
 
     def predecessors(self, class_id: int) -> List[Tuple[int, str]]:
         """Return list of (predecessor_id, transition_name) to class_id."""
@@ -545,6 +594,7 @@ def build_scg(tpn: TPN) -> SCG:
 
     queue = deque([c0_id])
     visited = {c0_id}
+    successor_cache: Dict = {}
 
     MAX_CLASSES = 50_000  # safety cap
     found_zero_time_cycle = False
@@ -560,7 +610,7 @@ def build_scg(tpn: TPN) -> SCG:
             break
 
         for t_name in sorted(curr_cls.enabled):
-            succ = _compute_successor(tpn, curr_cls, t_name)
+            succ = _compute_successor(tpn, curr_cls, t_name, successor_cache)
             if succ is None:
                 continue
 

@@ -345,6 +345,13 @@ def build_synchronizer(
 
     sigma = tpn.observable_alphabet
 
+    # The synchronizer transition is a pure function of (state, label): the
+    # reachability maps depend on the SCG and the two class-id sets only.  The
+    # BFS visits one (word, state) pair per prefix, so the same state is
+    # re-expanded many times; memoising the transition is exact and removes
+    # that duplication without changing any reachable state, edge or word.
+    transition_cache: Dict[Tuple[Tuple, str], Tuple[SyncState, Tuple]] = {}
+
     while queue:
         word, curr_key = queue.popleft()
         bump(profile, "sync_words_explored")
@@ -363,8 +370,17 @@ def build_synchronizer(
             continue
 
         for e in sorted(sigma):  # sorted for determinism
-            next_state = synchronizer_transition(scg_truncated, tpn, curr_state, e, profile)
-            next_key = next_state.key()
+            memo_key = (curr_key, e)
+            cached = transition_cache.get(memo_key)
+            if cached is not None:
+                bump(profile, "sync_transition_memo_hits")
+                next_state, next_key = cached
+            else:
+                next_state = synchronizer_transition(
+                    scg_truncated, tpn, curr_state, e, profile
+                )
+                next_key = next_state.key()
+                transition_cache[memo_key] = (next_state, next_key)
 
             # Only enqueue if X_N' is nonempty (pruning condition)
             if not next_state.X_N:

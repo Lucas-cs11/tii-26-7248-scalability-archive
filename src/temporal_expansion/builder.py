@@ -132,6 +132,7 @@ class TemporalExpansion:
         self.terminal_normal: List[Tuple[int, TraceRecord]] = []
         self.terminal_faulty: List[Tuple[int, TraceRecord]] = []
         self._node_index: Dict[ExpansionNode, int] = {}
+        self._record_sigmas: Dict[int, Set[Tuple[str, ...]]] = {}
         self._next_id: int = 0
 
     def get_or_create_node(
@@ -157,11 +158,15 @@ class TemporalExpansion:
     def add_record(self, node_id: int, record: TraceRecord) -> bool:
         """Add record if sigma not already present. Returns True if added."""
         bump(self.profile, "exp_record_adds")
-        for r in self.records[node_id]:
-            bump(self.profile, "exp_record_checks")
-            if r.sigma == record.sigma:
-                bump(self.profile, "exp_record_dedup_hits")
-                return False
+        sigmas = self._record_sigmas.get(node_id)
+        if sigmas is None:
+            sigmas = set()
+            self._record_sigmas[node_id] = sigmas
+        bump(self.profile, "exp_record_checks")
+        if record.sigma in sigmas:
+            bump(self.profile, "exp_record_dedup_hits")
+            return False
+        sigmas.add(record.sigma)
         self.records[node_id].append(record)
         return True
 
@@ -204,6 +209,50 @@ def build_expansion(
 
     total_records = 1
 
+    # Pure-function caches keyed by the marking identity.  ``enabled_set``,
+    # ``fire``, ``persistent_enabled``, ``newly_enabled`` and ``in_completion``
+    # depend only on the marking (and the fired transition), so memoising them
+    # cannot change any box, record or verdict; it only avoids recomputing the
+    # same enabling/marking data for every (node, sigma) visit.
+    enabled_cache: Dict[FrozenSet, Tuple[str, ...]] = {}
+    completion_cache: Dict[FrozenSet, bool] = {}
+    fire_cache: Dict[Tuple[FrozenSet, str], Tuple[Dict[str, int], FrozenSet]] = {}
+    clocks_cache: Dict[Tuple[FrozenSet, str], Tuple[FrozenSet[str], FrozenSet[str]]] = {}
+
+    def enabled_of(marking: Dict[str, int], marking_key: FrozenSet):
+        cached = enabled_cache.get(marking_key)
+        if cached is None:
+            cached = tuple(tpn.enabled_set(marking))
+            enabled_cache[marking_key] = cached
+        return cached
+
+    def in_completion(marking: Dict[str, int], marking_key: FrozenSet) -> bool:
+        cached = completion_cache.get(marking_key)
+        if cached is None:
+            cached = tpn.in_completion(marking)
+            completion_cache[marking_key] = cached
+        return cached
+
+    def fire_of(marking: Dict[str, int], marking_key: FrozenSet, t_name: str):
+        cache_key = (marking_key, t_name)
+        cached = fire_cache.get(cache_key)
+        if cached is None:
+            new_marking = tpn.fire(marking, t_name)
+            cached = (new_marking, _marking_key(new_marking))
+            fire_cache[cache_key] = cached
+        return cached
+
+    def clocks_of(marking: Dict[str, int], marking_key: FrozenSet, t_name: str):
+        cache_key = (marking_key, t_name)
+        cached = clocks_cache.get(cache_key)
+        if cached is None:
+            cached = (
+                tpn.persistent_enabled(marking, t_name),
+                tpn.newly_enabled(marking, t_name),
+            )
+            clocks_cache[cache_key] = cached
+        return cached
+
     # Worklist: (node_id, sigma, J_hat)
     queue: deque = deque()
     queue.append((n0_id, (), (Fraction(0), Fraction(0))))
@@ -218,13 +267,13 @@ def build_expansion(
         marking, box = exp.node_data[curr_id]
 
         # Do not expand if in completion marking (first-entry)
-        if tpn.in_completion(marking):
+        if in_completion(marking, curr_node.marking_key):
             # Terminal: check if k == m
             # (handled below when we add the record at terminal node)
             continue
 
         # Get enabled transitions
-        enabled = tpn.enabled_set(marking)
+        enabled = enabled_of(marking, curr_node.marking_key)
 
         # Compute upper bound for urgency: min over all enabled u of b_u
         urgency_upper = INF
@@ -274,15 +323,14 @@ def build_expansion(
                 # Empty: prune
                 continue
 
-            # Compute new marking
-            new_marking = tpn.fire(marking, t_name)
+            # Compute new marking (cached by marking identity + transition)
+            new_marking, new_marking_key = fire_of(marking, curr_node.marking_key, t_name)
 
             # Compute successor box
-            persistent = tpn.persistent_enabled(marking, t_name)
-            newly = tpn.newly_enabled(marking, t_name)
+            persistent, newly = clocks_of(marking, curr_node.marking_key, t_name)
 
             new_box: BoxDict = {}
-            for u in tpn.enabled_set(new_marking):
+            for u in enabled_of(new_marking, new_marking_key):
                 if u in persistent:
                     a_old, b_old = box.get(u, (Fraction(0), INF))
                     # [max(0, a_u - d_hi), b_u - d_lo]
@@ -313,7 +361,7 @@ def build_expansion(
 
             # Build successor node
             succ_node = ExpansionNode(
-                marking_key=_marking_key(new_marking),
+                marking_key=new_marking_key,
                 box_key=_box_key(new_box),
                 k=k_prime,
                 q=q_prime,
@@ -336,7 +384,7 @@ def build_expansion(
                     return "INC"
 
                 # Check if terminal
-                if tpn.in_completion(new_marking) and k_prime == m:
+                if in_completion(new_marking, new_marking_key) and k_prime == m:
                     if q_prime == "N":
                         exp.terminal_normal.append((succ_id, record))
                     else:
