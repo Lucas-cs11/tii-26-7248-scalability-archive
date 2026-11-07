@@ -1,7 +1,7 @@
 # v6 historical recompute and verdict-drift audit (555 problems / 3,645 evaluations)
 
-Status: **PRIMARY VERDICT PASS FINAL; COMPLETE_SET SECOND PASS RUNS ON GITHUB ACTIONS**
-(local snapshot: `LOCAL_PRIMARY_PASS_FINAL_COMPLETE_SET_ON_GITHUB_ACTIONS`).
+Status: **FINAL — primary verdict pass and COMPLETE_SET second pass both complete**
+(primary pass local; COMPLETE_SET second pass on GitHub Actions run 42366299274).
 
 This is an **add-on audit** of the archived 36,450-evaluation v4-era `rmt_fms`
 baseline. It is disjoint from the formal 8,280-cell v6 matrix: separate
@@ -107,13 +107,13 @@ artifact):**
 
 | field | value (from `results/hist_aggregate/summary/summary.json`) |
 |---|---|
-| snapshot_status | `<<FINAL or FINAL_PARTIAL>>` |
-| complete-pass recorded / completed / timeout | `<<x / 1,956>>` |
-| critical pairs equal / increased / decreased | `<<...>>` |
-| mean/median archived vs recomputed pairs | `<<...>>` |
-| feasible pairs positive / zero | `<<...>>` |
-| overlap inside archived window | `<<...>>` |
-| SCG classes smaller/equal/larger | `<<...>>` |
+| snapshot_status | **`FINAL`** (GitHub Actions run 42366299274, 20 shards, 0 missing/duplicate/extraneous rows) |
+| complete-pass recorded / completed / timeout | **1,956 / 1,956 (100.0 %)** — 1,136 COMPLETED, 820 `TIMEOUT_WALL_CLOCK`, 0 ERROR |
+| critical pairs equal / increased / decreased | **1,689 / 274 / 862** (1,689 VER rows equal; 1,136 AMB rows: 274 increased, 862 decreased) |
+| mean/median archived vs recomputed pairs | AMB rows mean **68,224.5 → 2,457.3** pairs; median Δ **−12,671**; median ratio recomputed/archived **0.149** |
+| feasible pairs positive / zero | **1,136 / 0** positive (mean **2,382.5** LP-feasible ambiguity pairs per AMB row) |
+| overlap inside archived window | **1,136 / 1,136 (100 %)**; width p50 **2.5 s**, p95 **5.5 s**, max 5.5 s |
+| SCG classes smaller/equal/larger under v6 | **1,925 / 0 / 31** of 1,956; median Δ **−392** classes |
 
 Pre-GH local snapshot retained as fallback
 (`raw/recompute_complete.jsonl`, 431 / 1,956 recorded, 217 completed,

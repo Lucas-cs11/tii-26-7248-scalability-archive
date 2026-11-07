@@ -1,0 +1,1398 @@
+{
+  "schema_version": "v6-historical-drift-v1",
+  "snapshot_status": "FINAL",
+  "snapshot_note": "GitHub Actions COMPLETE_SET second pass aggregation. FINAL requires all 1,956 archived-AMB rows recorded exactly once (statuses COMPLETED or TIMEOUT_WALL_CLOCK) and the primary-pass summary supplied; otherwise FINAL_PARTIAL with the explicit denominator.",
+  "frozen_manifest": {
+    "path": "protocol/v6_historical_recompute_tasks.json",
+    "sha256": "e1f6b455285e45cadbec655749b92db3c53b3fdf551dabbd3d7722804bc47a8f",
+    "tasks": 3645,
+    "bounded_problems": 555,
+    "amb_tasks": 1956
+  },
+  "scope_separation": {
+    "formal_v6_matrix_cells": 8280,
+    "historical_rows_this_manifest": 3645,
+    "conservative_upper_bound_rows": 36450,
+    "statement": "This manifest is an add-on historical recompute; it is disjoint from the formal 8,280-cell v6 matrix, does not consume its budget, and must never be pooled with its results."
+  },
+  "recompute_protocol": {
+    "verifier": "src.verifier.verify",
+    "mode": "first",
+    "complete_set": false,
+    "wall_cap_seconds_per_task": 60.0,
+    "parallel_workers_max": 8,
+    "interpreter": ".venv/bin/python",
+    "run_location": "local (no Modal access)",
+    "resume": "by task_id from raw/recompute_<phase>.jsonl",
+    "mode_assumption": "The archived Proposed shards carry no mode column. FIRST_CERTIFICATE is the documented archived default and is supported by the archived proposed/reference runtime ratio (median 0.108 for tier A): the Proposed pass stops at the first certificate while the archived reference enumerates completely."
+  },
+  "execution": {
+    "environment": "github-actions",
+    "sharded": true,
+    "shard_report": [
+      {
+        "shard": 0,
+        "raw_file": "artifacts/raw/recompute_complete_shard_0.jsonl",
+        "sha256": "dc58352a81b8fc3c41ef194737681f92833315a5946c1307c88e8060d80e73bd",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1608.846,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 1,
+        "raw_file": "artifacts/raw/recompute_complete_shard_1.jsonl",
+        "sha256": "7cb78e7d74b3626cdc5ddb3ca00911cddcafd39403292257c7695eec9b88a411",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1443.713,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 2,
+        "raw_file": "artifacts/raw/recompute_complete_shard_2.jsonl",
+        "sha256": "5b5d8491b948ed4dc9192bb7c7572f3be2d6b94aae0c9f985c453db5d90457b5",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1750.455,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 3,
+        "raw_file": "artifacts/raw/recompute_complete_shard_3.jsonl",
+        "sha256": "3c93c8c3aca5c7e475a9e7f77efe665600cbf27dc4e186e7fbb414814c4d6fa9",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1664.679,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 4,
+        "raw_file": "artifacts/raw/recompute_complete_shard_4.jsonl",
+        "sha256": "71188f468464786d43c6b82e62e6c84a502b288b199884c3de78fd563bdfd7f2",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1777.629,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 5,
+        "raw_file": "artifacts/raw/recompute_complete_shard_5.jsonl",
+        "sha256": "064526c63be23424f6fc7f747527a352aa5ceeca5e292fdebfdf2ab2e146cf7d",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1605.875,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 6,
+        "raw_file": "artifacts/raw/recompute_complete_shard_6.jsonl",
+        "sha256": "ee677349d5054d22cb80aa22f6b3b73b77ecb42568daa709128dd1c3010d9e07",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1746.564,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 7,
+        "raw_file": "artifacts/raw/recompute_complete_shard_7.jsonl",
+        "sha256": "48a0155cf037321db13c8b3d8a4db4c6cc5424b359c1c3a469144c55a6253e67",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1842.375,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 8,
+        "raw_file": "artifacts/raw/recompute_complete_shard_8.jsonl",
+        "sha256": "68578ae54f20c9b4062e1eb24e5bf18dd26106785ce1096cf838bf08ea37674f",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1496.557,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 9,
+        "raw_file": "artifacts/raw/recompute_complete_shard_9.jsonl",
+        "sha256": "aa91d99de68b31e57a9e867d1f8214743c6ed6f9017b6d153c26bf2e1f34f0a5",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1650.553,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 10,
+        "raw_file": "artifacts/raw/recompute_complete_shard_10.jsonl",
+        "sha256": "bc1595006b249edb8d43c09eeeb554fb6311d8c347ff4afd3619ddc6f81bf985",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1503.329,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 11,
+        "raw_file": "artifacts/raw/recompute_complete_shard_11.jsonl",
+        "sha256": "5eb10ae52be3e28e9fb1c6e98b7be7db8e42b1b13cfbac3c3130409441b127be",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1487.185,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 12,
+        "raw_file": "artifacts/raw/recompute_complete_shard_12.jsonl",
+        "sha256": "b6a2f90392c5f02355de77d5287dbd01c4d889f236afb93c134b4a65106eb716",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1661.153,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 13,
+        "raw_file": "artifacts/raw/recompute_complete_shard_13.jsonl",
+        "sha256": "b836acc538f8452dd21871a727323c49cfe36e66a588f54680304436b0c5b276",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1595.175,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 14,
+        "raw_file": "artifacts/raw/recompute_complete_shard_14.jsonl",
+        "sha256": "a097d6ee57640df4018fdb5ba02472ffd2ea8f4cc16e2558d623d400732c7df5",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1627.547,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 15,
+        "raw_file": "artifacts/raw/recompute_complete_shard_15.jsonl",
+        "sha256": "bc8b5e7259acbd29877bd0d257155f83fe2ad35cd05ac5d698a060dd465265af",
+        "records": 98,
+        "expected_shard_tasks": 98,
+        "elapsed_s": 1374.737,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 16,
+        "raw_file": "artifacts/raw/recompute_complete_shard_16.jsonl",
+        "sha256": "8de6184c37fa0a6e1f900778a72353d1d4ec464c7482fd7573a4d6e98a902879",
+        "records": 97,
+        "expected_shard_tasks": 97,
+        "elapsed_s": 1447.77,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 17,
+        "raw_file": "artifacts/raw/recompute_complete_shard_17.jsonl",
+        "sha256": "b809a55fe82e49d9784f5a6bda5c7837ae6f3a7078f0df49e21839811ab71ed3",
+        "records": 97,
+        "expected_shard_tasks": 97,
+        "elapsed_s": 1746.24,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 18,
+        "raw_file": "artifacts/raw/recompute_complete_shard_18.jsonl",
+        "sha256": "3b3561edfb9b976e12f4cd465f7e0946b69a3f228c38b62927387a9f0aec4403",
+        "records": 97,
+        "expected_shard_tasks": 97,
+        "elapsed_s": 1512.387,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      },
+      {
+        "shard": 19,
+        "raw_file": "artifacts/raw/recompute_complete_shard_19.jsonl",
+        "sha256": "6d289819cb6f9a320b644b368d774151bb28b16dd3853577bf8aaa6d17b94bc8",
+        "records": 97,
+        "expected_shard_tasks": 97,
+        "elapsed_s": 1404.478,
+        "workers": 2,
+        "wall_cap_s": 60.0,
+        "github_run_id": "42366299274",
+        "shard_coverage_fraction": 1.0
+      }
+    ]
+  },
+  "coverage": {
+    "primary_verdict_pass": {
+      "planned": 3645,
+      "recorded": 3645,
+      "completed": 3645
+    },
+    "complete_pass_amb_subset": {
+      "planned": 1956,
+      "recorded": 1956,
+      "recorded_fraction": 1.0,
+      "completed": 1136,
+      "timeout_wall_clock": 820,
+      "error": 0,
+      "not_run": 0,
+      "duplicate_records": 0,
+      "extraneous_records": 0
+    },
+    "shards": {
+      "detected": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "detected_num_shards": 20,
+      "expected_num_shards": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "missing_shard_files": []
+    }
+  },
+  "primary_verdict_pass": {
+    "denominator_tasks": 3645,
+    "denominator_bounded_problems": 555,
+    "archived_verdict_counts": {
+      "VER": 1689,
+      "AMB": 1956
+    },
+    "recomputed_outcome_counts": {
+      "AMB": 1956,
+      "VER": 1689
+    },
+    "transition_matrix": {
+      "VER": {
+        "VER": 1689
+      },
+      "AMB": {
+        "AMB": 1956
+      }
+    },
+    "drift_counts": {
+      "rows_with_verdict_change": 0,
+      "rows_unchanged_verdict": 3645,
+      "rows_changed_or_not_verdict": 0,
+      "rows_not_run": 0,
+      "rows_timeout_wall_clock": 0,
+      "rows_error": 0,
+      "rows_inconclusive_inc": 0,
+      "rows_not_decidable": 0
+    },
+    "problem_level": {
+      "problems": 555,
+      "with_any_row_drift": 0,
+      "all_rows_match": 555,
+      "with_complete_pass_censored_rows": 0
+    },
+    "complete_pass": {
+      "scope": "archived-AMB rows (VER rows enumerate completely in first pass)",
+      "archived_amb_rows": 1956,
+      "recorded": 431,
+      "completed": 217,
+      "timed_out": 214,
+      "completed_by_archived_verdict": {
+        "VER": 0,
+        "AMB": 217
+      }
+    },
+    "changed_verdict_rows": [],
+    "not_decidable_rows": []
+  },
+  "critical_pairs": {
+    "rows": 2825,
+    "equal": 1689,
+    "increased": 274,
+    "decreased": 862,
+    "mean_archived": 68224.507,
+    "mean_recomputed": 2457.331,
+    "median_delta": -12671.0,
+    "median_ratio_recomputed_over_archived": 0.149068,
+    "rows_feasible_positive": 1136,
+    "rows_feasible_zero": 0,
+    "mean_recomputed_feasible": 2382.479,
+    "rows_by_archived_verdict": {
+      "VER": {
+        "rows": 1689,
+        "equal": 1689,
+        "increased": 0,
+        "decreased": 0
+      },
+      "AMB": {
+        "rows": 1136,
+        "equal": 0,
+        "increased": 274,
+        "decreased": 862,
+        "mean_archived": 68224.507,
+        "mean_recomputed": 2457.331,
+        "median_delta": -12671.0,
+        "median_ratio_recomputed_over_archived": 0.149068,
+        "rows_feasible_positive": 1136,
+        "rows_feasible_zero": 0,
+        "mean_recomputed_feasible": 2382.479
+      }
+    }
+  },
+  "time_domain": {
+    "archived_overlap_endpoints_available": false,
+    "archived_overlap_endpoints_note": "the archived Proposed shard CSVs and the archived MSCG-LP reference CSV persist only verdicts/counters, not certificate overlap endpoints; the archived-vs-v6 endpoint comparison is supplied by the legacy-semantics replay sample exported in the primary-pass summary",
+    "complete_pass_rows_with_overlap": 1136,
+    "overlap_inside_archived_window": 1136,
+    "overlap_inside_archived_window_fraction": 1.0,
+    "overlap_width_p50": 2.5,
+    "overlap_width_p95": 5.5,
+    "overlap_width_max": 5.5,
+    "legacy_replay": {
+      "purpose": "archived-semantics replay: the pre-repair _compute_successor is monkeypatched back into the SCG builder; complete enumeration then reconstructs the archived critical-pair universe and certificate overlap endpoints. It validates the pipeline (legacy verdicts should reproduce the archived verdicts) and supplies the archived side of the critical-pair/overlap comparison.",
+      "sample_size_planned": 120,
+      "sample_rule": "deterministic ascending sha256('legacy-replay-v1'|task_id) over archived-AMB tier-A tasks",
+      "rows_recorded": 120,
+      "rows_completed": 62,
+      "rows_censored": 58,
+      "verdict_agreement_with_archived": 62,
+      "verdict_agreement_fraction": 1.0,
+      "critical_pair_rows_compared": 61,
+      "critical_pair_equal": 61,
+      "critical_pair_increased_under_v6": 0,
+      "critical_pair_decreased_under_v6": 0,
+      "critical_pair_median_delta_recomputed_minus_legacy": 0
+    },
+    "time_domain_legacy_replay": {
+      "rows_recorded": 120,
+      "rows_completed": 62,
+      "rows_censored": 58,
+      "rows_with_old_and_new_overlap": 61,
+      "endpoint_comparisons": [
+        {
+          "task_id": "028806da044d7bf391069aab37fb081c94f1040d8bdddfee05d10a5995e4d314",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl2_wf10_ar25_s2",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "0611d3cffcd2181f59279c902c588f39d18c45d23dd6979b938a4097f8901106",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl1_wf15_ar25_s2",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "09329a8fcfe769fbb2c078efc20af56f820f29ecbb0cf198e266bdf1357387f4",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl4_wf10_ar25_s2",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "0d92cb46cb2f86d0f4f620f3acb38e1e2f6d1ebcf7716b5e65fafe73826d470e",
+          "evaluation_id": "fs_m4_j2_k2_w2_ur30_fl1_wf5_ar25_s11",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "0de1adde787bf1e39954947be3801e7173de565aa4819949688ce16d9a05711b",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl4_wf5_ar50_s12",
+          "archived_semantics_overlap": [
+            8.75,
+            11.25
+          ],
+          "v6_overlap": [
+            8.75,
+            11.25
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "0f5eb29c91012f1425c04c1fd4ac1ce1fb09f1def4198a7e0f2109b8ffeec76a",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl2_wf10_ar10_s0",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "13da3bfe90d994a4fbaaccca0a83a17f8afd934395f8b237c55ce0f2ba8fe19b",
+          "evaluation_id": "fs_m3_j2_k2_w2_ur50_fl1_wf5_ar50_s2",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "1506ed7b15136ae1ffa21247afd9050da2b701cb7034a42c63017557fc88a4f0",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl1_wf15_ar10_s13",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "16466d9ccee98bd6ba5111034484defb930ffc84e0b150e02f69fdc01b86c007",
+          "evaluation_id": "fs_m4_j2_k2_w2_ur30_fl2_wf5_ar10_s3",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "1704159094c50472ad66fe163742d3ed20c5a1621d550005e95117a7294665bf",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl4_wf10_ar50_s14",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "17de1161fe0b71459dae7f8bdbfd648e58e1b4f979a919231023ae0e818ef19f",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl1_wf5_ar10_s6",
+          "archived_semantics_overlap": [
+            8.75,
+            11.25
+          ],
+          "v6_overlap": [
+            8.75,
+            11.25
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "1838f1f525054ac2929bb6063ab9fc707c95bf9ebdc756dc6231eacb340c0283",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl2_wf5_ar50_s12",
+          "archived_semantics_overlap": [
+            8.75,
+            11.25
+          ],
+          "v6_overlap": [
+            8.75,
+            11.25
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "21bc81412aff9db466e9a9a470eeb75369c38f9741b2577103a71c077784849b",
+          "evaluation_id": "fs_m4_j2_k2_w2_ur30_fl4_wf5_ar10_s12",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "27f98f694084d5e5040176cf5a8245f982fe6bef2793e8e3b04d5c955c897b99",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl4_wf10_ar25_s12",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "28d9f7c506b1c6ffa49ab943641a1916b944174a2bc1e945cf5d8dfd5e7240a4",
+          "evaluation_id": "fs_m4_j2_k2_w2_ur30_fl2_wf5_ar10_s13",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "29345f4b16dcaf3e46a74402be33b267d1c1914c42b2bff3319c169e540af3af",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl2_wf10_ar10_s6",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "305095a1448dc450588678b6ab8ddd1e0612a81c17c6479db21a1d6e9756ad20",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl1_wf10_ar10_s14",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "35975d96f0e99f2575915ee094856e1535567decde4ac431f03e24d208dbb01b",
+          "evaluation_id": "fs_m3_j2_k2_w2_ur30_fl2_wf5_ar50_s7",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "38382c1c93d982739468bd2ca20aeee4a95fb99d51cb7a91aafd9acebd9cad92",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl4_wf15_ar25_s2",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "3bc5bfee514a818cb8734737b8f8ff5644c8ef708ff0735477536151dce2638a",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl2_wf10_ar25_s1",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "3fc575423efe85d537c551694e7ac9f51fd61d218a65aabee65ceeb6ad33fcc9",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl1_wf15_ar10_s2",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "401d7185425e9de8dd63b6264bd32f26d25aba18ef226e869738797843f51dc7",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl2_wf15_ar25_s1",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "406c8364e28f1db916bfdf5d31a90014fc9982b4cdc2f6851dcfbe21f2a3535f",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl2_wf10_ar10_s9",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "42ff8f00dd6e05aff3584795f15af09380b2e3173c2585b8801900589cd6f035",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl1_wf15_ar10_s2",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "4837ed432e96c29428993c25ff81c26976c46072c659b80b8e4423cfe42c236f",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl1_wf10_ar25_s5",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "4885bf426e4168594d9c6e6538f62ee4e83e271ed1617d3833b688ab8c00b0bd",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl1_wf10_ar25_s14",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "52bc316a73c819af30f55f47f85a6041f39cefb02d3eba9acd1d4902b887dfe7",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl2_wf10_ar25_s8",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "539c4a24449b99ea6671052a824774952596fc85382c121bc626efeb1b5f5d83",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl4_wf10_ar10_s4",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "59822662f1b3b71ce679945cdf467a04308315cb380c5bbc57356a288247f1b5",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl1_wf10_ar50_s14",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "5d63fb2406348f71679dfb5b75140db79ff10f0e0b6cba4684a237e59ae0f164",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl2_wf10_ar10_s0",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "5fceb7ef15d4995076ed166a26bb98af2b7fbf62bfd777a14d3b4deb2351f7be",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl1_wf10_ar50_s1",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "696dcfd91c0227db72df6923ac61c0a3ad370b567e9c3fdbe47b4176cad56cd2",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl1_wf15_ar50_s14",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "6a8b03e99287e8bea462d47f33bfe44e127a60ae09b93a740fcd767f480e8ebd",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl1_wf15_ar25_s14",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "70ec8998cba92fbfa36c8b3d147eb96e15d600fb866c6a4b8fd5c8361fc62018",
+          "evaluation_id": "fs_m4_j2_k2_w2_ur30_fl2_wf5_ar25_s7",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "754905c95261f3993aac27677ee6990a1286dc09f3d4f37a57a2109383774221",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl2_wf15_ar10_s14",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "78ef91cb594fc15f2b54e8abf3b9a971299625bd8dc4706509a7a0007b70e991",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl2_wf15_ar25_s1",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "8240ec0ae7b6e4456ebdd3d75607ba0fe5575d0d9bdc1935f2f6a796586b38b0",
+          "evaluation_id": "fs_m4_j2_k2_w2_ur50_fl1_wf5_ar25_s6",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "836f377823661a7084421ea0ffa3053692f7c631f736e60bce46d43d5bbfb5ee",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl4_wf15_ar25_s9",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "8d18bcfacd4a7919fedc999fe58e5a1f82886ee4bc03457d7573057c463a98a7",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl2_wf5_ar10_s14",
+          "archived_semantics_overlap": [
+            8.75,
+            11.25
+          ],
+          "v6_overlap": [
+            8.75,
+            11.25
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "9baeeb05939a0386cb5ac22691a5d6f2a640505a1f930200014d8201f0bda3ae",
+          "evaluation_id": "fs_m4_j2_k2_w2_ur50_fl2_wf5_ar10_s14",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "9dd3576c205882b3062f2b88f7898f940a8d751d1dc1af14fa4ee8ff35827072",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl2_wf10_ar50_s11",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "b03eba343f0247f16f8e4e9e172ac852615622f23b8cd070f1ed49c788e22679",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl2_wf10_ar10_s7",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "b0547fbb9b6384e0fb06f08e36c341b49c94a7f017d70c93adbad2ddac7009d7",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl1_wf10_ar10_s8",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "b555db8ee3f520927b262b5c971fe225644cbaf195f555c6e36e3e849c2bd05a",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl2_wf5_ar25_s9",
+          "archived_semantics_overlap": [
+            8.75,
+            11.25
+          ],
+          "v6_overlap": [
+            8.75,
+            11.25
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "b65e968881c7f13c69d2b1f7447cdc323b8c05969b39426ea325953c7e542a61",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl4_wf15_ar25_s14",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "bac91c9d64ac92b3f861de7194fced45c45914ca33b7c6b75b95395d15e6a109",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl2_wf10_ar10_s14",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "c486a5b366f9ad4b7752ce034b879804e909b3be826f1ff2c13d80e2044a80be",
+          "evaluation_id": "fs_m3_j2_k2_w2_ur50_fl1_wf5_ar50_s8",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "c90e2caa1d7893ab7e6319665e97428275d97801b914176c4cfdd059e2e693c4",
+          "evaluation_id": "fs_m3_j2_k2_w2_ur50_fl2_wf5_ar25_s14",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "cd6de15ad95548751c0fd769f9d5373456b7297d4c42c870977754f622d9e290",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl2_wf15_ar10_s7",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "d091377571202945c8b88e8c085173d01fc01e745855c79f6d0e258267f33c37",
+          "evaluation_id": "fs_m4_j2_k2_w2_ur30_fl2_wf5_ar25_s14",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "d208154e46c98413a4c607a10800f9df2c3e3b2423addd717ec66b218e68c036",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl1_wf5_ar50_s5",
+          "archived_semantics_overlap": [
+            8.75,
+            11.25
+          ],
+          "v6_overlap": [
+            8.75,
+            11.25
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "d575c9524e0d1b0f3a2502ce46bb561045cdd9d59f6e0f2bbdded72be4468e37",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl2_wf10_ar25_s6",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "dee45a76734cbd61e9453dfbcef46d7ba50683c3182c3a562b62299f523e446a",
+          "evaluation_id": "fs_m4_j2_k2_w2_ur30_fl2_wf5_ar10_s14",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "e34f364dc1109f8eff33acc037ec08c0d7f7e30fb1464e0edb865e8056799967",
+          "evaluation_id": "fs_m3_j2_k2_w2_ur30_fl1_wf5_ar25_s8",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "e4682280e1b5921e5d192d3f947f50b4a99814a3c2721c1a64208ac6955502db",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl1_wf15_ar25_s1",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "e5dce7467f21f0b5310e7defc85ca6338391373981b1238087dd5cc30bf3cca4",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl4_wf10_ar50_s4",
+          "archived_semantics_overlap": [
+            8.0,
+            12.0
+          ],
+          "v6_overlap": [
+            8.0,
+            12.0
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "f05fb11e0fea46dddb53a42aab3811c6ad9b843f73bf89c6fd2d6f43b82635c5",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl1_wf5_ar10_s8",
+          "archived_semantics_overlap": [
+            8.75,
+            11.25
+          ],
+          "v6_overlap": [
+            8.75,
+            11.25
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "f6ce847daef52e54e68a656d2434dfe216b861feeea0a0902b43f2ea6c4c2e44",
+          "evaluation_id": "fs_m4_j2_k2_w2_ur30_fl2_wf5_ar10_s7",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "fa4e6ae3aeca4850b20e46f660db7113ac01fdc5ad53b2cb57e6186476a8627e",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur50_fl1_wf5_ar25_s6",
+          "archived_semantics_overlap": [
+            8.75,
+            11.25
+          ],
+          "v6_overlap": [
+            8.75,
+            11.25
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "fb943a344b320713ed18d35dc202af5790b5ee644918f1a2607263cb83580b4b",
+          "evaluation_id": "fs_m4_j2_k2_w2_ur50_fl1_wf5_ar50_s0",
+          "archived_semantics_overlap": [
+            6.5,
+            7.5
+          ],
+          "v6_overlap": [
+            6.5,
+            7.5
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        },
+        {
+          "task_id": "fd9223f3f609ff4991c81d10ddd674d6a6d0f68fd9bb5ce5b9a77bc8921ea16e",
+          "evaluation_id": "fs_m2_j2_k2_w2_ur30_fl4_wf15_ar10_s5",
+          "archived_semantics_overlap": [
+            7.25,
+            12.75
+          ],
+          "v6_overlap": [
+            7.25,
+            12.75
+          ],
+          "delta_min": 0.0,
+          "delta_max": 0.0
+        }
+      ],
+      "median_delta_min": 0.0,
+      "median_delta_max": 0.0,
+      "median_width_delta": 0.0
+    },
+    "first_pass_overlap": {
+      "archived_overlap_endpoints_available": false,
+      "recomputed_amb_first_pass_overlap_rows": 217,
+      "overlap_inside_archived_window_fraction": 1.0,
+      "overlap_width_p50": 2.5,
+      "overlap_width_p95": 5.5
+    }
+  },
+  "scg_shape": {
+    "complete_pass_rows_with_scg_counters": 1956,
+    "classes_equal": 0,
+    "classes_smaller_under_v6": 1925,
+    "classes_larger_under_v6": 31,
+    "median_class_delta": -392.0,
+    "fingerprint_sample": {
+      "rule": "deterministic ascending sha256('scg-fingerprint-v1'|task_id); one representative task per distinct regenerated v6 model; first 120 distinct v6 models in tier A",
+      "sample_size": 120,
+      "distinct_v6_models_in_sample": 120,
+      "legacy_semantics_source": {
+        "method": "git_history",
+        "source": "src/scg/builder.py",
+        "pre_repair_commit": "97b5d6db32279797580560ffcb82eccfdafd9b32",
+        "legacy_function_sha256": "4a5f24b4745f95285e039e3eb513578f55ddf90a1fdd566390f7437395b45900",
+        "legacy_function_lines": 217
+      },
+      "counts": {
+        "classes_structure_equal": 0,
+        "classes_full_dbm_equal": 0,
+        "edges_equal": 0,
+        "smaller_v6_class_count": 117,
+        "larger_v6_class_count": 3,
+        "equal_class_count": 0
+      },
+      "means": {
+        "n_classes_archived_semantics": 517.517,
+        "n_classes_v6": 175.392,
+        "n_edges_archived_semantics": 1013.892,
+        "n_edges_v6": 304.3
+      },
+      "interpretation": "classes_full_dbm_equal compares the canonical DBM signature of every state class; a difference means the strong-time successor semantics changed the archived SCG, so the archived SCG workload counters for the conflict tier are not reusable."
+    }
+  },
+  "legacy_replay": {
+    "purpose": "archived-semantics replay: the pre-repair _compute_successor is monkeypatched back into the SCG builder; complete enumeration then reconstructs the archived critical-pair universe and certificate overlap endpoints. It validates the pipeline (legacy verdicts should reproduce the archived verdicts) and supplies the archived side of the critical-pair/overlap comparison.",
+    "sample_size_planned": 120,
+    "sample_rule": "deterministic ascending sha256('legacy-replay-v1'|task_id) over archived-AMB tier-A tasks",
+    "rows_recorded": 120,
+    "rows_completed": 62,
+    "rows_censored": 58,
+    "verdict_agreement_with_archived": 62,
+    "verdict_agreement_fraction": 1.0,
+    "critical_pair_rows_compared": 61,
+    "critical_pair_equal": 61,
+    "critical_pair_increased_under_v6": 0,
+    "critical_pair_decreased_under_v6": 0,
+    "critical_pair_median_delta_recomputed_minus_legacy": 0
+  },
+  "mscg_lp_reference_plan": {
+    "present": true,
+    "path": "work/v6_historical_recompute/summary/mscg_lp_reference_plan.json"
+  },
+  "inputs": {
+    "recovered_csv": {
+      "path": "work/v6_historical_impact/historical_rows_recovered.csv",
+      "sha256": "11bc971bb08459b0024af019fa7b0c1b2264ac2c7f2a7ee56419c22e87caa29f"
+    },
+    "source_artifacts_manifest_csv": {
+      "path": "work/v6_historical_impact/source_artifacts_manifest.csv",
+      "sha256": "8842395f91435af9ee8f8d3be1a6d9596d0b26df013cbe28b9aa6c9c98b76583"
+    },
+    "archived_reference_csv": {
+      "path": "/Users/lucas/Documents/Codex/2026-11-05/referenced-chatgpt-conversation-this-is-an/work/tii-scalability-v4/work/v5_final_build_rebuilt/TII_Scalability_Benchmark_v5/06_fullscale_baseline/original_reference_records/fullscale_results_mscg_lp_complete.csv",
+      "sha256": "a854f364270f07223641aa3d67da3f45a95b753edb2e59d2cb1f311e8cfbe973"
+    },
+    "source_artifacts_root": "/Users/lucas/Documents/Codex/2026-11-05/referenced-chatgpt-conversation-this-is-an/work/tii-scalability-v4/work/v5_baseline_proposed_artifacts"
+  },
+  "limitations": [
+    "the archived Proposed shards carry no mode column; FIRST_CERTIFICATE is the documented assumption, supported by the 0.108 median proposed/reference runtime ratio",
+    "the archived Proposed shards carry no verifier counters, so the archived critical-pair count is taken from the paired archived MSCG-LP reference record (complete enumeration, different baseline implementation: its terminal_pairs counts all normal x fault path pairs)",
+    "archived certificate overlap endpoints were never persisted, so archived-vs-v6 overlap endpoint deltas are only available on the legacy-semantics replay sample",
+    "the conflict tier is a necessary-condition exposure screen; the 32,805 no-conflict rows remain inside the conservative upper bound and are not certified unaffected",
+    "the COMPLETE_SET pass is attempted, not guaranteed: rows that exceed the 60 s wall cap keep their primary-pass verdict but have no complete critical-pair count (TIMEOUT_WALL_CLOCK is recorded, never a fabricated verdict)",
+    "the MSCG-LP reference recompute is planning only in this deliverable, not executed; it is not independent of the repaired shared SCG",
+    "verdict drift measured here is for the historical rmt_fms baseline only and does not transfer to the 8,280-cell v6 formal matrix"
+  ]
+}

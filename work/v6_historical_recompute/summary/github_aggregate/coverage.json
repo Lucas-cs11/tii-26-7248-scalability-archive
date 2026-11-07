@@ -1,0 +1,66 @@
+{
+ "primary_verdict_pass": {
+  "planned": 3645,
+  "recorded": 3645,
+  "completed": 3645
+ },
+ "complete_pass_amb_subset": {
+  "planned": 1956,
+  "recorded": 1956,
+  "recorded_fraction": 1.0,
+  "completed": 1136,
+  "timeout_wall_clock": 820,
+  "error": 0,
+  "not_run": 0,
+  "duplicate_records": 0,
+  "extraneous_records": 0
+ },
+ "shards": {
+  "detected": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19
+  ],
+  "detected_num_shards": 20,
+  "expected_num_shards": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19
+  ],
+  "missing_shard_files": []
+ }
+}
