@@ -1,0 +1,212 @@
+{
+  "artifact_retention_days": 30,
+  "cache_group_rule": "cache_group is the full model_hash; rows with the same value are one reuse group and must be colocated in one shard",
+  "cache_key_components": {
+    "cache_key": "cache_key = sha256(json.dumps(key_material, sort_keys=True, separators=(\",\", \":\")).encode()).hexdigest()",
+    "format": "v6-scg-cache",
+    "format_version": 2,
+    "key_material": "key_material = {\"format\": \"v6-scg-cache\", \"format_version\": 2, \"model_hash\": <sha256 hex>, \"source_sha\": <executed commit sha>, \"scg_builder_sha\": <sha256 of src/scg/builder.py bytes>, \"semantics_version\": \"v6-strong-time-1\", \"python\": \"3.13\", \"serialization\": \"json-fraction-v2\"}",
+    "model_hash": "<sha256 hex>",
+    "python": "3.13",
+    "scg_builder_sha": "<sha256 of src/scg/builder.py bytes>",
+    "semantics_version": "v6-strong-time-1",
+    "serialization": "json-fraction-v2",
+    "source_sha": "<executed commit sha>"
+  },
+  "cache_policy": {
+    "atomic_write": "write a temporary file then atomically replace the entry",
+    "corruption_policy": "any deserialization or validation failure downgrades to miss",
+    "directory": "cache directory is given by environment variable SCG_CACHE_DIR; the workflow sets SCG_CACHE_DIR=${{ runner.temp }}/scg_cache",
+    "disabled_policy": "when the cache is disabled the status is \"disabled\"",
+    "entry": "one single file <cache_key>.json per cached SCG",
+    "max_entry_bytes": 67108864,
+    "oversize_policy": "an entry larger than 64 MiB is not written; the cell keeps status \"miss\" and the provenance records reason \"entry_too_large\" with store_ok=false",
+    "provenance_schema": {
+      "disabled": "record scg_cache_provenance is null",
+      "hit": "{cache_status: hit, key, key_material, reason: verified, load_s, build_s: null, store_s: null, payload_sha256, file_bytes, serializer}",
+      "miss": "{cache_status: miss, key, key_material, reason: stored | store_error:* | entry_too_large:*, store_ok, build_s, load_s: 0.0, store_s, payload_sha256, file_bytes, serializer}",
+      "required_key_material": "format, format_version, model_hash, source_sha, scg_builder_sha, semantics_version, python, serialization"
+    }
+  },
+  "cell_timeout_seconds": 60,
+  "differential_pairs": [
+    [
+      "cfg6-a02d7708b3cd59057536",
+      "cfg6-59cdabac87500c777544"
+    ],
+    [
+      "cfg6-9233c90f35f6e24221e2",
+      "cfg6-010cc3054ec5cc37346a"
+    ],
+    [
+      "cfg6-7f1c371e53f6c6beb506",
+      "cfg6-1dfd4de81526e46ac698"
+    ],
+    [
+      "cfg6-1bac169bccd426debe36",
+      "cfg6-b61279542e85b284bfa4"
+    ],
+    [
+      "cfg6-a1aefdd4252be17db358",
+      "cfg6-0f8a6e56fb5e26fb1016"
+    ],
+    [
+      "cfg6-4e28954f4f737688ca6b",
+      "cfg6-ac8ac77809eee3ad385d"
+    ],
+    [
+      "cfg6-52c6b297bb7e55556b32",
+      "cfg6-374cfc0ba8c0dc5d0bcc"
+    ],
+    [
+      "cfg6-d0cb2bc04b6497c3f6bd",
+      "cfg6-6462f3f96d5dc9e7a157"
+    ],
+    [
+      "cfg6-52af1bb3adc19bfe97e0",
+      "cfg6-ac1e3d21e736409d8053"
+    ],
+    [
+      "cfg6-96a82e1499e42b1183fa",
+      "cfg6-f3fa85fa8c33d7716864"
+    ],
+    [
+      "cfg6-7eed4245a7d72f75e310",
+      "cfg6-f0bcfcce647e37c1cccc"
+    ],
+    [
+      "cfg6-92aec6229d0eeb9a660e",
+      "cfg6-bb218e20016cc241fce4"
+    ]
+  ],
+  "distinct_bounded_problems": 84,
+  "distinct_model_hashes": 60,
+  "duplicate_configurations": 0,
+  "expected_cache": {
+    "basis": "Each family shard executes, in CSV order: the cold default model at L_low, the same model at L_mid, the same model at L_high_complete, and a replicate of the L_low cell. The first row builds the SCG (miss) and the next three reuse the same model_hash cache entry (hit). The three WIP bound cells and the difficult cell each introduce a distinct model (miss). Hence 5 misses and 3 hits per shard, 60/36 overall.",
+    "per_family": {
+      "F01_sequential_sparse": {
+        "hit": 3,
+        "miss": 5
+      },
+      "F02_sequential_dense": {
+        "hit": 3,
+        "miss": 5
+      },
+      "F03_deep_inspection": {
+        "hit": 3,
+        "miss": 5
+      },
+      "F04_alternative_routes": {
+        "hit": 3,
+        "miss": 5
+      },
+      "F05_routes_inspections": {
+        "hit": 3,
+        "miss": 5
+      },
+      "F06_parallel_parts": {
+        "hit": 3,
+        "miss": 5
+      },
+      "F07_shared_contention": {
+        "hit": 3,
+        "miss": 5
+      },
+      "F08_mixed_visibility": {
+        "hit": 3,
+        "miss": 5
+      },
+      "F09_deep_fault_stages": {
+        "hit": 3,
+        "miss": 5
+      },
+      "F10_bounded_rework": {
+        "hit": 3,
+        "miss": 5
+      },
+      "F11_resource_cycle": {
+        "hit": 3,
+        "miss": 5
+      },
+      "F12_sparse_cycle": {
+        "hit": 3,
+        "miss": 5
+      }
+    },
+    "per_shard": {
+      "hit": 3,
+      "miss": 5
+    },
+    "total": {
+      "hit": 36,
+      "miss": 60
+    }
+  },
+  "experiment_definitions": {
+    "B_wip": "same structural family at WIP bounds 1/2/3, each a cold model",
+    "C_Lsweep": "same default model at three structural L bounds plus one replica of the cold (L_low, first) cell",
+    "D_difficult": "Pilot-defined difficult parameter cell, a cold model"
+  },
+  "experiments": {
+    "B_wip": 36,
+    "C_Lsweep": 48,
+    "D_difficult": 12
+  },
+  "families": 12,
+  "family_names": [
+    "F01_sequential_sparse",
+    "F02_sequential_dense",
+    "F03_deep_inspection",
+    "F04_alternative_routes",
+    "F05_routes_inspections",
+    "F06_parallel_parts",
+    "F07_shared_contention",
+    "F08_mixed_visibility",
+    "F09_deep_fault_stages",
+    "F10_bounded_rework",
+    "F11_resource_cycle",
+    "F12_sparse_cycle"
+  ],
+  "frozen_before_execution": true,
+  "identity_rule": "bounded_problem_id hashes {protocol, model_hash, L, H}; configuration_id hashes the bounded-problem payload plus mode and replicate; task_id equals configuration_id",
+  "job_timeout_minutes": 30,
+  "max_parallel": 6,
+  "runner": "GitHub-hosted ubuntu-22.04 standard runner only",
+  "seeds": {
+    "F01_sequential_sparse": 66342,
+    "F02_sequential_dense": 51087,
+    "F03_deep_inspection": 81692,
+    "F04_alternative_routes": 41553,
+    "F05_routes_inspections": 83606,
+    "F06_parallel_parts": 11635,
+    "F07_shared_contention": 7689,
+    "F08_mixed_visibility": 19746,
+    "F09_deep_fault_stages": 97766,
+    "F10_bounded_rework": 87700,
+    "F11_resource_cycle": 70598,
+    "F12_sparse_cycle": 47044
+  },
+  "selection_rule": "12 declared benchmark families x 8 preregistered structural strata; one sha256-derived deterministic seed per family; the family order is FAMILY_SPECS order. WIP cells are selected by a deterministic combination of n_parts and wip_bound (see wip_structure_rule), never by any observed result. No Pilot verdict, runtime, completion status, or prior result influences task selection.",
+  "selection_uses_verdicts": false,
+  "semantics_gate": "protocol/v6_semantics_gate.json",
+  "shard_planning_rule": "one shard per benchmark family (12 shards x 8 tasks); every task with the same expected model_hash is placed in the same shard, i.e. the same worker; within each shard the CSV and execution order is fixed so the first row of a cache group is the cold build and all later rows of that group reuse it",
+  "shards": 12,
+  "strata": {
+    "L_high_complete": 12,
+    "L_low_first": 12,
+    "L_low_first_replica": 12,
+    "L_mid_first": 12,
+    "WIP_1": 12,
+    "WIP_2": 12,
+    "WIP_3": 12,
+    "difficult_first": 12
+  },
+  "tasks": 96,
+  "tasks_per_family": 8,
+  "tasks_per_shard": 8,
+  "unique_configurations": 96,
+  "version": "v6-cache-validation-1",
+  "wip_structure_rule": "wip_parts = max(3, parts + 1); ensures WIP models are distinct from the default L-sweep model so the pre-registered miss/hit invariant holds",
+  "worst_case_compute_runner_minutes": 96.0
+}

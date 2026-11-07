@@ -31,6 +31,8 @@ def verify(
     budget: Optional[int] = None,
     complete_set: bool = False,
     progress_hook: Optional[Callable[[str, Dict], None]] = None,
+    prebuilt_scg=None,
+    scg_build_seconds: Optional[float] = None,
 ) -> Dict:
     """Full verification pipeline.
 
@@ -39,6 +41,12 @@ def verify(
             certificate (FIRST_CERTIFICATE mode). If True, enumerate all candidates
             before returning (COMPLETE_SET mode) — required for repair and ambiguity
             set metrics.
+        prebuilt_scg: Optional already-built SCG for this exact TPN (e.g. loaded
+            from the same-model SCG cache).  When given, ``build_scg`` is skipped
+            and the cache loader's timing is *not* attributed to construction.
+        scg_build_seconds: Optional externally measured construction time for
+            ``prebuilt_scg``.  Only used to attribute the build cost to the cell
+            that actually paid it; a cache hit passes ``None`` and records 0.
 
     Returns:
         {
@@ -95,10 +103,18 @@ def verify(
         if progress_hook is not None:
             progress_hook(stage, dict(stats))
 
-    # Step 1: Build SCG
-    t0 = time.perf_counter()
-    scg = build_scg(tpn)
-    stats["runtime_scg"] = time.perf_counter() - t0
+    # Step 1: Build SCG (or reuse an externally built / cache-loaded one).
+    # A prebuilt SCG never contributes construction time unless the caller
+    # supplies the build duration it actually measured.
+    if prebuilt_scg is not None:
+        scg = prebuilt_scg
+        stats["runtime_scg"] = 0.0 if scg_build_seconds is None else float(scg_build_seconds)
+    else:
+        t0 = time.perf_counter()
+        scg = build_scg(tpn)
+        stats["runtime_scg"] = time.perf_counter() - t0
+        if scg_build_seconds is not None:
+            stats["runtime_scg"] = float(scg_build_seconds)
     stats["scg_classes"] = len(scg.classes)
     stats["scg_edges"] = len(scg.edges)
     progress("SCG_COMPLETE")

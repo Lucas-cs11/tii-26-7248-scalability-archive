@@ -15,6 +15,8 @@ from src.benchmarks.rmt_fms_generator import generate_rmt_fms
 from src.benchmarks.v5_families import generate_v5_model
 from src.benchmarks.v6_families import generate_v6_model
 from src.model.validation import validate_model
+from src.scg.builder import build_scg
+from src.scg.cache import SCGCache, build_key_material, compute_cache_key
 from src.verifier import verify
 
 
@@ -140,7 +142,10 @@ def main() -> int:
            "timeout_s": spec.get("timeout_s", 120),
            "partial_workload": False, "failure_stage": "MODEL_GENERATION",
            "model_attributes": None, "validation_status": "NOT_RUN",
-           "peak_rss_mb": None}
+           "peak_rss_mb": None,
+           "scg_cache_status": None, "scg_cache_key": None,
+           "scg_cache_provenance": None,
+           "runtime_scg_build_s": None, "runtime_scg_load_s": None}
     checkpoint_path = os.environ.get("CHECKPOINT_PATH")
 
     def checkpoint(stage, counters=None):
@@ -184,10 +189,57 @@ def main() -> int:
             raise ValueError("generated structure hash differs from frozen task")
         rec["validation_status"] = "PASS"
         checkpoint("MODEL_VALIDATED")
+        # Same-model SCG reuse.  The cache is keyed on the model hash *and* the
+        # executed source / SCG-builder / semantics / Python / format versions,
+        # so a hit is only ever the same construction for the same net under the
+        # same code.  Construction and load times are recorded separately from
+        # the algorithm counters; a hit must never look like construction work.
+        source_sha = (
+            os.environ.get("EXECUTED_SOURCE_SHA")
+            or os.environ.get("GITHUB_SHA")
+            or "unknown"
+        )
+        scg_cache = SCGCache.from_environment()
+        prebuilt_scg = None
+        scg_build_seconds = None
+        if not scg_cache.enabled:
+            rec["scg_cache_status"] = "disabled"
+        else:
+            key_material = build_key_material(
+                model_hash=rec["model_hash"], source_sha=source_sha
+            )
+            cache_key = compute_cache_key(key_material)
+            rec["scg_cache_key"] = cache_key
+            loaded = scg_cache.load(cache_key)
+            if loaded is not None:
+                prebuilt_scg, cache_provenance = loaded
+                rec["scg_cache_status"] = "hit"
+                rec["runtime_scg_build_s"] = 0.0
+                rec["runtime_scg_load_s"] = cache_provenance.get("load_s")
+                rec["scg_cache_provenance"] = cache_provenance
+            else:
+                # A miss is decided (and checkpointed) before the build so a
+                # wall-clock kill during construction still reports "miss"
+                # rather than "unknown".
+                rec["scg_cache_status"] = "miss"
+                rec["runtime_scg_load_s"] = 0.0
+                checkpoint("MODEL_VALIDATED")
+                t_build = time.perf_counter()
+                prebuilt_scg = build_scg(tpn)
+                scg_build_seconds = time.perf_counter() - t_build
+                rec["runtime_scg_build_s"] = scg_build_seconds
+                cache_provenance = scg_cache.store(
+                    cache_key, key_material, prebuilt_scg,
+                    build_seconds=scg_build_seconds,
+                )
+                rec["scg_cache_provenance"] = cache_provenance
+            checkpoint("MODEL_VALIDATED")
         t0 = time.perf_counter()
         out = verify(tpn, spec.get("L", L), spec.get("H", H),
                      complete_set=(rec["mode"] == "complete"),
-                     progress_hook=checkpoint)
+                     progress_hook=checkpoint,
+                     prebuilt_scg=prebuilt_scg,
+                     scg_build_seconds=scg_build_seconds)
         rec["runtime_s"] = time.perf_counter() - t0
         rec["verdict"] = out.get("result")
         if rec["verdict"] not in {"VER", "AMB", "INC"}:
