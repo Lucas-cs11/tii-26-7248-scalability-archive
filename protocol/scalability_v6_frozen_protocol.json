@@ -1,0 +1,110 @@
+{
+  "acceptance": {
+    "raw_artifacts_retained": true,
+    "tasks": 8280,
+    "unique_task_ids": true,
+    "unknown_work_counters_are_null": true,
+    "verdicts": [
+      "VER",
+      "AMB",
+      "INC",
+      "TIMEOUT_WALL_CLOCK",
+      "ERROR"
+    ]
+  },
+  "execution": {
+    "backend": "modal",
+    "base_image": "debian_slim python3.13",
+    "checkpoint": "per-task ledger entry + sha256 + atomic file write + volume commit",
+    "cost_guard": {
+      "authorized_cap_usd": 10.0,
+      "monitor": "modal billing summary consumed vs baseline; stop when projected > 9.5"
+    },
+    "cpu_physical_cores": 1,
+    "function_timeout_seconds": 5400,
+    "gpu": "none",
+    "image_digest": "im-O631HG8VDiyq7gCt22I3bq",
+    "lp_solver": "scipy.optimize.linprog (HiGHS)",
+    "max_parallel_shards": 20,
+    "memory_mib": 4096,
+    "modal_sdk": "1.6.3",
+    "numpy": "2.3.4",
+    "python": "3.13",
+    "retry_policy": "infrastructure failures only; at most one retry per shard attempt; never retry a mathematical INC or TIMEOUT",
+    "scg_class_cap": 50000,
+    "scipy": "1.16.2",
+    "shard_manifest": "protocol/v6_modal_shards_manifest.json",
+    "shard_manifest_sha256": "43585dfc51f7af7cfebb145ba3756c64a145f6969d21fc8d51e1ce04a2c4bca8",
+    "shard_manifest_summary": {
+      "model_clustered": null,
+      "shards": 120,
+      "tasks": 8280
+    },
+    "task_timeout_seconds": 60,
+    "volume": "tii-v6-scalability",
+    "volume_prefix": "/scalability_v6_formal"
+  },
+  "frozen_at": "2026-11-07T11:34:53Z",
+  "frozen_before_execution": true,
+  "gates": {
+    "differential_v2": {
+      "DIFFERENTIAL_V2_ACCEPTED": true,
+      "DIFFERENTIAL_V2_CENSORING_ACCOUNTED": true,
+      "DIFFERENTIAL_V2_COMPLETE_CASES_PASS": true,
+      "DIFFERENTIAL_V2_COMPONENT_PASS": true,
+      "DIFFERENTIAL_V2_NO_OBSERVED_MISMATCH": true,
+      "DIFFERENTIAL_V2_ORACLE_PASS": true
+    },
+    "formal": {
+      "ALL_12_FAMILIES_SEMANTIC_PASS": true,
+      "DBM_NORMALIZATION_PASS": true,
+      "DIFFERENTIAL_V2_ACCEPTED": true,
+      "FORMAL_PROTOCOL_READY": true,
+      "MODAL_BUDGET_POLICY_PASS": true,
+      "MODAL_CHECKPOINT_RECOVERY_PASS": true,
+      "MODAL_ENVIRONMENT_PASS": true,
+      "PILOT_MEMORY_PASS": true,
+      "PILOT_PERFORMANCE_AUDITED": true,
+      "SCG_SOUNDNESS_AND_COMPLETENESS_PASS": true,
+      "SCG_STRONG_TIME_PASS": true
+    }
+  },
+  "protocol": "scalability-v6-frozen-protocol-1",
+  "source": {
+    "baseline_commit": "10d27726c085076fe790d574eabd15d7423ac86d",
+    "optimized_commit": "215443219c524878f7af4cef0e4b8d8caf790531",
+    "semantics_gate_PASS": true,
+    "semantics_gate_sha256": "0a015eb6014e6102300028efc6722b530c5bb62126555308ad3585aaa7a26f06",
+    "semantics_version": "v6-strong-time-1",
+    "serialization": "json-fraction-v2",
+    "verifier_commit": "953ec0fbdb653135d18a3238eb68401527706dbf"
+  },
+  "task_grid": {
+    "distinct_bounded_problems": 7380,
+    "distinct_model_hashes": 3160,
+    "experiments": {
+      "A_structural": 600,
+      "B_wip": 1080,
+      "C_Lsweep": 5400,
+      "D_difficult": 1200
+    },
+    "manifest": "protocol/v6_formal_manifest.json",
+    "manifest_sha256": "06cf692d6a6a74586d7fab9697ec785acc9d7fabb38603ca6f5bc116e7210b3d",
+    "quota": {
+      "difficult": 1200,
+      "lsweep": 5400,
+      "structural": 600,
+      "wip": 1080
+    },
+    "shards": 120,
+    "task_files_sha256": "3ad66daea558539f972236ad8bcc39eee3e729c98d18deca5d384acdb31155ef",
+    "tasks": 8280,
+    "tasks_per_shard": 69,
+    "validation": {
+      "duplicates": 0,
+      "missing": 0,
+      "model_hashes_recomputed": true,
+      "unique_tasks": 8280
+    }
+  }
+}

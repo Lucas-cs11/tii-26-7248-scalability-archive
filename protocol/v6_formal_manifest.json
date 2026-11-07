@@ -1,0 +1,51 @@
+{
+  "artifact_retention_days": 30,
+  "cell_timeout_seconds": 60,
+  "distinct_bounded_problems": 7380,
+  "distinct_model_hashes": 3160,
+  "execution_backend": "modal",
+  "experiments": {
+    "A_structural": 600,
+    "B_wip": 1080,
+    "C_Lsweep": 5400,
+    "D_difficult": 1200
+  },
+  "families": [
+    "F01_sequential_sparse",
+    "F02_sequential_dense",
+    "F03_deep_inspection",
+    "F04_alternative_routes",
+    "F05_routes_inspections",
+    "F06_parallel_parts",
+    "F07_shared_contention",
+    "F08_mixed_visibility",
+    "F09_deep_fault_stages",
+    "F10_bounded_rework",
+    "F11_resource_cycle",
+    "F12_sparse_cycle"
+  ],
+  "frozen_before_execution": true,
+  "identity_rule": "bounded_problem_id hashes {protocol, model_hash, L, H}; configuration_id hashes the bounded problem plus mode; task_id equals configuration_id",
+  "job_timeout_minutes": 150,
+  "max_parallel": 20,
+  "modal_function_timeout_seconds": 5400,
+  "modal_sdk": "1.6.3",
+  "modal_shard_manifest": "protocol/v6_modal_shards_manifest.json",
+  "quota": {
+    "difficult": 1200,
+    "lsweep": 5400,
+    "structural": 600,
+    "wip": 1080
+  },
+  "runner": "Modal CPU-only Function (1 physical core, 4096 MiB, GPU=None)",
+  "selection_rule": "pre-registered structural grid: declared sizes, declared difficulty levels and ascending seeds with frozen duplicate-hash rejection; no Pilot verdict, runtime or failure stage is read",
+  "selection_uses_verdicts": false,
+  "semantics_gate": "protocol/v6_semantics_gate.json",
+  "shards": 120,
+  "task_timeout_seconds": 60,
+  "tasks": 8280,
+  "tasks_per_shard": 69,
+  "unique_configurations": 8280,
+  "version": "v6-formal-1",
+  "worst_case_compute_runner_minutes": 8280.0
+}
