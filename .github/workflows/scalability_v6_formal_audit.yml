@@ -1,6 +1,6 @@
 name: scalability-v6-formal-audit
 
-# Runs the independent audit, statistics and Figure 6 for a completed Modal
+# Runs the independent audit, the statistics and Figure 6 for a completed Modal
 # formal matrix.  The raw Modal records are published as a GitHub *release
 # asset* (never committed), and this workflow downloads that asset, audits it
 # and produces the figures — all computation happens on GitHub-hosted runners.
@@ -16,6 +16,9 @@ on:
         required: true
       source_sha:
         description: "Verifier source SHA recorded in the raw records"
+        required: true
+      image_spec_sha256:
+        description: "Modal image spec SHA-256 recorded in the raw records"
         required: true
       expected_tasks:
         description: "Expected number of unique tasks"
@@ -47,21 +50,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p work/v6_formal_run_${{ inputs.run_id }}
+          mkdir -p /tmp/v6_raw work/v6_formal_run_${{ inputs.run_id }}
           gh release download "${{ inputs.release_tag }}" \
             --pattern "*.zip" --dir /tmp/v6_raw
           unzip -q /tmp/v6_raw/*.zip -d work/v6_formal_run_${{ inputs.run_id }}
-          find work/v6_formal_run_${{ inputs.run_id }} -name "*.json" | head -3
+          echo "raw records: $(find work/v6_formal_run_${{ inputs.run_id }}/raw -name '*.json' | wc -l)"
       - name: Independent audit
         run: >-
           python scripts/audit_v6_modal_results.py
           --download-dir work/v6_formal_run_${{ inputs.run_id }}
-          --manifest protocol/v6_formal_manifest.json
-          --artifacts-name "v6-formal-"
-          --run-id "${{ inputs.run_id }}"
-          --source-sha "${{ inputs.source_sha }}"
-          --expected-tasks "${{ inputs.expected_tasks }}"
+          --shard-manifest protocol/v6_modal_shards_manifest.json
+          --source-tasks protocol/v6_formal_tasks
+          --run-manifest work/v6_formal_run_${{ inputs.run_id }}/run_manifest.json
           --out work/v6_formal_audit
+          --expected-source-sha "${{ inputs.source_sha }}"
+          --expected-image-spec-sha256 "${{ inputs.image_spec_sha256 }}"
+          --expected-tasks "${{ inputs.expected_tasks }}"
       - name: Statistics
         run: >-
           python scripts/analyze_v6_formal_results.py
@@ -69,6 +73,8 @@ jobs:
           --manifest protocol/v6_formal_manifest.json
           --raw-dir work/v6_formal_run_${{ inputs.run_id }}
           --out work/v6_analysis_formal
+          --dataset-label FORMAL
+          --reference-audit work/v6_formal_audit/audit.json
       - name: Figure 6
         run: >-
           python scripts/plot_figure6_v6.py
