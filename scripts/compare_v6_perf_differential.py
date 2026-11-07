@@ -42,12 +42,21 @@ def load_results(path):
 def compare_cell(task_id, baseline, optimized):
     mismatches = []
     if baseline.get("execution_status") != "COMPLETED" or optimized.get("execution_status") != "COMPLETED":
+        baseline_status = baseline.get("execution_status")
+        optimized_status = optimized.get("execution_status")
+        if baseline_status != "COMPLETED" and optimized_status != "COMPLETED":
+            category = "both_censored"
+        elif baseline_status != "COMPLETED":
+            category = "baseline_censored_optimized_completed"
+        else:
+            category = "optimized_censored_baseline_completed"
         return {
             "task_id": task_id,
             "status": "CENSORED",
+            "censoring": category,
             "mismatches": [],
-            "baseline_status": baseline.get("execution_status"),
-            "optimized_status": optimized.get("execution_status"),
+            "baseline_status": baseline_status,
+            "optimized_status": optimized_status,
         }
     for field in SEMANTIC_FIELDS:
         if baseline.get(field) != optimized.get(field):
@@ -77,6 +86,9 @@ def compare_cell(task_id, baseline, optimized):
     return {
         "task_id": task_id,
         "status": "MATCH" if not mismatches else "MISMATCH",
+        "censoring": None,
+        "baseline_status": baseline.get("execution_status"),
+        "optimized_status": optimized.get("execution_status"),
         "mismatches": mismatches,
         "counter_fields_compared": compared_counters,
         "baseline_wall_s": baseline_wall,
@@ -133,9 +145,20 @@ def main() -> int:
         "layer_a_matched": sum(1 for p in matched if p["layer"] == "A"),
         "layer_b_matched": sum(1 for p in matched if p["layer"] == "B"),
         "mismatch_detail": mismatched,
+        "censoring_breakdown": {
+            "both_censored": sum(1 for p in censored if p.get("censoring") == "both_censored"),
+            "baseline_censored_optimized_completed": sum(
+                1 for p in censored
+                if p.get("censoring") == "baseline_censored_optimized_completed"
+            ),
+            "optimized_censored_baseline_completed": sum(
+                1 for p in censored
+                if p.get("censoring") == "optimized_censored_baseline_completed"
+            ),
+        },
         "censored_detail": [
             {key: p.get(key) for key in ("task_id", "benchmark_family", "stratum",
-                                         "baseline_status", "optimized_status")}
+                                         "baseline_status", "optimized_status", "censoring")}
             for p in censored
         ],
         "performance": {
@@ -161,7 +184,7 @@ def main() -> int:
     with (out_dir / "differential_pairs.csv").open("w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=[
             "task_id", "benchmark_family", "stratum", "mode", "layer", "status",
-            "baseline_status", "optimized_status", "baseline_wall_s",
+            "baseline_status", "optimized_status", "censoring", "baseline_wall_s",
             "optimized_wall_s", "speedup", "mismatch_fields",
         ])
         writer.writeheader()
@@ -173,8 +196,9 @@ def main() -> int:
                 "mode": pair["mode"],
                 "layer": pair["layer"],
                 "status": pair["status"],
-                "baseline_status": (layer_a.get(pair["task_id"], {}).get("baseline", {}) or {}).get("execution_status"),
-                "optimized_status": (layer_a.get(pair["task_id"], {}).get("optimized", {}) or {}).get("execution_status"),
+                "baseline_status": pair.get("baseline_status"),
+                "optimized_status": pair.get("optimized_status"),
+                "censoring": pair.get("censoring"),
                 "baseline_wall_s": pair.get("baseline_wall_s"),
                 "optimized_wall_s": pair.get("optimized_wall_s"),
                 "speedup": pair.get("speedup"),

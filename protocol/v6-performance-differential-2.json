@@ -1,0 +1,152 @@
+{
+  "acceptance_gates": [
+    "DIFFERENTIAL_V2_COMPONENT_PASS",
+    "DIFFERENTIAL_V2_COMPLETE_CASES_PASS",
+    "DIFFERENTIAL_V2_ORACLE_PASS",
+    "DIFFERENTIAL_V2_CENSORING_ACCOUNTED",
+    "DIFFERENTIAL_V2_NO_OBSERVED_MISMATCH"
+  ],
+  "baseline_source_commit": "10d27726c085076fe790d574eabd15d7423ac86d",
+  "composite_gate": "DIFFERENTIAL_V2_ACCEPTED",
+  "composite_rule": "all component gates true; no observed diagnostic or critical-pair mismatch; censored cells kept in the denominator and reported; every optimization rule used by the production verifier covered by component or transition evidence",
+  "evidence_paths": {
+    "component": "work/v6_differential_v2_component/",
+    "oracle": "tests/test_fraction_oracle.py, tests/test_strong_time_scg.py, scripts/validate_v6_model_semantics.py",
+    "pilot_runs": [
+      "work/v6_baseline_pilot_run_42348140150",
+      "work/v6_optimized_pilot_run_42348132809"
+    ],
+    "scg_equivalence": "work/v6_scg_equivalence_1/",
+    "sync_equivalence_attempt": "work/v6_sync_equivalence_1/",
+    "v1_differential": "work/v6_perf_differential_1/"
+  },
+  "forbidden": [
+    "removing unfinished tasks from the denominator",
+    "declaring a censored pair as agreement",
+    "editing v6-performance-differential-1",
+    "post-hoc selection of easy cells to replace difficult ones"
+  ],
+  "frozen_before_execution": true,
+  "layer_a": {
+    "comparison_fields": [
+      "verdict",
+      "inconclusive_reason",
+      "certificate_mode",
+      "enumeration_complete",
+      "critical_pair_canonical_set",
+      "critical_pair_count",
+      "model_hash",
+      "scg_state_limit_reached",
+      "zero_time_unobservable_cycle",
+      "counters.scg_classes",
+      "counters.scg_edges",
+      "counters.sync_states",
+      "counters.candidate_words",
+      "counters.candidate_words_processed",
+      "counters.temporal_states",
+      "counters.trace_records",
+      "counters.terminal_pairs",
+      "counters.enclosure_rejected_pairs",
+      "counters.lp_calls"
+    ],
+    "complete_set_rule": "the full canonical critical-pair set must match, not only its cardinality",
+    "coverage_requirements": {
+      "cycles": "F10/F11/F12 rework and cycle families",
+      "difficult": "D family levels; boundary reported even when inconclusive",
+      "families": 12,
+      "l_sweep": "consecutive L levels with fixed model and H",
+      "lp_boundary_equality": "included through complete-mode and half-integer interval cases",
+      "modes": [
+        "first",
+        "complete"
+      ],
+      "resource_contention": "F07 shared contention",
+      "structural_sizes": "A1/A2/A3 series levels",
+      "unobservable_faults": "all families carry unobservable fault transitions",
+      "wip": [
+        1,
+        2,
+        3
+      ]
+    },
+    "first_certificate_rule": "a legal first certificate may differ if search order is unaffected by the memoisation; both certificates must be verified legal and the verdict must match",
+    "inherited_complete_pairs": {
+      "pairs": 126,
+      "rule": "every task completed by both versions; compare all comparison fields",
+      "source": "GitHub Actions runs 42348140150 (baseline) and 42348132809 (optimized), frozen 288-cell Pilot"
+    },
+    "new_cells": {
+      "cell_timeout_seconds": 60,
+      "conclusive_pairs_expected": 30,
+      "layer_b_timeout_seconds": 300,
+      "source": "protocol/v6_perf_differential_1.json (48 structural cells)"
+    },
+    "purpose": "complete end-to-end equivalence for configurations both versions can finish",
+    "runtime_fields_excluded": true
+  },
+  "layer_b": {
+    "acceptance": "zero transition mismatches and exact graph/candidate-word reconstruction; cells where the 300 s budget is exceeded are reported as censored and cannot count as PASS",
+    "censored_rule": "a pair that cannot be completed on both sides is never a pass; the evidence level (full graph vs. transition-level within the optimized tree) is recorded explicitly",
+    "coverage_rule": "every legal successor label, including labels with empty successors; never only cache hits",
+    "procedure": [
+      "build the synchronizer with expose_transitions=True",
+      "for every reachable SyncState and every observable label, recompute the transition without the memo cache",
+      "compare X_N/X_F canonical sets, state identity and empty-successor handling with the memoised value",
+      "rebuild the reachable graph, edge multiset and ordered candidate words from fresh transitions",
+      "compare with the automaton produced by build_synchronizer",
+      "for cells that fit the budget, additionally compare build_synchronizer(use_transition_memo=False) with True"
+    ],
+    "purpose": "transition-by-transition equivalence of the memoised synchronizer",
+    "scope_cells": "all 48 cells of v6_perf_differential_1 plus every cell censored there"
+  },
+  "layer_c": {
+    "acceptance": "zero component mismatches; tests executed, not asserted by prose",
+    "components": {
+      "dbm_fraction": [
+        "half-integer rationals, arbitrary denominators, negatives, zero, infinity",
+        "boundary equality and epsilon-tight constraints",
+        "empty zone detection, canonicalisation, persistent projection, newly-enabled reset"
+      ],
+      "marking_cache": [
+        "enabled/fire/persistent/newly-enabled depend only on (marking, transition) and are equivalent to tpn methods",
+        "no DBM/clock-domain data is cached under a marking-only key",
+        "no cross-model reuse"
+      ],
+      "scg_adjacency_index": [
+        "adjacency equals the original edge-list projection per class",
+        "edge multiplicity and transition labels preserved",
+        "empty successor lists handled",
+        "index is not stale for any queried graph"
+      ],
+      "synchronizer_memo": [
+        "key contains every input that determines the successor (X_N, X_F, label)",
+        "immutable frozenset keys only",
+        "no reuse across different fault classes",
+        "empty successors are memoised too",
+        "memo cannot change the reachable graph"
+      ],
+      "trace_record_dedup": [
+        "identical sigma deduplicated",
+        "different fault histories never merged",
+        "different time feasibility never merged",
+        "COMPLETE_SET critical pairs preserved",
+        "first-entry completion preserved"
+      ]
+    },
+    "purpose": "per-optimization component audit with independent evidence"
+  },
+  "optimized_source_commit": "215443219c524878f7af4cef0e4b8d8caf790531",
+  "oracle": {
+    "family_regressions": "scripts/validate_v6_model_semantics.py",
+    "fraction_timed_semantics": "src/semantics/fraction_oracle.py (15 independent language tests)",
+    "industrial_17p_15t": "work/v6_freeze baseline fingerprints (read-only reference)",
+    "tina_scg": "tests/test_strong_time_scg.py A--F regressions",
+    "wang_tac_2015": "tests/test_scalability_v4.py regression"
+  },
+  "protocol_version": "v6-performance-differential-2",
+  "python": "3.13",
+  "semantics_version": "v6-strong-time-1",
+  "serialization_version": "json-fraction-v2",
+  "supersedes": "v6-performance-differential-1 (unchanged, its 18 censored pairs stay on record)",
+  "tooling_commit_at_freeze": "ae9ecd9f990179d8373d30b7ab69624e80c84558"
+}

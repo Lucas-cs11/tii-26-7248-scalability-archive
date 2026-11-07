@@ -182,7 +182,7 @@ def main() -> int:
     # 7. SHA-256 manifest over the staging tree
     digest_lines = []
     for path in sorted(staging.rglob("*")):
-        if path.is_dir() or path.name == "SHA256SUMS":
+        if path.is_dir() or path == staging / "SHA256SUMS":
             continue
         digest_lines.append(f"{sha256_file(path)}  {path.relative_to(staging)}")
     (staging / "SHA256SUMS").write_text("\n".join(digest_lines) + "\n")
@@ -207,11 +207,31 @@ def main() -> int:
             if actual != expected:
                 raise SystemExit(f"self-check failed: {relative}")
             checked += 1
-        expected_entries = [name for name in names if not name.endswith("SHA256SUMS")]
+        expected_entries = [name for name in names if name != "SHA256SUMS"]
         if checked != len(expected_entries):
             raise SystemExit(
                 f"self-check failed: {checked} hashes for {len(expected_entries)} files"
             )
+        # Nested SHA-256 manifests (evidence directories keep their own) are part of
+        # the archive and are themselves verified against the files they list.
+        nested_checked = 0
+        for name in sorted(names):
+            if name == "SHA256SUMS" or not name.endswith("SHA256SUMS"):
+                continue
+            base = name[: -len("SHA256SUMS")]
+            for line in archive.read(name).decode().splitlines():
+                if not line.strip():
+                    continue
+                expected, relative = line.split("  ", 1)
+                relative = relative.lstrip("./")
+                member = base + relative if not relative.startswith(base) else relative
+                if member not in names:
+                    raise SystemExit(f"self-check failed: nested entry missing {member}")
+                if hashlib.sha256(archive.read(member)).hexdigest() != expected:
+                    raise SystemExit(f"self-check failed: nested hash mismatch {member}")
+                nested_checked += 1
+        if nested_checked == 0:
+            raise SystemExit("self-check failed: no nested manifests verified")
     size = args.out_zip.stat().st_size
     print(json.dumps({
         "zip": str(args.out_zip),
