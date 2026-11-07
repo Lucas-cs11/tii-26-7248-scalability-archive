@@ -1,0 +1,38 @@
+# requirements-modal.lock
+#
+# Exact pins for the v6 scalability benchmark (Modal-only formal execution).
+# Two environments use this file; do not install them into each other:
+#
+# A) Execution image (Linux x86_64, CPython 3.13) built by
+#    modal_app/v6_modal_runner.py:
+#        Image.debian_slim(python_version="3.13")
+#             .pip_install("numpy==2.3.4", "scipy==1.16.2", "modal==1.6.3")
+#    The numpy/scipy wheel hashes are the CPython 3.13 / manylinux x86_64
+#    hashes already frozen for the v5 formal workflows in requirements-v5.lock
+#    (same wheels, same interpreter series).
+#
+# B) Local orchestration machine (macOS/Linux, CPython >= 3.10):
+#    only `modal==1.6.3` is needed.  The v6 Modal orchestration was validated
+#    against the Modal client 1.6.3 already installed in
+#    ../../firing_interval_adjustment/.venv (TII_TPN workspace venv).
+#
+# The local verifier virtualenv (/tmp/v6work/.venv) intentionally does NOT get
+# Modal installed; it stays on numpy/scipy for local correctness tests.
+
+# ---------------------------------------------------------------------------
+# A) execution image (installed inside the Modal container)
+# ---------------------------------------------------------------------------
+numpy==2.3.4 \
+    --hash=sha256:fc8a63918b04b8571789688b2780ab2b4a33ab44bfe8ccea36d3eba51228c953
+scipy==1.16.2 \
+    --hash=sha256:c2275ff105e508942f99d4e3bc56b6ef5e4b3c0af970386ca56b777608ce95b7
+# Modal client inside the image is used only for invocation-id provenance.
+# No wheel hash is pinned for the client: the reproducible identity of the
+# environment is the image spec SHA-256 recorded in every raw record, shard
+# metric and run manifest (base image + pip pins + source tree hash).
+modal==1.6.3
+
+# ---------------------------------------------------------------------------
+# B) local orchestration (already present in the TII Modal venv)
+# ---------------------------------------------------------------------------
+# modal==1.6.3

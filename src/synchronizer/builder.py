@@ -308,6 +308,12 @@ class ObservationSynchronizer:
     edges: List[Tuple[Tuple, str, Tuple]]
     initial_key: Tuple
     candidate_words: List[Tuple[str, ...]]
+    # Read-only view of the transition memo used during construction.  The
+    # memo is keyed by ``(state_key, label)`` and stores the memoised
+    # ``(SyncState, next_key)``.  It is exposed so verification can compare
+    # every memoised transition against a fresh recomputation; it is not used
+    # by the construction itself and must not be mutated by callers.
+    transition_cache: Optional[Dict[Tuple[Tuple, str], Tuple["SyncState", Tuple]]] = None
 
 
 def build_synchronizer(
@@ -402,4 +408,5 @@ def build_synchronizer(
         edges=edges,
         initial_key=initial_key,
         candidate_words=candidate_words,
+        transition_cache=transition_cache,
     )

@@ -1,0 +1,3303 @@
+{
+  "cell_timeout_seconds": 60,
+  "cells": 64,
+  "cells_detail": [
+    {
+      "H": 36.0,
+      "L": 10,
+      "benchmark_family": "F01_sequential_sparse",
+      "experiment": "A_structural",
+      "mode": "first",
+      "model_hash": "250eaca167ff6b80d4556db5d130ad10c6a461001a71ade7a2c247cf99d520ab",
+      "params": {
+        "ops_per_part": 4,
+        "seed": 74943,
+        "v6_family": "F01_sequential_sparse"
+      },
+      "pilot_task_id": "pilot:cfg6-293b3ac60078cac5a857",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 0.402
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-293b3ac60078cac5a857",
+      "stratum": "depth_shallow",
+      "timeout_s": 60
+    },
+    {
+      "H": 54.0,
+      "L": 6,
+      "benchmark_family": "F01_sequential_sparse",
+      "experiment": "C_Lsweep",
+      "mode": "first",
+      "model_hash": "b9c6cc5184e830b10c9920073d95fd0c27c0cf12372ba7ffde5ce707826a4190",
+      "params": {
+        "seed": 74943,
+        "v6_family": "F01_sequential_sparse"
+      },
+      "pilot_task_id": "pilot:cfg6-794a70b9b6d41daf38fc",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 0.402
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-794a70b9b6d41daf38fc",
+      "stratum": "L_mid",
+      "timeout_s": 60
+    },
+    {
+      "H": 54.0,
+      "L": 14,
+      "benchmark_family": "F01_sequential_sparse",
+      "experiment": "C_Lsweep",
+      "mode": "complete",
+      "model_hash": "781b950337db39bf5673e8d0c4ab76b2a30e34720dfe04e217873ea65cb126be",
+      "params": {
+        "seed": 28968,
+        "v6_family": "F01_sequential_sparse"
+      },
+      "pilot_task_id": "pilot:cfg6-37d23678aded4e2723e7",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 0.502
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-37d23678aded4e2723e7",
+      "stratum": "L_high_complete",
+      "timeout_s": 60
+    },
+    {
+      "H": 162.0,
+      "L": 38,
+      "benchmark_family": "F01_sequential_sparse",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "83ec1495f6fdc4c87c57b0ae535c8f2ee9925021c83e2ea1378f34425f4e2d4d",
+      "params": {
+        "n_parts": 3,
+        "seed": 74943,
+        "v6_family": "F01_sequential_sparse",
+        "wip_bound": 1
+      },
+      "pilot_task_id": "pilot:cfg6-03d00af9d8741172f0ef",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 1.506
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-03d00af9d8741172f0ef",
+      "stratum": "WIP_1",
+      "timeout_s": 60
+    },
+    {
+      "H": 54.0,
+      "L": 14,
+      "benchmark_family": "F02_sequential_dense",
+      "experiment": "A_structural",
+      "mode": "first",
+      "model_hash": "aa37de5178d79db816e95007050f276de37dc6e49f2fd4890160423b3c5c8009",
+      "params": {
+        "ops_per_part": 6,
+        "seed": 60977,
+        "v6_family": "F02_sequential_dense"
+      },
+      "pilot_task_id": "pilot:cfg6-d18790b862b03adf4222",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 0.402
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-d18790b862b03adf4222",
+      "stratum": "depth_shallow",
+      "timeout_s": 60
+    },
+    {
+      "H": 72.0,
+      "L": 8,
+      "benchmark_family": "F02_sequential_dense",
+      "experiment": "C_Lsweep",
+      "mode": "first",
+      "model_hash": "0f5ad5981fb5d29f513312ed9c931f53b370e3540800b1c30f7db1293b1a6b11",
+      "params": {
+        "seed": 60977,
+        "v6_family": "F02_sequential_dense"
+      },
+      "pilot_task_id": "pilot:cfg6-6421e17a187e527be574",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 0.502
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-6421e17a187e527be574",
+      "stratum": "L_mid",
+      "timeout_s": 60
+    },
+    {
+      "H": 72.0,
+      "L": 18,
+      "benchmark_family": "F02_sequential_dense",
+      "experiment": "C_Lsweep",
+      "mode": "complete",
+      "model_hash": "847cdadddd786f022ab415d747fe6360debdff3146ac4dda7eaa045ae1b33574",
+      "params": {
+        "seed": 720,
+        "v6_family": "F02_sequential_dense"
+      },
+      "pilot_task_id": "pilot:cfg6-06ff162908423fc1483e",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 1.104
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-06ff162908423fc1483e",
+      "stratum": "L_high_complete",
+      "timeout_s": 60
+    },
+    {
+      "H": 216.0,
+      "L": 50,
+      "benchmark_family": "F02_sequential_dense",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "344e22ed7c5472038fbfe4694021673be276d503290e6f99ddb5b8ea5b07b514",
+      "params": {
+        "n_parts": 3,
+        "seed": 60977,
+        "v6_family": "F02_sequential_dense",
+        "wip_bound": 1
+      },
+      "pilot_task_id": "pilot:cfg6-4b63ed72c243373f508f",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 0.502
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-4b63ed72c243373f508f",
+      "stratum": "WIP_1",
+      "timeout_s": 60
+    },
+    {
+      "H": 72.0,
+      "L": 18,
+      "benchmark_family": "F03_deep_inspection",
+      "experiment": "A_structural",
+      "mode": "first",
+      "model_hash": "d4332442a5c3ae4c71de12306e0973c37d3336e57fa0a3a2dfd795316fdf6a05",
+      "params": {
+        "ops_per_part": 8,
+        "seed": 38924,
+        "v6_family": "F03_deep_inspection"
+      },
+      "pilot_task_id": "pilot:cfg6-072fba608ff59ab9e7aa",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 1.203
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-072fba608ff59ab9e7aa",
+      "stratum": "depth_shallow",
+      "timeout_s": 60
+    },
+    {
+      "H": 90.0,
+      "L": 10,
+      "benchmark_family": "F03_deep_inspection",
+      "experiment": "C_Lsweep",
+      "mode": "first",
+      "model_hash": "5a025c0eab155c8ae61775649d7c650ac22debe5440af47a14f3eaec9b74c955",
+      "params": {
+        "seed": 23516,
+        "v6_family": "F03_deep_inspection"
+      },
+      "pilot_task_id": "pilot:cfg6-639d8d5c43809cf972f9",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 0.503
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-639d8d5c43809cf972f9",
+      "stratum": "L_mid",
+      "timeout_s": 60
+    },
+    {
+      "H": 90.0,
+      "L": 22,
+      "benchmark_family": "F03_deep_inspection",
+      "experiment": "C_Lsweep",
+      "mode": "complete",
+      "model_hash": "5a025c0eab155c8ae61775649d7c650ac22debe5440af47a14f3eaec9b74c955",
+      "params": {
+        "seed": 23516,
+        "v6_family": "F03_deep_inspection"
+      },
+      "pilot_task_id": "pilot:cfg6-4ae19a0618683587dbd5",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 4.412
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-4ae19a0618683587dbd5",
+      "stratum": "L_high_complete",
+      "timeout_s": 60
+    },
+    {
+      "H": 270.0,
+      "L": 62,
+      "benchmark_family": "F03_deep_inspection",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "0c24ca7474cf042124c89ece7ab3a194802878b8c84ee3dc508bfb4a960a1054",
+      "params": {
+        "n_parts": 3,
+        "seed": 38924,
+        "v6_family": "F03_deep_inspection",
+        "wip_bound": 1
+      },
+      "pilot_task_id": "pilot:cfg6-3ea710f2b34da7d9a2aa",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 0.501
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-3ea710f2b34da7d9a2aa",
+      "stratum": "WIP_1",
+      "timeout_s": 60
+    },
+    {
+      "H": 54.0,
+      "L": 14,
+      "benchmark_family": "F04_alternative_routes",
+      "experiment": "A_structural",
+      "mode": "first",
+      "model_hash": "e7dfc2b9aa91a79fcc9bfce72515be5e3d96eb5c00e55fe72dfc6a5935d6a349",
+      "params": {
+        "ops_per_part": 3,
+        "seed": 75714,
+        "v6_family": "F04_alternative_routes"
+      },
+      "pilot_task_id": "pilot:cfg6-a0760a11150aa373e034",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 0.502
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-a0760a11150aa373e034",
+      "stratum": "depth_shallow",
+      "timeout_s": 60
+    },
+    {
+      "H": 90.0,
+      "L": 10,
+      "benchmark_family": "F04_alternative_routes",
+      "experiment": "C_Lsweep",
+      "mode": "first",
+      "model_hash": "770ea9a41230b34d92c65ffdb862044ee080b0731ab3720b9641247ae9fadaa1",
+      "params": {
+        "seed": 75714,
+        "v6_family": "F04_alternative_routes"
+      },
+      "pilot_task_id": "pilot:cfg6-234fb65b4b268c3fe2ef",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 0.402
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-234fb65b4b268c3fe2ef",
+      "stratum": "L_mid",
+      "timeout_s": 60
+    },
+    {
+      "H": 90.0,
+      "L": 22,
+      "benchmark_family": "F04_alternative_routes",
+      "experiment": "C_Lsweep",
+      "mode": "complete",
+      "model_hash": "f291829562197d4ce12d4ca9d9a58e1677146cb768ae186f501ca50795db72bf",
+      "params": {
+        "seed": 20135,
+        "v6_family": "F04_alternative_routes"
+      },
+      "pilot_task_id": "pilot:cfg6-54cd626817d3adc1ca05",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 0.903
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-54cd626817d3adc1ca05",
+      "stratum": "L_high_complete",
+      "timeout_s": 60
+    },
+    {
+      "H": 135.0,
+      "L": 32,
+      "benchmark_family": "F04_alternative_routes",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "458bd59a23d7b5e75c778c17a037725d37e5595ccb6b80ff1c6bedb27c05a02c",
+      "params": {
+        "n_parts": 3,
+        "seed": 75714,
+        "v6_family": "F04_alternative_routes",
+        "wip_bound": 1
+      },
+      "pilot_task_id": "pilot:cfg6-732fa807eb3834bfa756",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 0.603
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-732fa807eb3834bfa756",
+      "stratum": "WIP_1",
+      "timeout_s": 60
+    },
+    {
+      "H": 72.0,
+      "L": 18,
+      "benchmark_family": "F05_routes_inspections",
+      "experiment": "A_structural",
+      "mode": "first",
+      "model_hash": "2114bfb37ab16023b60ae26190857f3e10d376b2b83a4fce98837c4e1a48a459",
+      "params": {
+        "ops_per_part": 4,
+        "seed": 72541,
+        "v6_family": "F05_routes_inspections"
+      },
+      "pilot_task_id": "pilot:cfg6-374bf777f30c585bc30f",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 0.502
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-374bf777f30c585bc30f",
+      "stratum": "depth_shallow",
+      "timeout_s": 60
+    },
+    {
+      "H": 108.0,
+      "L": 12,
+      "benchmark_family": "F05_routes_inspections",
+      "experiment": "C_Lsweep",
+      "mode": "first",
+      "model_hash": "635dbbd76109f15d7dd8e6daec88262c0f14512a60f8e1c10e226eab4ef0633a",
+      "params": {
+        "seed": 74362,
+        "v6_family": "F05_routes_inspections"
+      },
+      "pilot_task_id": "pilot:cfg6-024a62be65da43eb1958",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 0.703
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-024a62be65da43eb1958",
+      "stratum": "L_mid",
+      "timeout_s": 60
+    },
+    {
+      "H": 108.0,
+      "L": 26,
+      "benchmark_family": "F05_routes_inspections",
+      "experiment": "C_Lsweep",
+      "mode": "complete",
+      "model_hash": "635dbbd76109f15d7dd8e6daec88262c0f14512a60f8e1c10e226eab4ef0633a",
+      "params": {
+        "seed": 74362,
+        "v6_family": "F05_routes_inspections"
+      },
+      "pilot_task_id": "pilot:cfg6-0f89168979b6afb0aec4",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "TIMEOUT_WALL_CLOCK",
+        "inconclusive_reason": null,
+        "verdict": null,
+        "wall_s": 60.104
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-0f89168979b6afb0aec4",
+      "stratum": "L_high_complete",
+      "timeout_s": 60
+    },
+    {
+      "H": 162.0,
+      "L": 38,
+      "benchmark_family": "F05_routes_inspections",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "b11841f9e0f14289fc72eb4d8afc215acd0ab782f0228999a2c31fdaf6540dd4",
+      "params": {
+        "n_parts": 3,
+        "seed": 74362,
+        "v6_family": "F05_routes_inspections",
+        "wip_bound": 1
+      },
+      "pilot_task_id": "pilot:cfg6-3ae8066b4064edeb0f98",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 0.803
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-3ae8066b4064edeb0f98",
+      "stratum": "WIP_1",
+      "timeout_s": 60
+    },
+    {
+      "H": 54.0,
+      "L": 14,
+      "benchmark_family": "F06_parallel_parts",
+      "experiment": "A_structural",
+      "mode": "first",
+      "model_hash": "eac20b4d158232d27eda803f7df02275d5c0230fcb998a6664d7c71c3a4b37c5",
+      "params": {
+        "ops_per_part": 2,
+        "seed": 37311,
+        "v6_family": "F06_parallel_parts"
+      },
+      "pilot_task_id": "pilot:cfg6-993b062bbe930d713152",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "TIMEOUT_WALL_CLOCK",
+        "inconclusive_reason": null,
+        "verdict": null,
+        "wall_s": 60.109
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-993b062bbe930d713152",
+      "stratum": "depth_shallow",
+      "timeout_s": 60
+    },
+    {
+      "H": 108.0,
+      "L": 12,
+      "benchmark_family": "F06_parallel_parts",
+      "experiment": "C_Lsweep",
+      "mode": "first",
+      "model_hash": "962608fd61926b4f8b317331b10698fcfbe7e288d83940dfea515e5461a2a0b8",
+      "params": {
+        "seed": 40657,
+        "v6_family": "F06_parallel_parts"
+      },
+      "pilot_task_id": "pilot:cfg6-5aa36bd1c655046a43bf",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 29.193
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-5aa36bd1c655046a43bf",
+      "stratum": "L_mid",
+      "timeout_s": 60
+    },
+    {
+      "H": 108.0,
+      "L": 26,
+      "benchmark_family": "F06_parallel_parts",
+      "experiment": "C_Lsweep",
+      "mode": "complete",
+      "model_hash": "1841f93b8f3aa45fc597684640c696c552171084844fa2fe1433f59e557b4459",
+      "params": {
+        "seed": 37311,
+        "v6_family": "F06_parallel_parts"
+      },
+      "pilot_task_id": "pilot:cfg6-39963f9bd2f7199fffc5",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "TIMEOUT_WALL_CLOCK",
+        "inconclusive_reason": null,
+        "verdict": null,
+        "wall_s": 60.102
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-39963f9bd2f7199fffc5",
+      "stratum": "L_high_complete",
+      "timeout_s": 60
+    },
+    {
+      "H": 108.0,
+      "L": 26,
+      "benchmark_family": "F06_parallel_parts",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "b0f3a43f21349c3fce3e3987e6972092858e4d2f0b48c8c0859b14652b842b11",
+      "params": {
+        "n_parts": 3,
+        "seed": 40657,
+        "v6_family": "F06_parallel_parts",
+        "wip_bound": 1
+      },
+      "pilot_task_id": "pilot:cfg6-93dd6a498349a4e7646a",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 0.502
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-93dd6a498349a4e7646a",
+      "stratum": "WIP_1",
+      "timeout_s": 60
+    },
+    {
+      "H": 54.0,
+      "L": 14,
+      "benchmark_family": "F07_shared_contention",
+      "experiment": "A_structural",
+      "mode": "first",
+      "model_hash": "1e7b2793d7fe281246f50dba9d33d8c52c56279465dc9c7fa83b3f1599a9340d",
+      "params": {
+        "ops_per_part": 2,
+        "seed": 339,
+        "v6_family": "F07_shared_contention"
+      },
+      "pilot_task_id": "pilot:cfg6-2d6c4dc3dde8af24f824",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 0.803
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-2d6c4dc3dde8af24f824",
+      "stratum": "depth_shallow",
+      "timeout_s": 60
+    },
+    {
+      "H": 108.0,
+      "L": 12,
+      "benchmark_family": "F07_shared_contention",
+      "experiment": "C_Lsweep",
+      "mode": "first",
+      "model_hash": "e32cfbfd030a568df4b7fd4202d1451be7895a0c706e7a1987fd019659454eb0",
+      "params": {
+        "seed": 339,
+        "v6_family": "F07_shared_contention"
+      },
+      "pilot_task_id": "pilot:cfg6-a6b479ca207f0007e36e",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 4.714
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-a6b479ca207f0007e36e",
+      "stratum": "L_mid",
+      "timeout_s": 60
+    },
+    {
+      "H": 108.0,
+      "L": 26,
+      "benchmark_family": "F07_shared_contention",
+      "experiment": "C_Lsweep",
+      "mode": "complete",
+      "model_hash": "e32cfbfd030a568df4b7fd4202d1451be7895a0c706e7a1987fd019659454eb0",
+      "params": {
+        "seed": 339,
+        "v6_family": "F07_shared_contention"
+      },
+      "pilot_task_id": "pilot:cfg6-2895e04d423aad0dc640",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "TIMEOUT_WALL_CLOCK",
+        "inconclusive_reason": null,
+        "verdict": null,
+        "wall_s": 60.112
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-2895e04d423aad0dc640",
+      "stratum": "L_high_complete",
+      "timeout_s": 60
+    },
+    {
+      "H": 108.0,
+      "L": 26,
+      "benchmark_family": "F07_shared_contention",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "69413a039c4731570ab74b8950fd5d122e6d20fb71943a98a2033edb9e767488",
+      "params": {
+        "n_parts": 3,
+        "seed": 35307,
+        "v6_family": "F07_shared_contention",
+        "wip_bound": 1
+      },
+      "pilot_task_id": "pilot:cfg6-badf00bc0a4b079ed7a5",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 0.402
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-badf00bc0a4b079ed7a5",
+      "stratum": "WIP_1",
+      "timeout_s": 60
+    },
+    {
+      "H": 81.0,
+      "L": 20,
+      "benchmark_family": "F08_mixed_visibility",
+      "experiment": "A_structural",
+      "mode": "first",
+      "model_hash": "a203baadde5e8cff4fc5ab9e8dff58ef589c144928e6e416e04a0e0b61bfdad2",
+      "params": {
+        "ops_per_part": 3,
+        "seed": 46072,
+        "v6_family": "F08_mixed_visibility"
+      },
+      "pilot_task_id": "pilot:cfg6-8dc3230e6f95d995942e",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 5.518
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-8dc3230e6f95d995942e",
+      "stratum": "depth_shallow",
+      "timeout_s": 60
+    },
+    {
+      "H": 135.0,
+      "L": 15,
+      "benchmark_family": "F08_mixed_visibility",
+      "experiment": "C_Lsweep",
+      "mode": "first",
+      "model_hash": "8c4764846ccc4952284a1f986d18e31fbd9fa03ea680004904578fcf712da8ee",
+      "params": {
+        "seed": 29720,
+        "v6_family": "F08_mixed_visibility"
+      },
+      "pilot_task_id": "pilot:cfg6-351425269dfb843ab6ed",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 4.314
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-351425269dfb843ab6ed",
+      "stratum": "L_mid",
+      "timeout_s": 60
+    },
+    {
+      "H": 135.0,
+      "L": 32,
+      "benchmark_family": "F08_mixed_visibility",
+      "experiment": "C_Lsweep",
+      "mode": "complete",
+      "model_hash": "08322436ea9892ddc4d1edeef8cd498269e1f66e2660e1f81a4c221f46af35c0",
+      "params": {
+        "seed": 46072,
+        "v6_family": "F08_mixed_visibility"
+      },
+      "pilot_task_id": "pilot:cfg6-25b732e87235ba7ee634",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "TIMEOUT_WALL_CLOCK",
+        "inconclusive_reason": null,
+        "verdict": null,
+        "wall_s": 60.048
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-25b732e87235ba7ee634",
+      "stratum": "L_high_complete",
+      "timeout_s": 60
+    },
+    {
+      "H": 135.0,
+      "L": 32,
+      "benchmark_family": "F08_mixed_visibility",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "a3884f805844c41a64869d4fa69cba6f30412404f2d94cb895f928ca862a5d5e",
+      "params": {
+        "n_parts": 3,
+        "seed": 29720,
+        "v6_family": "F08_mixed_visibility",
+        "wip_bound": 1
+      },
+      "pilot_task_id": "pilot:cfg6-7adfae9f512058cac31d",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 0.502
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-7adfae9f512058cac31d",
+      "stratum": "WIP_1",
+      "timeout_s": 60
+    },
+    {
+      "H": 108.0,
+      "L": 26,
+      "benchmark_family": "F09_deep_fault_stages",
+      "experiment": "A_structural",
+      "mode": "first",
+      "model_hash": "9a615415ae20a748d89c5937c5103746309f77e7ecf7905cf4cf00c8c82f9831",
+      "params": {
+        "ops_per_part": 6,
+        "seed": 90316,
+        "v6_family": "F09_deep_fault_stages"
+      },
+      "pilot_task_id": "pilot:cfg6-ebd02972adb6f5321bbe",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 33.305
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-ebd02972adb6f5321bbe",
+      "stratum": "depth_shallow",
+      "timeout_s": 60
+    },
+    {
+      "H": 144.0,
+      "L": 16,
+      "benchmark_family": "F09_deep_fault_stages",
+      "experiment": "C_Lsweep",
+      "mode": "first",
+      "model_hash": "442fdd8965d49430bd8362abbdfd31f022c993f0720391ae8355dd413f0c7789",
+      "params": {
+        "seed": 73088,
+        "v6_family": "F09_deep_fault_stages"
+      },
+      "pilot_task_id": "pilot:cfg6-06ead7b8f8544551904d",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 4.114
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-06ead7b8f8544551904d",
+      "stratum": "L_mid",
+      "timeout_s": 60
+    },
+    {
+      "H": 144.0,
+      "L": 34,
+      "benchmark_family": "F09_deep_fault_stages",
+      "experiment": "C_Lsweep",
+      "mode": "complete",
+      "model_hash": "d3d1251d694b0024a2b3ba46407470cd8594a6d3a82ec3004d8d87e7f81d9999",
+      "params": {
+        "seed": 90316,
+        "v6_family": "F09_deep_fault_stages"
+      },
+      "pilot_task_id": "pilot:cfg6-6d9fb9c2c4dcd5ab9dad",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "TIMEOUT_WALL_CLOCK",
+        "inconclusive_reason": null,
+        "verdict": null,
+        "wall_s": 60.207
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-6d9fb9c2c4dcd5ab9dad",
+      "stratum": "L_high_complete",
+      "timeout_s": 60
+    },
+    {
+      "H": 216.0,
+      "L": 50,
+      "benchmark_family": "F09_deep_fault_stages",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "efd6bea81c60f298972563b7808ba2ff9b7de0283dccf00e4d0dcbce2ce1f226",
+      "params": {
+        "n_parts": 3,
+        "seed": 73088,
+        "v6_family": "F09_deep_fault_stages",
+        "wip_bound": 1
+      },
+      "pilot_task_id": "pilot:cfg6-3ccff75437d8048eb4c8",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 0.703
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-3ccff75437d8048eb4c8",
+      "stratum": "WIP_1",
+      "timeout_s": 60
+    },
+    {
+      "H": 108.0,
+      "L": 14,
+      "benchmark_family": "F10_bounded_rework",
+      "experiment": "A_structural",
+      "mode": "first",
+      "model_hash": "28857b1d093053aaf096b3266294af0bdcc964202cb2a3d350edb016176d9d5f",
+      "params": {
+        "ops_per_part": 6,
+        "seed": 68653,
+        "v6_family": "F10_bounded_rework"
+      },
+      "pilot_task_id": "pilot:cfg6-559712f590f2bf01b452",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 0.402
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-559712f590f2bf01b452",
+      "stratum": "depth_shallow",
+      "timeout_s": 60
+    },
+    {
+      "H": 144.0,
+      "L": 8,
+      "benchmark_family": "F10_bounded_rework",
+      "experiment": "C_Lsweep",
+      "mode": "first",
+      "model_hash": "ab0fddb88440b28de8037ed8e32112670c0ed85d5ad75a944aa77a679dbf5f8c",
+      "params": {
+        "seed": 68653,
+        "v6_family": "F10_bounded_rework"
+      },
+      "pilot_task_id": "pilot:cfg6-709628fa6d12461bfc8d",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 0.402
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-709628fa6d12461bfc8d",
+      "stratum": "L_mid",
+      "timeout_s": 60
+    },
+    {
+      "H": 144.0,
+      "L": 18,
+      "benchmark_family": "F10_bounded_rework",
+      "experiment": "C_Lsweep",
+      "mode": "complete",
+      "model_hash": "ab0fddb88440b28de8037ed8e32112670c0ed85d5ad75a944aa77a679dbf5f8c",
+      "params": {
+        "seed": 68653,
+        "v6_family": "F10_bounded_rework"
+      },
+      "pilot_task_id": "pilot:cfg6-3071f3b6ceb7beeaa056",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 0.301
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-3071f3b6ceb7beeaa056",
+      "stratum": "L_high_complete",
+      "timeout_s": 60
+    },
+    {
+      "H": 432.0,
+      "L": 50,
+      "benchmark_family": "F10_bounded_rework",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "f87ae5fb295c8a2c59f58ecebb219e1bb3041899db654314a4a1f9467e5affd1",
+      "params": {
+        "n_parts": 3,
+        "seed": 31989,
+        "v6_family": "F10_bounded_rework",
+        "wip_bound": 1
+      },
+      "pilot_task_id": "pilot:cfg6-25e912fc2109ecff0cd5",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 1.004
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-25e912fc2109ecff0cd5",
+      "stratum": "WIP_1",
+      "timeout_s": 60
+    },
+    {
+      "H": 108.0,
+      "L": 14,
+      "benchmark_family": "F11_resource_cycle",
+      "experiment": "A_structural",
+      "mode": "first",
+      "model_hash": "835a8104161450b74fc3b3e51ea0880f6e2ba74ba6cf3474af577d736912f2d8",
+      "params": {
+        "ops_per_part": 2,
+        "seed": 52855,
+        "v6_family": "F11_resource_cycle"
+      },
+      "pilot_task_id": "pilot:cfg6-739a0d2cb6648733e460",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 1.205
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-739a0d2cb6648733e460",
+      "stratum": "depth_shallow",
+      "timeout_s": 60
+    },
+    {
+      "H": 216.0,
+      "L": 12,
+      "benchmark_family": "F11_resource_cycle",
+      "experiment": "C_Lsweep",
+      "mode": "first",
+      "model_hash": "ef2eb7aacdb0076bfadff53d51a6f952ad3e1415e3faeaf8885546b2cb1be3c8",
+      "params": {
+        "seed": 52855,
+        "v6_family": "F11_resource_cycle"
+      },
+      "pilot_task_id": "pilot:cfg6-3cc8f43d6c48325d823e",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 1.204
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-3cc8f43d6c48325d823e",
+      "stratum": "L_mid",
+      "timeout_s": 60
+    },
+    {
+      "H": 216.0,
+      "L": 26,
+      "benchmark_family": "F11_resource_cycle",
+      "experiment": "C_Lsweep",
+      "mode": "complete",
+      "model_hash": "ef2eb7aacdb0076bfadff53d51a6f952ad3e1415e3faeaf8885546b2cb1be3c8",
+      "params": {
+        "seed": 52855,
+        "v6_family": "F11_resource_cycle"
+      },
+      "pilot_task_id": "pilot:cfg6-3312354754090ff7c06c",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "TIMEOUT_WALL_CLOCK",
+        "inconclusive_reason": null,
+        "verdict": null,
+        "wall_s": 60.063
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-3312354754090ff7c06c",
+      "stratum": "L_high_complete",
+      "timeout_s": 60
+    },
+    {
+      "H": 216.0,
+      "L": 26,
+      "benchmark_family": "F11_resource_cycle",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "70fcf81866d5a3a311ed93b5065bca2fb6b910cb30e0bc7651e4011a87c57313",
+      "params": {
+        "n_parts": 3,
+        "seed": 52855,
+        "v6_family": "F11_resource_cycle",
+        "wip_bound": 1
+      },
+      "pilot_task_id": "pilot:cfg6-2aaff57df8dd745f2a5e",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 0.502
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-2aaff57df8dd745f2a5e",
+      "stratum": "WIP_1",
+      "timeout_s": 60
+    },
+    {
+      "H": 225.0,
+      "L": 22,
+      "benchmark_family": "F12_sparse_cycle",
+      "experiment": "A_structural",
+      "mode": "first",
+      "model_hash": "810def85f13303f9ef86f102a9601a0dce44fd65edd0f538375ed843366a1cb3",
+      "params": {
+        "ops_per_part": 5,
+        "seed": 4292,
+        "v6_family": "F12_sparse_cycle"
+      },
+      "pilot_task_id": "pilot:cfg6-08bada213ee6a3b28be1",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 38.31
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-08bada213ee6a3b28be1",
+      "stratum": "depth_shallow",
+      "timeout_s": 60
+    },
+    {
+      "H": 315.0,
+      "L": 14,
+      "benchmark_family": "F12_sparse_cycle",
+      "experiment": "C_Lsweep",
+      "mode": "first",
+      "model_hash": "bdc3c5d26f703463ffe5bff4bf2464654ee9769efdc77f785327fb0a0a6e0e26",
+      "params": {
+        "seed": 1524,
+        "v6_family": "F12_sparse_cycle"
+      },
+      "pilot_task_id": "pilot:cfg6-0c2ea0e63bda7e77a941",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "VER",
+        "wall_s": 2.107
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-0c2ea0e63bda7e77a941",
+      "stratum": "L_mid",
+      "timeout_s": 60
+    },
+    {
+      "H": 315.0,
+      "L": 30,
+      "benchmark_family": "F12_sparse_cycle",
+      "experiment": "C_Lsweep",
+      "mode": "complete",
+      "model_hash": "01c64745de2a66c9a18ad659a1956a6f55921bd23e8634070910505a737f0f33",
+      "params": {
+        "seed": 4292,
+        "v6_family": "F12_sparse_cycle"
+      },
+      "pilot_task_id": "pilot:cfg6-1720f92bbc0b6ab25ad6",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "TIMEOUT_WALL_CLOCK",
+        "inconclusive_reason": null,
+        "verdict": null,
+        "wall_s": 60.105
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-1720f92bbc0b6ab25ad6",
+      "stratum": "L_high_complete",
+      "timeout_s": 60
+    },
+    {
+      "H": 472.5,
+      "L": 44,
+      "benchmark_family": "F12_sparse_cycle",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "314e60d03d9cea1f28937e5f676fccf4f7265b14db31483618ce2c1dbf719995",
+      "params": {
+        "n_parts": 3,
+        "seed": 1524,
+        "v6_family": "F12_sparse_cycle",
+        "wip_bound": 1
+      },
+      "pilot_task_id": "pilot:cfg6-4254da700cc1d40b9a43",
+      "protocol": "v6-pilot-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 4.516
+      },
+      "reference_run": "42348132809",
+      "source_task_id": "cfg6-4254da700cc1d40b9a43",
+      "stratum": "WIP_1",
+      "timeout_s": 60
+    },
+    {
+      "H": 216.0,
+      "L": 50,
+      "benchmark_family": "F01_sequential_sparse",
+      "experiment": "D_difficult",
+      "mode": "first",
+      "model_hash": "b21bfecf29f74455d33ab2ecbe545af46fcb503244983672b5c774767c33dd7b",
+      "params": {
+        "inspection_locations": 3,
+        "n_parts": 3,
+        "ops_per_part": 8,
+        "rework_locations": 1,
+        "route_choices": 2,
+        "seed": 66342,
+        "v6_family": "F01_sequential_sparse",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-6745da1969ad571a1b7a",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": "SCG_STATE_LIMIT",
+        "verdict": "INC",
+        "wall_s": 35.32
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-6745da1969ad571a1b7a",
+      "stratum": "difficult_first",
+      "timeout_s": 60
+    },
+    {
+      "H": 270.0,
+      "L": 62,
+      "benchmark_family": "F02_sequential_dense",
+      "experiment": "D_difficult",
+      "mode": "first",
+      "model_hash": "032e38fb6f16eff12eedbaa6f21503441c4fabd0bda9138390e82e0afb929c13",
+      "params": {
+        "inspection_locations": 4,
+        "n_parts": 3,
+        "ops_per_part": 10,
+        "rework_locations": 1,
+        "route_choices": 2,
+        "seed": 51087,
+        "v6_family": "F02_sequential_dense",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-5f480bce2bd557b05204",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": "SCG_STATE_LIMIT",
+        "verdict": "INC",
+        "wall_s": 38.625
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-5f480bce2bd557b05204",
+      "stratum": "difficult_first",
+      "timeout_s": 60
+    },
+    {
+      "H": 270.0,
+      "L": 62,
+      "benchmark_family": "F03_deep_inspection",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "8463264eb802fd294b42dade3d3158c9088e77f9811449edc8f29ca1905ee30b",
+      "params": {
+        "n_parts": 3,
+        "seed": 81692,
+        "v6_family": "F03_deep_inspection",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-193532a5daa4b2110259",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": "SCG_STATE_LIMIT",
+        "verdict": "INC",
+        "wall_s": 38.822
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-193532a5daa4b2110259",
+      "stratum": "WIP_3",
+      "timeout_s": 60
+    },
+    {
+      "H": 135.0,
+      "L": 32,
+      "benchmark_family": "F04_alternative_routes",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "e59a7431619b38ce26c66b6ef63f60e92bb8f9ff6b7e1a7b6a80f396aca7ad0f",
+      "params": {
+        "n_parts": 3,
+        "seed": 41553,
+        "v6_family": "F04_alternative_routes",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-3e3b6b47fe10adaab5ab",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "TIMEOUT_WALL_CLOCK",
+        "inconclusive_reason": null,
+        "verdict": null,
+        "wall_s": 60.1
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-3e3b6b47fe10adaab5ab",
+      "stratum": "WIP_3",
+      "timeout_s": 60
+    },
+    {
+      "H": 162.0,
+      "L": 38,
+      "benchmark_family": "F05_routes_inspections",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "56e9312e3173adbf8196bd206229cf25a862c818d88fb3b94b75460647ef4cbb",
+      "params": {
+        "n_parts": 3,
+        "seed": 83606,
+        "v6_family": "F05_routes_inspections",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-b65268a16bc8a869c79f",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": "SCG_STATE_LIMIT",
+        "verdict": "INC",
+        "wall_s": 46.337
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-b65268a16bc8a869c79f",
+      "stratum": "WIP_3",
+      "timeout_s": 60
+    },
+    {
+      "H": 144.0,
+      "L": 34,
+      "benchmark_family": "F06_parallel_parts",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "2217092cc1eb9ffef8bf7635eb4b181ee9558acd815b023b10fb93c954eba3c3",
+      "params": {
+        "n_parts": 4,
+        "seed": 11635,
+        "v6_family": "F06_parallel_parts",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-b894fb30b4a6386a5df3",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": "SCG_STATE_LIMIT",
+        "verdict": "INC",
+        "wall_s": 43.05
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-b894fb30b4a6386a5df3",
+      "stratum": "WIP_3",
+      "timeout_s": 60
+    },
+    {
+      "H": 144.0,
+      "L": 34,
+      "benchmark_family": "F07_shared_contention",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "499b5b5fc5e7f23cace2f9721452e60c40553b127cb173cdab70f07857243f7c",
+      "params": {
+        "n_parts": 4,
+        "seed": 7689,
+        "v6_family": "F07_shared_contention",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-086f33eaabfd80fc491e",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "TIMEOUT_WALL_CLOCK",
+        "inconclusive_reason": null,
+        "verdict": null,
+        "wall_s": 60.067
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-086f33eaabfd80fc491e",
+      "stratum": "WIP_3",
+      "timeout_s": 60
+    },
+    {
+      "H": 180.0,
+      "L": 42,
+      "benchmark_family": "F08_mixed_visibility",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "4294c9c797ef63f3648102ca131f89b6fc0a635590ad63d3355f4441e5825910",
+      "params": {
+        "n_parts": 4,
+        "seed": 19746,
+        "v6_family": "F08_mixed_visibility",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-49e9fec004b7dd435b69",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": "SCG_STATE_LIMIT",
+        "verdict": "INC",
+        "wall_s": 29.584
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-49e9fec004b7dd435b69",
+      "stratum": "WIP_3",
+      "timeout_s": 60
+    },
+    {
+      "H": 216.0,
+      "L": 50,
+      "benchmark_family": "F09_deep_fault_stages",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "31024ce90074aa259206d6fc88dc6da4d638b7474466f758c7022c0b495158a2",
+      "params": {
+        "n_parts": 3,
+        "seed": 97766,
+        "v6_family": "F09_deep_fault_stages",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-c7ab2af37e0ae7ec8f57",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": "SCG_STATE_LIMIT",
+        "verdict": "INC",
+        "wall_s": 54.099
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-c7ab2af37e0ae7ec8f57",
+      "stratum": "WIP_3",
+      "timeout_s": 60
+    },
+    {
+      "H": 540.0,
+      "L": 62,
+      "benchmark_family": "F10_bounded_rework",
+      "experiment": "D_difficult",
+      "mode": "first",
+      "model_hash": "032828900a11f30a0bfc15feac3a7dd3ea1deb1998a35b860da293219de7adeb",
+      "params": {
+        "inspection_locations": 5,
+        "n_parts": 3,
+        "ops_per_part": 10,
+        "rework_locations": 2,
+        "route_choices": 2,
+        "seed": 87700,
+        "v6_family": "F10_bounded_rework",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-8e5a9851528dcb58dc88",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": "SCG_STATE_LIMIT",
+        "verdict": "INC",
+        "wall_s": 57.351
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-8e5a9851528dcb58dc88",
+      "stratum": "difficult_first",
+      "timeout_s": 60
+    },
+    {
+      "H": 288.0,
+      "L": 34,
+      "benchmark_family": "F11_resource_cycle",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "10009708a376e2f91b69dd08568726681b1bcc937c590f978dfc83db64fc327b",
+      "params": {
+        "n_parts": 4,
+        "seed": 70598,
+        "v6_family": "F11_resource_cycle",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-da43526ed7116c949e4b",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": "SCG_STATE_LIMIT",
+        "verdict": "INC",
+        "wall_s": 41.01
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-da43526ed7116c949e4b",
+      "stratum": "WIP_3",
+      "timeout_s": 60
+    },
+    {
+      "H": 607.5,
+      "L": 56,
+      "benchmark_family": "F12_sparse_cycle",
+      "experiment": "D_difficult",
+      "mode": "first",
+      "model_hash": "1d9de226c3fabe29cf3238ba7cd2cb8c2e5e170c71cd2c3dd16c3280ad00b830",
+      "params": {
+        "inspection_locations": 4,
+        "n_parts": 3,
+        "ops_per_part": 9,
+        "rework_locations": 2,
+        "route_choices": 4,
+        "seed": 47044,
+        "v6_family": "F12_sparse_cycle",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-b370e33aa2980cb7c8f3",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": "SCG_STATE_LIMIT",
+        "verdict": "INC",
+        "wall_s": 55.815
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-b370e33aa2980cb7c8f3",
+      "stratum": "difficult_first",
+      "timeout_s": 60
+    },
+    {
+      "H": 162.0,
+      "L": 38,
+      "benchmark_family": "F06_parallel_parts",
+      "experiment": "D_difficult",
+      "mode": "first",
+      "model_hash": "a151588924557a82389d1a76898cb2d1f521c529073e32c9b4753cdd56c923d1",
+      "params": {
+        "inspection_locations": 5,
+        "n_parts": 3,
+        "ops_per_part": 6,
+        "rework_locations": 1,
+        "route_choices": 2,
+        "seed": 11635,
+        "v6_family": "F06_parallel_parts",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-c2d276d306603d8f91e0",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": "SCG_STATE_LIMIT",
+        "verdict": "INC",
+        "wall_s": 53.89
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-c2d276d306603d8f91e0",
+      "stratum": "difficult_first",
+      "timeout_s": 60
+    },
+    {
+      "H": 144.0,
+      "L": 34,
+      "benchmark_family": "F07_shared_contention",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "71b9516fe8db0e0b392ebb26211b300ee2e6aed67d747f0e6c3c2180aab631cc",
+      "params": {
+        "n_parts": 4,
+        "seed": 7689,
+        "v6_family": "F07_shared_contention",
+        "wip_bound": 1
+      },
+      "pilot_task_id": "pilot:cfg6-01d57177ada084508982",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": null,
+        "verdict": "AMB",
+        "wall_s": 0.502
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-01d57177ada084508982",
+      "stratum": "WIP_1",
+      "timeout_s": 60
+    },
+    {
+      "H": 324.0,
+      "L": 38,
+      "benchmark_family": "F11_resource_cycle",
+      "experiment": "D_difficult",
+      "mode": "first",
+      "model_hash": "7cdc0c90d61172064a83aa982f177ffe73c559f7b7d29c82674a159e328019a1",
+      "params": {
+        "inspection_locations": 5,
+        "n_parts": 3,
+        "ops_per_part": 6,
+        "rework_locations": 1,
+        "route_choices": 2,
+        "seed": 70598,
+        "v6_family": "F11_resource_cycle",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-42b65b49d5ab21652ebe",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "TIMEOUT_WALL_CLOCK",
+        "inconclusive_reason": null,
+        "verdict": null,
+        "wall_s": 60.084
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-42b65b49d5ab21652ebe",
+      "stratum": "difficult_first",
+      "timeout_s": 60
+    },
+    {
+      "H": 472.5,
+      "L": 44,
+      "benchmark_family": "F12_sparse_cycle",
+      "experiment": "B_wip",
+      "mode": "first",
+      "model_hash": "4436af01800ecf7822ad5175445a329679cab59dc48d9ed53af01604b75aa96a",
+      "params": {
+        "n_parts": 3,
+        "seed": 47044,
+        "v6_family": "F12_sparse_cycle",
+        "wip_bound": 3
+      },
+      "pilot_task_id": "pilot:cfg6-da61f647d1d2bbed009c",
+      "protocol": "v6-cache-validation-1",
+      "reference": {
+        "execution_status": "COMPLETED",
+        "inconclusive_reason": "SCG_STATE_LIMIT",
+        "verdict": "INC",
+        "wall_s": 54.417
+      },
+      "reference_run": "42347953385",
+      "source_task_id": "cfg6-da61f647d1d2bbed009c",
+      "stratum": "WIP_3",
+      "timeout_s": 60
+    }
+  ],
+  "frozen_before_execution": true,
+  "protocol": "v6-modal-pilot-1",
+  "purpose": "Modal environment portability check before the formal 8,280 matrix: verdict consistency against audited GitHub records, memory behaviour, timeout semantics, cache hit/miss, checkpoint recovery",
+  "reference_runs": {
+    "42347953385": "optimized 96-cell difficulty sample",
+    "42348132809": "optimized 288-cell GitHub pilot"
+  },
+  "selection_rule": "48 frozen differential cells plus 16 frozen difficulty cells per family (prefer INC reference, else timeout, plus four heavy-family extras)",
+  "shard_plan": [
+    {
+      "shard_id": "pilot_000",
+      "tasks": [
+        {
+          "H": 315.0,
+          "L": 30,
+          "benchmark_family": "F12_sparse_cycle",
+          "experiment": "C_Lsweep",
+          "mode": "complete",
+          "model_hash": "01c64745de2a66c9a18ad659a1956a6f55921bd23e8634070910505a737f0f33",
+          "params": {
+            "seed": 4292,
+            "v6_family": "F12_sparse_cycle"
+          },
+          "pilot_task_id": "pilot:cfg6-1720f92bbc0b6ab25ad6",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "TIMEOUT_WALL_CLOCK",
+            "inconclusive_reason": null,
+            "verdict": null,
+            "wall_s": 60.105
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-1720f92bbc0b6ab25ad6",
+          "stratum": "L_high_complete",
+          "timeout_s": 60
+        },
+        {
+          "H": 540.0,
+          "L": 62,
+          "benchmark_family": "F10_bounded_rework",
+          "experiment": "D_difficult",
+          "mode": "first",
+          "model_hash": "032828900a11f30a0bfc15feac3a7dd3ea1deb1998a35b860da293219de7adeb",
+          "params": {
+            "inspection_locations": 5,
+            "n_parts": 3,
+            "ops_per_part": 10,
+            "rework_locations": 2,
+            "route_choices": 2,
+            "seed": 87700,
+            "v6_family": "F10_bounded_rework",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-8e5a9851528dcb58dc88",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": "SCG_STATE_LIMIT",
+            "verdict": "INC",
+            "wall_s": 57.351
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-8e5a9851528dcb58dc88",
+          "stratum": "difficult_first",
+          "timeout_s": 60
+        },
+        {
+          "H": 270.0,
+          "L": 62,
+          "benchmark_family": "F02_sequential_dense",
+          "experiment": "D_difficult",
+          "mode": "first",
+          "model_hash": "032e38fb6f16eff12eedbaa6f21503441c4fabd0bda9138390e82e0afb929c13",
+          "params": {
+            "inspection_locations": 4,
+            "n_parts": 3,
+            "ops_per_part": 10,
+            "rework_locations": 1,
+            "route_choices": 2,
+            "seed": 51087,
+            "v6_family": "F02_sequential_dense",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-5f480bce2bd557b05204",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": "SCG_STATE_LIMIT",
+            "verdict": "INC",
+            "wall_s": 38.625
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-5f480bce2bd557b05204",
+          "stratum": "difficult_first",
+          "timeout_s": 60
+        },
+        {
+          "H": 135.0,
+          "L": 32,
+          "benchmark_family": "F08_mixed_visibility",
+          "experiment": "C_Lsweep",
+          "mode": "complete",
+          "model_hash": "08322436ea9892ddc4d1edeef8cd498269e1f66e2660e1f81a4c221f46af35c0",
+          "params": {
+            "seed": 46072,
+            "v6_family": "F08_mixed_visibility"
+          },
+          "pilot_task_id": "pilot:cfg6-25b732e87235ba7ee634",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "TIMEOUT_WALL_CLOCK",
+            "inconclusive_reason": null,
+            "verdict": null,
+            "wall_s": 60.048
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-25b732e87235ba7ee634",
+          "stratum": "L_high_complete",
+          "timeout_s": 60
+        },
+        {
+          "H": 270.0,
+          "L": 62,
+          "benchmark_family": "F03_deep_inspection",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "0c24ca7474cf042124c89ece7ab3a194802878b8c84ee3dc508bfb4a960a1054",
+          "params": {
+            "n_parts": 3,
+            "seed": 38924,
+            "v6_family": "F03_deep_inspection",
+            "wip_bound": 1
+          },
+          "pilot_task_id": "pilot:cfg6-3ea710f2b34da7d9a2aa",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 0.501
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-3ea710f2b34da7d9a2aa",
+          "stratum": "WIP_1",
+          "timeout_s": 60
+        },
+        {
+          "H": 72.0,
+          "L": 8,
+          "benchmark_family": "F02_sequential_dense",
+          "experiment": "C_Lsweep",
+          "mode": "first",
+          "model_hash": "0f5ad5981fb5d29f513312ed9c931f53b370e3540800b1c30f7db1293b1a6b11",
+          "params": {
+            "seed": 60977,
+            "v6_family": "F02_sequential_dense"
+          },
+          "pilot_task_id": "pilot:cfg6-6421e17a187e527be574",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 0.502
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-6421e17a187e527be574",
+          "stratum": "L_mid",
+          "timeout_s": 60
+        },
+        {
+          "H": 288.0,
+          "L": 34,
+          "benchmark_family": "F11_resource_cycle",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "10009708a376e2f91b69dd08568726681b1bcc937c590f978dfc83db64fc327b",
+          "params": {
+            "n_parts": 4,
+            "seed": 70598,
+            "v6_family": "F11_resource_cycle",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-da43526ed7116c949e4b",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": "SCG_STATE_LIMIT",
+            "verdict": "INC",
+            "wall_s": 41.01
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-da43526ed7116c949e4b",
+          "stratum": "WIP_3",
+          "timeout_s": 60
+        },
+        {
+          "H": 108.0,
+          "L": 26,
+          "benchmark_family": "F06_parallel_parts",
+          "experiment": "C_Lsweep",
+          "mode": "complete",
+          "model_hash": "1841f93b8f3aa45fc597684640c696c552171084844fa2fe1433f59e557b4459",
+          "params": {
+            "seed": 37311,
+            "v6_family": "F06_parallel_parts"
+          },
+          "pilot_task_id": "pilot:cfg6-39963f9bd2f7199fffc5",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "TIMEOUT_WALL_CLOCK",
+            "inconclusive_reason": null,
+            "verdict": null,
+            "wall_s": 60.102
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-39963f9bd2f7199fffc5",
+          "stratum": "L_high_complete",
+          "timeout_s": 60
+        },
+        {
+          "H": 607.5,
+          "L": 56,
+          "benchmark_family": "F12_sparse_cycle",
+          "experiment": "D_difficult",
+          "mode": "first",
+          "model_hash": "1d9de226c3fabe29cf3238ba7cd2cb8c2e5e170c71cd2c3dd16c3280ad00b830",
+          "params": {
+            "inspection_locations": 4,
+            "n_parts": 3,
+            "ops_per_part": 9,
+            "rework_locations": 2,
+            "route_choices": 4,
+            "seed": 47044,
+            "v6_family": "F12_sparse_cycle",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-b370e33aa2980cb7c8f3",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": "SCG_STATE_LIMIT",
+            "verdict": "INC",
+            "wall_s": 55.815
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-b370e33aa2980cb7c8f3",
+          "stratum": "difficult_first",
+          "timeout_s": 60
+        },
+        {
+          "H": 54.0,
+          "L": 14,
+          "benchmark_family": "F07_shared_contention",
+          "experiment": "A_structural",
+          "mode": "first",
+          "model_hash": "1e7b2793d7fe281246f50dba9d33d8c52c56279465dc9c7fa83b3f1599a9340d",
+          "params": {
+            "ops_per_part": 2,
+            "seed": 339,
+            "v6_family": "F07_shared_contention"
+          },
+          "pilot_task_id": "pilot:cfg6-2d6c4dc3dde8af24f824",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 0.803
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-2d6c4dc3dde8af24f824",
+          "stratum": "depth_shallow",
+          "timeout_s": 60
+        },
+        {
+          "H": 72.0,
+          "L": 18,
+          "benchmark_family": "F05_routes_inspections",
+          "experiment": "A_structural",
+          "mode": "first",
+          "model_hash": "2114bfb37ab16023b60ae26190857f3e10d376b2b83a4fce98837c4e1a48a459",
+          "params": {
+            "ops_per_part": 4,
+            "seed": 72541,
+            "v6_family": "F05_routes_inspections"
+          },
+          "pilot_task_id": "pilot:cfg6-374bf777f30c585bc30f",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 0.502
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-374bf777f30c585bc30f",
+          "stratum": "depth_shallow",
+          "timeout_s": 60
+        },
+        {
+          "H": 144.0,
+          "L": 34,
+          "benchmark_family": "F06_parallel_parts",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "2217092cc1eb9ffef8bf7635eb4b181ee9558acd815b023b10fb93c954eba3c3",
+          "params": {
+            "n_parts": 4,
+            "seed": 11635,
+            "v6_family": "F06_parallel_parts",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-b894fb30b4a6386a5df3",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": "SCG_STATE_LIMIT",
+            "verdict": "INC",
+            "wall_s": 43.05
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-b894fb30b4a6386a5df3",
+          "stratum": "WIP_3",
+          "timeout_s": 60
+        }
+      ]
+    },
+    {
+      "shard_id": "pilot_001",
+      "tasks": [
+        {
+          "H": 36.0,
+          "L": 10,
+          "benchmark_family": "F01_sequential_sparse",
+          "experiment": "A_structural",
+          "mode": "first",
+          "model_hash": "250eaca167ff6b80d4556db5d130ad10c6a461001a71ade7a2c247cf99d520ab",
+          "params": {
+            "ops_per_part": 4,
+            "seed": 74943,
+            "v6_family": "F01_sequential_sparse"
+          },
+          "pilot_task_id": "pilot:cfg6-293b3ac60078cac5a857",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 0.402
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-293b3ac60078cac5a857",
+          "stratum": "depth_shallow",
+          "timeout_s": 60
+        },
+        {
+          "H": 108.0,
+          "L": 14,
+          "benchmark_family": "F10_bounded_rework",
+          "experiment": "A_structural",
+          "mode": "first",
+          "model_hash": "28857b1d093053aaf096b3266294af0bdcc964202cb2a3d350edb016176d9d5f",
+          "params": {
+            "ops_per_part": 6,
+            "seed": 68653,
+            "v6_family": "F10_bounded_rework"
+          },
+          "pilot_task_id": "pilot:cfg6-559712f590f2bf01b452",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 0.402
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-559712f590f2bf01b452",
+          "stratum": "depth_shallow",
+          "timeout_s": 60
+        },
+        {
+          "H": 216.0,
+          "L": 50,
+          "benchmark_family": "F09_deep_fault_stages",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "31024ce90074aa259206d6fc88dc6da4d638b7474466f758c7022c0b495158a2",
+          "params": {
+            "n_parts": 3,
+            "seed": 97766,
+            "v6_family": "F09_deep_fault_stages",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-c7ab2af37e0ae7ec8f57",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": "SCG_STATE_LIMIT",
+            "verdict": "INC",
+            "wall_s": 54.099
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-c7ab2af37e0ae7ec8f57",
+          "stratum": "WIP_3",
+          "timeout_s": 60
+        },
+        {
+          "H": 472.5,
+          "L": 44,
+          "benchmark_family": "F12_sparse_cycle",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "314e60d03d9cea1f28937e5f676fccf4f7265b14db31483618ce2c1dbf719995",
+          "params": {
+            "n_parts": 3,
+            "seed": 1524,
+            "v6_family": "F12_sparse_cycle",
+            "wip_bound": 1
+          },
+          "pilot_task_id": "pilot:cfg6-4254da700cc1d40b9a43",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 4.516
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-4254da700cc1d40b9a43",
+          "stratum": "WIP_1",
+          "timeout_s": 60
+        },
+        {
+          "H": 216.0,
+          "L": 50,
+          "benchmark_family": "F02_sequential_dense",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "344e22ed7c5472038fbfe4694021673be276d503290e6f99ddb5b8ea5b07b514",
+          "params": {
+            "n_parts": 3,
+            "seed": 60977,
+            "v6_family": "F02_sequential_dense",
+            "wip_bound": 1
+          },
+          "pilot_task_id": "pilot:cfg6-4b63ed72c243373f508f",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 0.502
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-4b63ed72c243373f508f",
+          "stratum": "WIP_1",
+          "timeout_s": 60
+        },
+        {
+          "H": 180.0,
+          "L": 42,
+          "benchmark_family": "F08_mixed_visibility",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "4294c9c797ef63f3648102ca131f89b6fc0a635590ad63d3355f4441e5825910",
+          "params": {
+            "n_parts": 4,
+            "seed": 19746,
+            "v6_family": "F08_mixed_visibility",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-49e9fec004b7dd435b69",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": "SCG_STATE_LIMIT",
+            "verdict": "INC",
+            "wall_s": 29.584
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-49e9fec004b7dd435b69",
+          "stratum": "WIP_3",
+          "timeout_s": 60
+        },
+        {
+          "H": 144.0,
+          "L": 16,
+          "benchmark_family": "F09_deep_fault_stages",
+          "experiment": "C_Lsweep",
+          "mode": "first",
+          "model_hash": "442fdd8965d49430bd8362abbdfd31f022c993f0720391ae8355dd413f0c7789",
+          "params": {
+            "seed": 73088,
+            "v6_family": "F09_deep_fault_stages"
+          },
+          "pilot_task_id": "pilot:cfg6-06ead7b8f8544551904d",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 4.114
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-06ead7b8f8544551904d",
+          "stratum": "L_mid",
+          "timeout_s": 60
+        },
+        {
+          "H": 472.5,
+          "L": 44,
+          "benchmark_family": "F12_sparse_cycle",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "4436af01800ecf7822ad5175445a329679cab59dc48d9ed53af01604b75aa96a",
+          "params": {
+            "n_parts": 3,
+            "seed": 47044,
+            "v6_family": "F12_sparse_cycle",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-da61f647d1d2bbed009c",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": "SCG_STATE_LIMIT",
+            "verdict": "INC",
+            "wall_s": 54.417
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-da61f647d1d2bbed009c",
+          "stratum": "WIP_3",
+          "timeout_s": 60
+        },
+        {
+          "H": 135.0,
+          "L": 32,
+          "benchmark_family": "F04_alternative_routes",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "458bd59a23d7b5e75c778c17a037725d37e5595ccb6b80ff1c6bedb27c05a02c",
+          "params": {
+            "n_parts": 3,
+            "seed": 75714,
+            "v6_family": "F04_alternative_routes",
+            "wip_bound": 1
+          },
+          "pilot_task_id": "pilot:cfg6-732fa807eb3834bfa756",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 0.603
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-732fa807eb3834bfa756",
+          "stratum": "WIP_1",
+          "timeout_s": 60
+        },
+        {
+          "H": 144.0,
+          "L": 34,
+          "benchmark_family": "F07_shared_contention",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "499b5b5fc5e7f23cace2f9721452e60c40553b127cb173cdab70f07857243f7c",
+          "params": {
+            "n_parts": 4,
+            "seed": 7689,
+            "v6_family": "F07_shared_contention",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-086f33eaabfd80fc491e",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "TIMEOUT_WALL_CLOCK",
+            "inconclusive_reason": null,
+            "verdict": null,
+            "wall_s": 60.067
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-086f33eaabfd80fc491e",
+          "stratum": "WIP_3",
+          "timeout_s": 60
+        },
+        {
+          "H": 162.0,
+          "L": 38,
+          "benchmark_family": "F05_routes_inspections",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "56e9312e3173adbf8196bd206229cf25a862c818d88fb3b94b75460647ef4cbb",
+          "params": {
+            "n_parts": 3,
+            "seed": 83606,
+            "v6_family": "F05_routes_inspections",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-b65268a16bc8a869c79f",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": "SCG_STATE_LIMIT",
+            "verdict": "INC",
+            "wall_s": 46.337
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-b65268a16bc8a869c79f",
+          "stratum": "WIP_3",
+          "timeout_s": 60
+        }
+      ]
+    },
+    {
+      "shard_id": "pilot_002",
+      "tasks": [
+        {
+          "H": 90.0,
+          "L": 10,
+          "benchmark_family": "F03_deep_inspection",
+          "experiment": "C_Lsweep",
+          "mode": "first",
+          "model_hash": "5a025c0eab155c8ae61775649d7c650ac22debe5440af47a14f3eaec9b74c955",
+          "params": {
+            "seed": 23516,
+            "v6_family": "F03_deep_inspection"
+          },
+          "pilot_task_id": "pilot:cfg6-639d8d5c43809cf972f9",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 0.503
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-639d8d5c43809cf972f9",
+          "stratum": "L_mid",
+          "timeout_s": 60
+        },
+        {
+          "H": 90.0,
+          "L": 22,
+          "benchmark_family": "F03_deep_inspection",
+          "experiment": "C_Lsweep",
+          "mode": "complete",
+          "model_hash": "5a025c0eab155c8ae61775649d7c650ac22debe5440af47a14f3eaec9b74c955",
+          "params": {
+            "seed": 23516,
+            "v6_family": "F03_deep_inspection"
+          },
+          "pilot_task_id": "pilot:cfg6-4ae19a0618683587dbd5",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 4.412
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-4ae19a0618683587dbd5",
+          "stratum": "L_high_complete",
+          "timeout_s": 60
+        },
+        {
+          "H": 108.0,
+          "L": 12,
+          "benchmark_family": "F05_routes_inspections",
+          "experiment": "C_Lsweep",
+          "mode": "first",
+          "model_hash": "635dbbd76109f15d7dd8e6daec88262c0f14512a60f8e1c10e226eab4ef0633a",
+          "params": {
+            "seed": 74362,
+            "v6_family": "F05_routes_inspections"
+          },
+          "pilot_task_id": "pilot:cfg6-024a62be65da43eb1958",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 0.703
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-024a62be65da43eb1958",
+          "stratum": "L_mid",
+          "timeout_s": 60
+        },
+        {
+          "H": 108.0,
+          "L": 26,
+          "benchmark_family": "F05_routes_inspections",
+          "experiment": "C_Lsweep",
+          "mode": "complete",
+          "model_hash": "635dbbd76109f15d7dd8e6daec88262c0f14512a60f8e1c10e226eab4ef0633a",
+          "params": {
+            "seed": 74362,
+            "v6_family": "F05_routes_inspections"
+          },
+          "pilot_task_id": "pilot:cfg6-0f89168979b6afb0aec4",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "TIMEOUT_WALL_CLOCK",
+            "inconclusive_reason": null,
+            "verdict": null,
+            "wall_s": 60.104
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-0f89168979b6afb0aec4",
+          "stratum": "L_high_complete",
+          "timeout_s": 60
+        },
+        {
+          "H": 108.0,
+          "L": 26,
+          "benchmark_family": "F07_shared_contention",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "69413a039c4731570ab74b8950fd5d122e6d20fb71943a98a2033edb9e767488",
+          "params": {
+            "n_parts": 3,
+            "seed": 35307,
+            "v6_family": "F07_shared_contention",
+            "wip_bound": 1
+          },
+          "pilot_task_id": "pilot:cfg6-badf00bc0a4b079ed7a5",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 0.402
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-badf00bc0a4b079ed7a5",
+          "stratum": "WIP_1",
+          "timeout_s": 60
+        },
+        {
+          "H": 216.0,
+          "L": 26,
+          "benchmark_family": "F11_resource_cycle",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "70fcf81866d5a3a311ed93b5065bca2fb6b910cb30e0bc7651e4011a87c57313",
+          "params": {
+            "n_parts": 3,
+            "seed": 52855,
+            "v6_family": "F11_resource_cycle",
+            "wip_bound": 1
+          },
+          "pilot_task_id": "pilot:cfg6-2aaff57df8dd745f2a5e",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 0.502
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-2aaff57df8dd745f2a5e",
+          "stratum": "WIP_1",
+          "timeout_s": 60
+        },
+        {
+          "H": 144.0,
+          "L": 34,
+          "benchmark_family": "F07_shared_contention",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "71b9516fe8db0e0b392ebb26211b300ee2e6aed67d747f0e6c3c2180aab631cc",
+          "params": {
+            "n_parts": 4,
+            "seed": 7689,
+            "v6_family": "F07_shared_contention",
+            "wip_bound": 1
+          },
+          "pilot_task_id": "pilot:cfg6-01d57177ada084508982",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 0.502
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-01d57177ada084508982",
+          "stratum": "WIP_1",
+          "timeout_s": 60
+        },
+        {
+          "H": 90.0,
+          "L": 10,
+          "benchmark_family": "F04_alternative_routes",
+          "experiment": "C_Lsweep",
+          "mode": "first",
+          "model_hash": "770ea9a41230b34d92c65ffdb862044ee080b0731ab3720b9641247ae9fadaa1",
+          "params": {
+            "seed": 75714,
+            "v6_family": "F04_alternative_routes"
+          },
+          "pilot_task_id": "pilot:cfg6-234fb65b4b268c3fe2ef",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 0.402
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-234fb65b4b268c3fe2ef",
+          "stratum": "L_mid",
+          "timeout_s": 60
+        },
+        {
+          "H": 54.0,
+          "L": 14,
+          "benchmark_family": "F01_sequential_sparse",
+          "experiment": "C_Lsweep",
+          "mode": "complete",
+          "model_hash": "781b950337db39bf5673e8d0c4ab76b2a30e34720dfe04e217873ea65cb126be",
+          "params": {
+            "seed": 28968,
+            "v6_family": "F01_sequential_sparse"
+          },
+          "pilot_task_id": "pilot:cfg6-37d23678aded4e2723e7",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 0.502
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-37d23678aded4e2723e7",
+          "stratum": "L_high_complete",
+          "timeout_s": 60
+        },
+        {
+          "H": 324.0,
+          "L": 38,
+          "benchmark_family": "F11_resource_cycle",
+          "experiment": "D_difficult",
+          "mode": "first",
+          "model_hash": "7cdc0c90d61172064a83aa982f177ffe73c559f7b7d29c82674a159e328019a1",
+          "params": {
+            "inspection_locations": 5,
+            "n_parts": 3,
+            "ops_per_part": 6,
+            "rework_locations": 1,
+            "route_choices": 2,
+            "seed": 70598,
+            "v6_family": "F11_resource_cycle",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-42b65b49d5ab21652ebe",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "TIMEOUT_WALL_CLOCK",
+            "inconclusive_reason": null,
+            "verdict": null,
+            "wall_s": 60.084
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-42b65b49d5ab21652ebe",
+          "stratum": "difficult_first",
+          "timeout_s": 60
+        },
+        {
+          "H": 225.0,
+          "L": 22,
+          "benchmark_family": "F12_sparse_cycle",
+          "experiment": "A_structural",
+          "mode": "first",
+          "model_hash": "810def85f13303f9ef86f102a9601a0dce44fd65edd0f538375ed843366a1cb3",
+          "params": {
+            "ops_per_part": 5,
+            "seed": 4292,
+            "v6_family": "F12_sparse_cycle"
+          },
+          "pilot_task_id": "pilot:cfg6-08bada213ee6a3b28be1",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 38.31
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-08bada213ee6a3b28be1",
+          "stratum": "depth_shallow",
+          "timeout_s": 60
+        },
+        {
+          "H": 108.0,
+          "L": 14,
+          "benchmark_family": "F11_resource_cycle",
+          "experiment": "A_structural",
+          "mode": "first",
+          "model_hash": "835a8104161450b74fc3b3e51ea0880f6e2ba74ba6cf3474af577d736912f2d8",
+          "params": {
+            "ops_per_part": 2,
+            "seed": 52855,
+            "v6_family": "F11_resource_cycle"
+          },
+          "pilot_task_id": "pilot:cfg6-739a0d2cb6648733e460",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 1.205
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-739a0d2cb6648733e460",
+          "stratum": "depth_shallow",
+          "timeout_s": 60
+        }
+      ]
+    },
+    {
+      "shard_id": "pilot_003",
+      "tasks": [
+        {
+          "H": 162.0,
+          "L": 38,
+          "benchmark_family": "F01_sequential_sparse",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "83ec1495f6fdc4c87c57b0ae535c8f2ee9925021c83e2ea1378f34425f4e2d4d",
+          "params": {
+            "n_parts": 3,
+            "seed": 74943,
+            "v6_family": "F01_sequential_sparse",
+            "wip_bound": 1
+          },
+          "pilot_task_id": "pilot:cfg6-03d00af9d8741172f0ef",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 1.506
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-03d00af9d8741172f0ef",
+          "stratum": "WIP_1",
+          "timeout_s": 60
+        },
+        {
+          "H": 270.0,
+          "L": 62,
+          "benchmark_family": "F03_deep_inspection",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "8463264eb802fd294b42dade3d3158c9088e77f9811449edc8f29ca1905ee30b",
+          "params": {
+            "n_parts": 3,
+            "seed": 81692,
+            "v6_family": "F03_deep_inspection",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-193532a5daa4b2110259",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": "SCG_STATE_LIMIT",
+            "verdict": "INC",
+            "wall_s": 38.822
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-193532a5daa4b2110259",
+          "stratum": "WIP_3",
+          "timeout_s": 60
+        },
+        {
+          "H": 72.0,
+          "L": 18,
+          "benchmark_family": "F02_sequential_dense",
+          "experiment": "C_Lsweep",
+          "mode": "complete",
+          "model_hash": "847cdadddd786f022ab415d747fe6360debdff3146ac4dda7eaa045ae1b33574",
+          "params": {
+            "seed": 720,
+            "v6_family": "F02_sequential_dense"
+          },
+          "pilot_task_id": "pilot:cfg6-06ff162908423fc1483e",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 1.104
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-06ff162908423fc1483e",
+          "stratum": "L_high_complete",
+          "timeout_s": 60
+        },
+        {
+          "H": 135.0,
+          "L": 15,
+          "benchmark_family": "F08_mixed_visibility",
+          "experiment": "C_Lsweep",
+          "mode": "first",
+          "model_hash": "8c4764846ccc4952284a1f986d18e31fbd9fa03ea680004904578fcf712da8ee",
+          "params": {
+            "seed": 29720,
+            "v6_family": "F08_mixed_visibility"
+          },
+          "pilot_task_id": "pilot:cfg6-351425269dfb843ab6ed",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 4.314
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-351425269dfb843ab6ed",
+          "stratum": "L_mid",
+          "timeout_s": 60
+        },
+        {
+          "H": 108.0,
+          "L": 12,
+          "benchmark_family": "F06_parallel_parts",
+          "experiment": "C_Lsweep",
+          "mode": "first",
+          "model_hash": "962608fd61926b4f8b317331b10698fcfbe7e288d83940dfea515e5461a2a0b8",
+          "params": {
+            "seed": 40657,
+            "v6_family": "F06_parallel_parts"
+          },
+          "pilot_task_id": "pilot:cfg6-5aa36bd1c655046a43bf",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 29.193
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-5aa36bd1c655046a43bf",
+          "stratum": "L_mid",
+          "timeout_s": 60
+        },
+        {
+          "H": 108.0,
+          "L": 26,
+          "benchmark_family": "F09_deep_fault_stages",
+          "experiment": "A_structural",
+          "mode": "first",
+          "model_hash": "9a615415ae20a748d89c5937c5103746309f77e7ecf7905cf4cf00c8c82f9831",
+          "params": {
+            "ops_per_part": 6,
+            "seed": 90316,
+            "v6_family": "F09_deep_fault_stages"
+          },
+          "pilot_task_id": "pilot:cfg6-ebd02972adb6f5321bbe",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 33.305
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-ebd02972adb6f5321bbe",
+          "stratum": "depth_shallow",
+          "timeout_s": 60
+        },
+        {
+          "H": 162.0,
+          "L": 38,
+          "benchmark_family": "F06_parallel_parts",
+          "experiment": "D_difficult",
+          "mode": "first",
+          "model_hash": "a151588924557a82389d1a76898cb2d1f521c529073e32c9b4753cdd56c923d1",
+          "params": {
+            "inspection_locations": 5,
+            "n_parts": 3,
+            "ops_per_part": 6,
+            "rework_locations": 1,
+            "route_choices": 2,
+            "seed": 11635,
+            "v6_family": "F06_parallel_parts",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-c2d276d306603d8f91e0",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": "SCG_STATE_LIMIT",
+            "verdict": "INC",
+            "wall_s": 53.89
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-c2d276d306603d8f91e0",
+          "stratum": "difficult_first",
+          "timeout_s": 60
+        },
+        {
+          "H": 81.0,
+          "L": 20,
+          "benchmark_family": "F08_mixed_visibility",
+          "experiment": "A_structural",
+          "mode": "first",
+          "model_hash": "a203baadde5e8cff4fc5ab9e8dff58ef589c144928e6e416e04a0e0b61bfdad2",
+          "params": {
+            "ops_per_part": 3,
+            "seed": 46072,
+            "v6_family": "F08_mixed_visibility"
+          },
+          "pilot_task_id": "pilot:cfg6-8dc3230e6f95d995942e",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 5.518
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-8dc3230e6f95d995942e",
+          "stratum": "depth_shallow",
+          "timeout_s": 60
+        },
+        {
+          "H": 135.0,
+          "L": 32,
+          "benchmark_family": "F08_mixed_visibility",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "a3884f805844c41a64869d4fa69cba6f30412404f2d94cb895f928ca862a5d5e",
+          "params": {
+            "n_parts": 3,
+            "seed": 29720,
+            "v6_family": "F08_mixed_visibility",
+            "wip_bound": 1
+          },
+          "pilot_task_id": "pilot:cfg6-7adfae9f512058cac31d",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 0.502
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-7adfae9f512058cac31d",
+          "stratum": "WIP_1",
+          "timeout_s": 60
+        },
+        {
+          "H": 54.0,
+          "L": 14,
+          "benchmark_family": "F02_sequential_dense",
+          "experiment": "A_structural",
+          "mode": "first",
+          "model_hash": "aa37de5178d79db816e95007050f276de37dc6e49f2fd4890160423b3c5c8009",
+          "params": {
+            "ops_per_part": 6,
+            "seed": 60977,
+            "v6_family": "F02_sequential_dense"
+          },
+          "pilot_task_id": "pilot:cfg6-d18790b862b03adf4222",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 0.402
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-d18790b862b03adf4222",
+          "stratum": "depth_shallow",
+          "timeout_s": 60
+        },
+        {
+          "H": 144.0,
+          "L": 8,
+          "benchmark_family": "F10_bounded_rework",
+          "experiment": "C_Lsweep",
+          "mode": "first",
+          "model_hash": "ab0fddb88440b28de8037ed8e32112670c0ed85d5ad75a944aa77a679dbf5f8c",
+          "params": {
+            "seed": 68653,
+            "v6_family": "F10_bounded_rework"
+          },
+          "pilot_task_id": "pilot:cfg6-709628fa6d12461bfc8d",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 0.402
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-709628fa6d12461bfc8d",
+          "stratum": "L_mid",
+          "timeout_s": 60
+        },
+        {
+          "H": 144.0,
+          "L": 18,
+          "benchmark_family": "F10_bounded_rework",
+          "experiment": "C_Lsweep",
+          "mode": "complete",
+          "model_hash": "ab0fddb88440b28de8037ed8e32112670c0ed85d5ad75a944aa77a679dbf5f8c",
+          "params": {
+            "seed": 68653,
+            "v6_family": "F10_bounded_rework"
+          },
+          "pilot_task_id": "pilot:cfg6-3071f3b6ceb7beeaa056",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 0.301
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-3071f3b6ceb7beeaa056",
+          "stratum": "L_high_complete",
+          "timeout_s": 60
+        }
+      ]
+    },
+    {
+      "shard_id": "pilot_004",
+      "tasks": [
+        {
+          "H": 108.0,
+          "L": 26,
+          "benchmark_family": "F06_parallel_parts",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "b0f3a43f21349c3fce3e3987e6972092858e4d2f0b48c8c0859b14652b842b11",
+          "params": {
+            "n_parts": 3,
+            "seed": 40657,
+            "v6_family": "F06_parallel_parts",
+            "wip_bound": 1
+          },
+          "pilot_task_id": "pilot:cfg6-93dd6a498349a4e7646a",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 0.502
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-93dd6a498349a4e7646a",
+          "stratum": "WIP_1",
+          "timeout_s": 60
+        },
+        {
+          "H": 162.0,
+          "L": 38,
+          "benchmark_family": "F05_routes_inspections",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "b11841f9e0f14289fc72eb4d8afc215acd0ab782f0228999a2c31fdaf6540dd4",
+          "params": {
+            "n_parts": 3,
+            "seed": 74362,
+            "v6_family": "F05_routes_inspections",
+            "wip_bound": 1
+          },
+          "pilot_task_id": "pilot:cfg6-3ae8066b4064edeb0f98",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 0.803
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-3ae8066b4064edeb0f98",
+          "stratum": "WIP_1",
+          "timeout_s": 60
+        },
+        {
+          "H": 216.0,
+          "L": 50,
+          "benchmark_family": "F01_sequential_sparse",
+          "experiment": "D_difficult",
+          "mode": "first",
+          "model_hash": "b21bfecf29f74455d33ab2ecbe545af46fcb503244983672b5c774767c33dd7b",
+          "params": {
+            "inspection_locations": 3,
+            "n_parts": 3,
+            "ops_per_part": 8,
+            "rework_locations": 1,
+            "route_choices": 2,
+            "seed": 66342,
+            "v6_family": "F01_sequential_sparse",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-6745da1969ad571a1b7a",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": "SCG_STATE_LIMIT",
+            "verdict": "INC",
+            "wall_s": 35.32
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-6745da1969ad571a1b7a",
+          "stratum": "difficult_first",
+          "timeout_s": 60
+        },
+        {
+          "H": 54.0,
+          "L": 6,
+          "benchmark_family": "F01_sequential_sparse",
+          "experiment": "C_Lsweep",
+          "mode": "first",
+          "model_hash": "b9c6cc5184e830b10c9920073d95fd0c27c0cf12372ba7ffde5ce707826a4190",
+          "params": {
+            "seed": 74943,
+            "v6_family": "F01_sequential_sparse"
+          },
+          "pilot_task_id": "pilot:cfg6-794a70b9b6d41daf38fc",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 0.402
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-794a70b9b6d41daf38fc",
+          "stratum": "L_mid",
+          "timeout_s": 60
+        },
+        {
+          "H": 315.0,
+          "L": 14,
+          "benchmark_family": "F12_sparse_cycle",
+          "experiment": "C_Lsweep",
+          "mode": "first",
+          "model_hash": "bdc3c5d26f703463ffe5bff4bf2464654ee9769efdc77f785327fb0a0a6e0e26",
+          "params": {
+            "seed": 1524,
+            "v6_family": "F12_sparse_cycle"
+          },
+          "pilot_task_id": "pilot:cfg6-0c2ea0e63bda7e77a941",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 2.107
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-0c2ea0e63bda7e77a941",
+          "stratum": "L_mid",
+          "timeout_s": 60
+        },
+        {
+          "H": 144.0,
+          "L": 34,
+          "benchmark_family": "F09_deep_fault_stages",
+          "experiment": "C_Lsweep",
+          "mode": "complete",
+          "model_hash": "d3d1251d694b0024a2b3ba46407470cd8594a6d3a82ec3004d8d87e7f81d9999",
+          "params": {
+            "seed": 90316,
+            "v6_family": "F09_deep_fault_stages"
+          },
+          "pilot_task_id": "pilot:cfg6-6d9fb9c2c4dcd5ab9dad",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "TIMEOUT_WALL_CLOCK",
+            "inconclusive_reason": null,
+            "verdict": null,
+            "wall_s": 60.207
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-6d9fb9c2c4dcd5ab9dad",
+          "stratum": "L_high_complete",
+          "timeout_s": 60
+        },
+        {
+          "H": 72.0,
+          "L": 18,
+          "benchmark_family": "F03_deep_inspection",
+          "experiment": "A_structural",
+          "mode": "first",
+          "model_hash": "d4332442a5c3ae4c71de12306e0973c37d3336e57fa0a3a2dfd795316fdf6a05",
+          "params": {
+            "ops_per_part": 8,
+            "seed": 38924,
+            "v6_family": "F03_deep_inspection"
+          },
+          "pilot_task_id": "pilot:cfg6-072fba608ff59ab9e7aa",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 1.203
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-072fba608ff59ab9e7aa",
+          "stratum": "depth_shallow",
+          "timeout_s": 60
+        },
+        {
+          "H": 108.0,
+          "L": 12,
+          "benchmark_family": "F07_shared_contention",
+          "experiment": "C_Lsweep",
+          "mode": "first",
+          "model_hash": "e32cfbfd030a568df4b7fd4202d1451be7895a0c706e7a1987fd019659454eb0",
+          "params": {
+            "seed": 339,
+            "v6_family": "F07_shared_contention"
+          },
+          "pilot_task_id": "pilot:cfg6-a6b479ca207f0007e36e",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 4.714
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-a6b479ca207f0007e36e",
+          "stratum": "L_mid",
+          "timeout_s": 60
+        },
+        {
+          "H": 108.0,
+          "L": 26,
+          "benchmark_family": "F07_shared_contention",
+          "experiment": "C_Lsweep",
+          "mode": "complete",
+          "model_hash": "e32cfbfd030a568df4b7fd4202d1451be7895a0c706e7a1987fd019659454eb0",
+          "params": {
+            "seed": 339,
+            "v6_family": "F07_shared_contention"
+          },
+          "pilot_task_id": "pilot:cfg6-2895e04d423aad0dc640",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "TIMEOUT_WALL_CLOCK",
+            "inconclusive_reason": null,
+            "verdict": null,
+            "wall_s": 60.112
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-2895e04d423aad0dc640",
+          "stratum": "L_high_complete",
+          "timeout_s": 60
+        },
+        {
+          "H": 135.0,
+          "L": 32,
+          "benchmark_family": "F04_alternative_routes",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "e59a7431619b38ce26c66b6ef63f60e92bb8f9ff6b7e1a7b6a80f396aca7ad0f",
+          "params": {
+            "n_parts": 3,
+            "seed": 41553,
+            "v6_family": "F04_alternative_routes",
+            "wip_bound": 3
+          },
+          "pilot_task_id": "pilot:cfg6-3e3b6b47fe10adaab5ab",
+          "protocol": "v6-cache-validation-1",
+          "reference": {
+            "execution_status": "TIMEOUT_WALL_CLOCK",
+            "inconclusive_reason": null,
+            "verdict": null,
+            "wall_s": 60.1
+          },
+          "reference_run": "42347953385",
+          "source_task_id": "cfg6-3e3b6b47fe10adaab5ab",
+          "stratum": "WIP_3",
+          "timeout_s": 60
+        },
+        {
+          "H": 54.0,
+          "L": 14,
+          "benchmark_family": "F04_alternative_routes",
+          "experiment": "A_structural",
+          "mode": "first",
+          "model_hash": "e7dfc2b9aa91a79fcc9bfce72515be5e3d96eb5c00e55fe72dfc6a5935d6a349",
+          "params": {
+            "ops_per_part": 3,
+            "seed": 75714,
+            "v6_family": "F04_alternative_routes"
+          },
+          "pilot_task_id": "pilot:cfg6-a0760a11150aa373e034",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 0.502
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-a0760a11150aa373e034",
+          "stratum": "depth_shallow",
+          "timeout_s": 60
+        },
+        {
+          "H": 54.0,
+          "L": 14,
+          "benchmark_family": "F06_parallel_parts",
+          "experiment": "A_structural",
+          "mode": "first",
+          "model_hash": "eac20b4d158232d27eda803f7df02275d5c0230fcb998a6664d7c71c3a4b37c5",
+          "params": {
+            "ops_per_part": 2,
+            "seed": 37311,
+            "v6_family": "F06_parallel_parts"
+          },
+          "pilot_task_id": "pilot:cfg6-993b062bbe930d713152",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "TIMEOUT_WALL_CLOCK",
+            "inconclusive_reason": null,
+            "verdict": null,
+            "wall_s": 60.109
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-993b062bbe930d713152",
+          "stratum": "depth_shallow",
+          "timeout_s": 60
+        }
+      ]
+    },
+    {
+      "shard_id": "pilot_005",
+      "tasks": [
+        {
+          "H": 216.0,
+          "L": 12,
+          "benchmark_family": "F11_resource_cycle",
+          "experiment": "C_Lsweep",
+          "mode": "first",
+          "model_hash": "ef2eb7aacdb0076bfadff53d51a6f952ad3e1415e3faeaf8885546b2cb1be3c8",
+          "params": {
+            "seed": 52855,
+            "v6_family": "F11_resource_cycle"
+          },
+          "pilot_task_id": "pilot:cfg6-3cc8f43d6c48325d823e",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "VER",
+            "wall_s": 1.204
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-3cc8f43d6c48325d823e",
+          "stratum": "L_mid",
+          "timeout_s": 60
+        },
+        {
+          "H": 216.0,
+          "L": 26,
+          "benchmark_family": "F11_resource_cycle",
+          "experiment": "C_Lsweep",
+          "mode": "complete",
+          "model_hash": "ef2eb7aacdb0076bfadff53d51a6f952ad3e1415e3faeaf8885546b2cb1be3c8",
+          "params": {
+            "seed": 52855,
+            "v6_family": "F11_resource_cycle"
+          },
+          "pilot_task_id": "pilot:cfg6-3312354754090ff7c06c",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "TIMEOUT_WALL_CLOCK",
+            "inconclusive_reason": null,
+            "verdict": null,
+            "wall_s": 60.063
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-3312354754090ff7c06c",
+          "stratum": "L_high_complete",
+          "timeout_s": 60
+        },
+        {
+          "H": 216.0,
+          "L": 50,
+          "benchmark_family": "F09_deep_fault_stages",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "efd6bea81c60f298972563b7808ba2ff9b7de0283dccf00e4d0dcbce2ce1f226",
+          "params": {
+            "n_parts": 3,
+            "seed": 73088,
+            "v6_family": "F09_deep_fault_stages",
+            "wip_bound": 1
+          },
+          "pilot_task_id": "pilot:cfg6-3ccff75437d8048eb4c8",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 0.703
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-3ccff75437d8048eb4c8",
+          "stratum": "WIP_1",
+          "timeout_s": 60
+        },
+        {
+          "H": 90.0,
+          "L": 22,
+          "benchmark_family": "F04_alternative_routes",
+          "experiment": "C_Lsweep",
+          "mode": "complete",
+          "model_hash": "f291829562197d4ce12d4ca9d9a58e1677146cb768ae186f501ca50795db72bf",
+          "params": {
+            "seed": 20135,
+            "v6_family": "F04_alternative_routes"
+          },
+          "pilot_task_id": "pilot:cfg6-54cd626817d3adc1ca05",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 0.903
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-54cd626817d3adc1ca05",
+          "stratum": "L_high_complete",
+          "timeout_s": 60
+        },
+        {
+          "H": 432.0,
+          "L": 50,
+          "benchmark_family": "F10_bounded_rework",
+          "experiment": "B_wip",
+          "mode": "first",
+          "model_hash": "f87ae5fb295c8a2c59f58ecebb219e1bb3041899db654314a4a1f9467e5affd1",
+          "params": {
+            "n_parts": 3,
+            "seed": 31989,
+            "v6_family": "F10_bounded_rework",
+            "wip_bound": 1
+          },
+          "pilot_task_id": "pilot:cfg6-25e912fc2109ecff0cd5",
+          "protocol": "v6-pilot-1",
+          "reference": {
+            "execution_status": "COMPLETED",
+            "inconclusive_reason": null,
+            "verdict": "AMB",
+            "wall_s": 1.004
+          },
+          "reference_run": "42348132809",
+          "source_task_id": "cfg6-25e912fc2109ecff0cd5",
+          "stratum": "WIP_1",
+          "timeout_s": 60
+        }
+      ]
+    }
+  ],
+  "shards": 6
+}

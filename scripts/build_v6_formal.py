@@ -233,9 +233,14 @@ def main() -> int:
         "quota": {"structural": 600, "wip": 1080, "lsweep": 5400, "difficult": 1200},
         "cell_timeout_seconds": CELL_TIMEOUT,
         "max_parallel": 20,
+        "task_timeout_seconds": CELL_TIMEOUT,
         "job_timeout_minutes": 150,
         "worst_case_compute_runner_minutes": len(tasks) * CELL_TIMEOUT / 60,
-        "runner": "GitHub-hosted ubuntu-22.04 standard runner only",
+        "execution_backend": "modal",
+        "runner": "Modal CPU-only Function (1 physical core, 4096 MiB, GPU=None)",
+        "modal_sdk": "1.6.3",
+        "modal_function_timeout_seconds": 5400,
+        "modal_shard_manifest": "protocol/v6_modal_shards_manifest.json",
         "artifact_retention_days": 30,
         "identity_rule": (
             "bounded_problem_id hashes {protocol, model_hash, L, H}; "

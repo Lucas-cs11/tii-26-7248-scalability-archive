@@ -42,12 +42,21 @@ def main() -> int:
             errors.append(f"duplicate {key}")
     if any(row["task_id"] != row["configuration_id"] for row in rows):
         errors.append("task_id != configuration_id")
-    per_experiment = {
-        name: sum(row["experiment"] == name for row in rows) for name in manifest["quota"]
+    quota_to_experiment = {
+        "structural": "A_structural",
+        "wip": "B_wip",
+        "lsweep": "C_Lsweep",
+        "difficult": "D_difficult",
     }
-    for name, quota in manifest["quota"].items():
-        if per_experiment[name] != quota:
-            errors.append(f"quota mismatch for {name}: {per_experiment[name]} != {quota}")
+    per_experiment = {
+        name: sum(row["experiment"] == name for row in rows) for name in quota_to_experiment.values()
+    }
+    for quota_name, quota in manifest["quota"].items():
+        experiment = quota_to_experiment[quota_name]
+        if per_experiment[experiment] != quota:
+            errors.append(
+                f"quota mismatch for {quota_name}: {per_experiment[experiment]} != {quota}"
+            )
     if len({row["model_id"] for row in rows}) != manifest["distinct_model_hashes"]:
         errors.append("distinct model count mismatch")
     if len({row["bounded_problem_id"] for row in rows}) != manifest["distinct_bounded_problems"]:
