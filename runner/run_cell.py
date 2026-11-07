@@ -85,12 +85,14 @@ SYNC_COUNTERS = (
 )
 EXPANSION_COUNTERS = (
     "temporal_states", "trace_records", "terminal_pairs",
+    "candidate_words_processed", "terminal_normal_records",
+    "terminal_faulty_records",
     "exp_nodes_created", "exp_edges", "exp_record_checks", "exp_worklist_pops",
     "runtime_expansion", "runtime_certificate",
 )
 LP_COUNTERS = (
     "lp_calls", "lp_builds", "lp_solves", "lp_feasible", "lp_infeasible",
-    "lp_unknown", "confirmed_critical_pairs",
+    "lp_unknown", "confirmed_critical_pairs", "enclosure_rejected_pairs",
     "runtime_lp", "runtime_lp_build", "runtime_lp_solve",
 )
 STAGE_KEYS = (
@@ -144,10 +146,12 @@ def checkpoint_counters(stage, counters):
         for key in SYNC_COUNTERS + EXPANSION_COUNTERS + LP_COUNTERS:
             if key in result:
                 result[key] = None
+        result["runtime_total"] = None
     elif stage == "SYNCHRONIZER_COMPLETE":
         for key in EXPANSION_COUNTERS + LP_COUNTERS:
             if key in result:
                 result[key] = None
+        result["runtime_total"] = None
     return result
 
 
