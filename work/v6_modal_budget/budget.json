@@ -1,0 +1,38 @@
+{
+  "authorized": true,
+  "baseline_metered_cost_usd": 23.58024702,
+  "baseline_snapshot": {
+    "adjustments": {
+      "credits": "-23.58000000",
+      "free_storage": "-0.00023706",
+      "network_egress_allowance": "-0.00000996",
+      "plan_cost": "0E-8",
+      "reservation_adjustment": "-0E-8"
+    },
+    "billed_cost": "0E-8",
+    "metered_cost": "23.58024702",
+    "metered_cost_breakdown": {
+      "ephemeral_apps": "23.58426010",
+      "llm_tokens": "0E-8",
+      "network_egress": "0.00000996",
+      "volumes": "0.00023706"
+    }
+  },
+  "cap_usd": 10.0,
+  "checked_at": "2026-11-07T11:12:39Z",
+  "created_at": "2026-11-07T09:05:58Z",
+  "credits_confirmed_by_user": true,
+  "current_metered_cost_usd": 23.67025246,
+  "current_spend_usd": 0.090005,
+  "projected_at": "2026-11-07T19:18:00+08:00",
+  "projected_full_run_usd": 3.43,
+  "projected_full_run_worst_case_usd": 10.94,
+  "projected_method": "43.24 CPU-hours expected x 1 physical core x $0.0473/CPU-hour + 43.24 x 4 GiB x $0.008/GiB-hour = $3.43 expected; conservative all-timeout worst case 138 CPU-hours = $10.94; guard stops spawning at $9.50",
+  "rates": {
+    "cpu_hour_cost": 0.0473,
+    "mem_gib_hour_cost": 0.008
+  },
+  "remaining_budget_usd": 9.91,
+  "user_authorization": "$10 Modal cap confirmed by the user (2026-11-07)",
+  "within_cap": true
+}

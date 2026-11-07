@@ -32,7 +32,7 @@ def main() -> int:
     parser.add_argument("--modal-pilot-summary", type=Path,
                         default=ROOT / "work/v6_modal_pilot/pilot_summary.json")
     parser.add_argument("--modal-recovery", type=Path,
-                        default=ROOT / "work/v6_modal_pilot/recovery_test.json")
+                        default=ROOT / "work/v6_modal_recovery/recovery_test.json")
     parser.add_argument("--modal-budget", type=Path,
                         default=ROOT / "work/v6_modal_budget/budget.json")
     parser.add_argument("--formal-manifest", type=Path,
@@ -89,11 +89,17 @@ def main() -> int:
     )
     gates["MODAL_ENVIRONMENT_PASS"] = bool(
         modal_audit.get("PASS")
+        and modal_summary.get("PASS", True)
         and modal_summary.get("verdict_consistency_pass")
         and not modal_summary.get("oom_events")
-        and modal_summary.get("tasks_completed") == modal_summary.get("tasks_expected")
-        and modal_summary.get("missing") == 0
-        and modal_summary.get("duplicates") == 0
+        # timeouts are right-censored observations, not missing tasks: every
+        # task must have a record, with no error, missing or duplicate record.
+        and modal_summary.get("tasks_recorded") == modal_summary.get("tasks_expected")
+        and not modal_summary.get("missing_count")
+        and not modal_summary.get("duplicate_count")
+        and not modal_summary.get("tasks_error")
+        and not modal_summary.get("missing")
+        and not modal_summary.get("duplicates")
         and modal_summary.get("resource_measurements_recorded")
     )
     gates["MODAL_CHECKPOINT_RECOVERY_PASS"] = bool(
