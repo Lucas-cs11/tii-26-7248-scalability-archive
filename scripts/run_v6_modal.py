@@ -846,7 +846,9 @@ def _run_pool(runner, run_id: str, shard_ids, attempts, args,
         while queue or pending:
             while queue and not budget_stopped and len(pending) < max_parallel:
                 shard, attempt = queue.popleft()
-                call = runner.run_shard.spawn(shard, run_id, attempt)
+                call = runner.run_shard.spawn(
+                    shard, run_id, attempt, args.volume_prefix
+                )
                 pending[shard] = {
                     "call": call, "attempt": attempt, "call_id": call.object_id,
                     "started": time.monotonic(),

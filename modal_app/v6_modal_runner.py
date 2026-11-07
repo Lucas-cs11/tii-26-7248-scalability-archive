@@ -163,10 +163,20 @@ def _current_function_call_id():
     # shards and makes the recorded invocation id unambiguous.
     single_use_containers=True,
 )
-def run_shard(shard_id: str, run_id: str, attempt: int) -> dict:
-    """Execute one frozen shard inside a Modal CPU container."""
+def run_shard(
+    shard_id: str, run_id: str, attempt: int, volume_prefix: str = VOLUME_PREFIX
+) -> dict:
+    """Execute one frozen shard inside a Modal CPU container.
+
+    ``volume_prefix`` must be passed explicitly by the orchestrator: the
+    module-level ``VOLUME_PREFIX`` is fixed at import time in the *local*
+    process, while the container copy would otherwise read its own default and
+    look for run metadata under the wrong prefix.
+    """
     invocation_id = _current_function_call_id()
-    run_meta = worker.load_run_metadata(VOLUME_ROOT, run_id)
+    prefix = (volume_prefix or VOLUME_PREFIX).strip("/")
+    volume_root = f"/vol/{prefix}"
+    run_meta = worker.load_run_metadata(volume_root, run_id)
     config = {
         "source_sha": run_meta.get("source_sha"),
         "image_spec_sha256": run_meta.get("image_spec_sha256"),
@@ -179,7 +189,7 @@ def run_shard(shard_id: str, run_id: str, attempt: int) -> dict:
         "scg_cache_dir": run_meta.get("scg_cache_dir") or SCG_CACHE_DIR,
         "function_timeout_s": FUNCTION_TIMEOUT_S,
         "volume_name": VOLUME_NAME,
-        "volume_prefix": VOLUME_PREFIX,
+        "volume_prefix": prefix,
         "app_name": APP_NAME,
         "executor": "modal",
     }
@@ -192,7 +202,7 @@ def run_shard(shard_id: str, run_id: str, attempt: int) -> dict:
 
     return worker.execute_shard(
         str(shard_id), str(run_id), int(attempt),
-        volume_root=VOLUME_ROOT,
+        volume_root=volume_root,
         repo_root=REMOTE_REPO_ROOT,
         config=config,
         invocation_id=invocation_id,
@@ -202,6 +212,10 @@ def run_shard(shard_id: str, run_id: str, attempt: int) -> dict:
 
 
 @app.local_entrypoint()
-def main(shard_id: str = "000", run_id: str = "manual", attempt: int = 0):
+def main(shard_id: str = "000", run_id: str = "manual", attempt: int = 0,
+         volume_prefix: str = VOLUME_PREFIX):
     """Debug entry point: ``modal run modal_app/v6_modal_runner.py --shard-id 000 ...``"""
-    print(json.dumps(run_shard.remote(shard_id, run_id, attempt), indent=2, sort_keys=True))
+    print(json.dumps(
+        run_shard.remote(shard_id, run_id, attempt, volume_prefix),
+        indent=2, sort_keys=True,
+    ))
