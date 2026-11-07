@@ -1,0 +1,33 @@
+{
+  "version": "v6-gate-criteria-1",
+  "frozen_before_final_measurement": true,
+  "rationale": {
+    "conclusive_coverage_min": "the task requires a significant improvement of the Pilot's deterministic-verdict coverage (baseline 120/288 = 0.417); 0.55 is a fixed, pre-declared floor",
+    "timeout_fraction_max": "the Pilot baseline is 0.556 right-censored; 0.40 is the pre-declared ceiling for accepting the optimised design",
+    "expected_compute_minutes_max": "censoring-aware expectation for the 8,280-cell matrix must stay below 3,000 runner-minutes (50 h) so a 20-way GitHub run stays inside the platform's resource envelope",
+    "rss_p95_mib_max": "standard ubuntu-22.04 runners have 16 GiB; 2 GiB P95 leaves a large margin and covers the instrumented expansion caches",
+    "formal_plan": "120 shards x 69 tasks, 60 s cell cap, 150 min job cap, max-parallel 20, standard hosted runners only - the same shape as the audited v5 formal run"
+  },
+  "pilot_budget": {
+    "conclusive_coverage_min": 0.55,
+    "timeout_fraction_max": 0.40,
+    "expected_compute_minutes_max": 3000,
+    "rss_p95_mib_max": 2048
+  },
+  "formal_plan": {
+    "quota": {
+      "structural": 600,
+      "wip": 1080,
+      "lsweep": 5400,
+      "difficult": 1200
+    },
+    "total_tasks": 8280,
+    "shards": 120,
+    "tasks_per_shard": 69,
+    "cell_timeout_seconds": 60,
+    "job_timeout_minutes": 150,
+    "max_parallel": 20,
+    "expected_wall_hours_max": 6.0,
+    "worst_case_wall_hours_max": 12.0
+  }
+}

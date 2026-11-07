@@ -99,7 +99,7 @@ def main():
         for row in csv.DictReader(path.open())
     ]
     tasks = {row["task_id"]: row for row in task_rows}
-    raw_paths = sorted(args.artifacts.glob("v6-pilot-*-*/raw/shard_*.jsonl"))
+    raw_paths = sorted(args.artifacts.glob("*pilot-*-*/raw/shard_*.jsonl"))
     records = [
         json.loads(line) for path in raw_paths for line in path.read_text().splitlines()
         if line.strip()
@@ -182,7 +182,7 @@ def main():
         audited.append(normalized)
 
     validation_files = list(args.artifacts.glob(
-        "v6-pilot-validation-*/v6_pilot_protocol_validation.json"
+        "*pilot-validation-*/v6_pilot_protocol_validation.json"
     ))
     if len(validation_files) != 1:
         errors.append(f"expected one protocol-validation artifact, found {len(validation_files)}")
