@@ -98,6 +98,27 @@ def normalized_counters(out):
     }
 
 
+def checkpoint_counters(stage, counters):
+    """Use null for stages that have not executed at a progress checkpoint."""
+    if counters is None:
+        return None
+    result = dict(counters)
+    if stage == "SCG_COMPLETE":
+        for key in (
+            "sync_states", "candidate_words", "candidate_words_processed",
+            "temporal_states", "trace_records", "terminal_pairs", "lp_calls",
+            "runtime_sync", "runtime_expansion", "runtime_lp",
+        ):
+            result[key] = None
+    elif stage == "SYNCHRONIZER_COMPLETE":
+        for key in (
+            "candidate_words_processed", "temporal_states", "trace_records",
+            "terminal_pairs", "lp_calls", "runtime_expansion", "runtime_lp",
+        ):
+            result[key] = None
+    return result
+
+
 def main() -> int:
     spec = json.loads(sys.argv[1])
     rec = {"tag": spec.get("tag"), "mode": spec.get("mode", "first"),
@@ -125,7 +146,7 @@ def main() -> int:
     def checkpoint(stage, counters=None):
         rec["failure_stage"] = stage
         if counters is not None:
-            rec["counters"] = counters
+            rec["counters"] = checkpoint_counters(stage, counters)
         rec["peak_rss_mb"] = peak_rss_mb()
         if not checkpoint_path:
             return

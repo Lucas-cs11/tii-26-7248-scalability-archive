@@ -272,6 +272,9 @@ def verify(
         stats["trace_records"] = total_trace_records
         stats["terminal_pairs"] = total_terminal_pairs
         stats["lp_calls"] = total_lp_calls
+        stats["runtime_expansion"] = t_exp_total
+        stats["runtime_lp"] = t_lp_total
+        stats["runtime_total"] = time.perf_counter() - t_start
         progress("HISTORY_ANALYSIS_PARTIAL")
 
     # enumeration_complete is True only if ALL candidates were fully analyzed

@@ -1,6 +1,6 @@
 import unittest
 
-from runner.run_cell import normalized_counters
+from runner.run_cell import checkpoint_counters, normalized_counters
 from scripts.build_v6_pilot import build_tasks
 
 
@@ -23,6 +23,18 @@ class V6PilotProtocolTests(unittest.TestCase):
             },
         })
         self.assertEqual(counters["scg_classes"], 50001)
+        self.assertIsNone(counters["sync_states"])
+        self.assertIsNone(counters["candidate_words"])
+        self.assertIsNone(counters["trace_records"])
+        self.assertIsNone(counters["lp_calls"])
+
+    def test_scg_progress_checkpoint_never_serializes_future_work_as_zero(self):
+        counters = checkpoint_counters("SCG_COMPLETE", {
+            "scg_classes": 10, "scg_edges": 20, "sync_states": 0,
+            "candidate_words": 0, "trace_records": 0, "lp_calls": 0,
+            "runtime_scg": 1.5, "runtime_sync": 0.0,
+        })
+        self.assertEqual(counters["scg_classes"], 10)
         self.assertIsNone(counters["sync_states"])
         self.assertIsNone(counters["candidate_words"])
         self.assertIsNone(counters["trace_records"])
