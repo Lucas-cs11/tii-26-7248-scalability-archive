@@ -21,7 +21,7 @@ PILOT_TASKS = ROOT / "protocol" / "v6_pilot_tasks"
 OUT = ROOT / "protocol" / "v6_perf_differential_1.json"
 
 PROTOCOL = "v6-performance-differential-1"
-BASELINE_COMMIT = "10d2772c085076fe790d574eabd15d7423ac86d"
+BASELINE_COMMIT = "10d27726c085076fe790d574eabd15d7423ac86d"
 STRATA = ("depth_shallow", "L_mid", "L_high_complete", "WIP_1")
 FIELDS = (
     "task_id", "benchmark_family", "stratum", "model_id", "seed", "replicate",

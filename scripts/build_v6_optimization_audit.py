@@ -21,7 +21,7 @@ from pathlib import Path
 
 ROOT = Path("/tmp/v6work")
 WORK = ROOT / "work"
-BASELINE_COMMIT = "10d2772c085076fe790d574eabd15d7423ac86d"
+BASELINE_COMMIT = "10d27726c085076fe790d574eabd15d7423ac86d"
 OPTIMIZED_COMMIT = "2154432"
 INSTRUMENTED_COMMIT = "1dd1d49"
 
@@ -207,9 +207,10 @@ def main() -> int:
             if actual != expected:
                 raise SystemExit(f"self-check failed: {relative}")
             checked += 1
-        if checked != len(names) - 1:
+        expected_entries = [name for name in names if not name.endswith("SHA256SUMS")]
+        if checked != len(expected_entries):
             raise SystemExit(
-                f"self-check failed: {checked} hashes for {len(names) - 1} files"
+                f"self-check failed: {checked} hashes for {len(expected_entries)} files"
             )
     size = args.out_zip.stat().st_size
     print(json.dumps({
