@@ -2727,17 +2727,21 @@ def run_audit(manifest: dict) -> dict:
     )
     summary = {
         "schema_version": DRIFT_SCHEMA_VERSION,
-        "snapshot_status": "PAUSED_FOR_SAFE_SNAPSHOT",
+        "snapshot_status": "LOCAL_PRIMARY_PASS_FINAL_COMPLETE_SET_ON_GITHUB_ACTIONS",
         "snapshot_note": (
-            "Primary verdict pass is complete (3,645/3,645). The auxiliary "
-            "complete-set pass on archived-AMB rows was suspended at a task "
-            "boundary by an explicit safe-pause request; it is resumable by "
-            "task_id. No verdict, counter or file in the primary pass depends "
-            "on the suspended pass."
+            "The primary verdict pass is FINAL and complete (3,645/3,645, 0 "
+            "verdict drift). The COMPLETE_SET second pass is executed on "
+            "GitHub Actions by .github/workflows/scalability_v6_historical_complete.yml "
+            "and its authoritative coverage/critical-pair/time-domain numbers come "
+            "from the aggregate artifact (snapshot_status FINAL or FINAL_PARTIAL). "
+            "This local summary keeps the primary-pass evidence and the local "
+            "pre-GH COMPLETE_SET snapshot; the local raw JSONL remains as the "
+            "resume fallback."
         ),
         "resume_commands": [
-            ".venv/bin/python scripts/recompute_v6_historical_impact.py run --phase complete",
-            ".venv/bin/python scripts/recompute_v6_historical_impact.py audit",
+            "gh workflow run scalability_v6_historical_complete.yml -f num_shards=20",
+            "(fallback) .venv/bin/python scripts/recompute_v6_historical_impact.py run --phase complete",
+            "(fallback) .venv/bin/python scripts/recompute_v6_historical_impact.py audit",
         ],
         "frozen_manifest": {
             "path": str(PROTOCOL_MANIFEST.relative_to(ROOT)),
