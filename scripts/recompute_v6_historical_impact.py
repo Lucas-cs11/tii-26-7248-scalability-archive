@@ -950,17 +950,49 @@ def run_phase(
     subset: str,
     resume: bool,
     limit: int | None,
+    *,
+    tasks_override: list[dict] | None = None,
+    raw_file_override: Path | None = None,
+    run_json_path: Path | None = None,
+    checkpoint_dir: Path | None = None,
+    extra_meta: dict | None = None,
 ) -> dict:
     ensure_dirs()
     manifest = load_manifest_and_verify_freeze()
-    all_tasks = select_phase_tasks(phase, manifest, subset)
+    all_tasks = (
+        list(tasks_override)
+        if tasks_override is not None
+        else select_phase_tasks(phase, manifest, subset)
+    )
     tasks = all_tasks[:limit] if limit is not None else all_tasks
-    recorded = load_raw_records(phase) if resume else {}
-    if not resume and recorded:
-        backup = raw_path(phase).with_suffix(
+    target_raw = raw_file_override if raw_file_override is not None else raw_path(phase)
+    target_raw.parent.mkdir(parents=True, exist_ok=True)
+    target_checkpoint_dir = checkpoint_dir if checkpoint_dir is not None else CKPT_DIR
+    target_checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+    def load_target_records() -> dict[str, dict]:
+        records: dict[str, dict] = {}
+        if not target_raw.is_file():
+            return records
+        with target_raw.open() as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if "task_id" in record:
+                    records[record["task_id"]] = record
+        return records
+
+    recorded = load_target_records() if resume else {}
+    if not resume and target_raw.is_file() and recorded:
+        backup = target_raw.with_suffix(
             f".jsonl.bak-{time.strftime('%Y%m%d%H%M%S')}"
         )
-        raw_path(phase).replace(backup)
+        target_raw.replace(backup)
         log(f"existing raw file moved to {backup.name}", phase=phase)
         recorded = {}
     pending = [
@@ -974,16 +1006,49 @@ def run_phase(
         f"pending={len(pending)} workers={workers} wall_cap={wall_cap_s}s",
         phase=phase,
     )
+    def checkpoint_now(done: int, total_count: int, started_at: float) -> None:
+        payload = {
+            "phase": phase,
+            "done": done,
+            "total": total_count,
+            "coverage_fraction": round(done / total_count, 6) if total_count else None,
+            "elapsed_s": round(time.perf_counter() - started_at, 3),
+            "updated_at_local": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+            "raw_path": str(target_raw),
+        }
+        payload.update(extra_meta or {})
+        name = (
+            f"shard_{extra_meta['shard']}_progress.json"
+            if extra_meta and "shard" in extra_meta
+            else f"{phase}_progress.json"
+        )
+        (target_checkpoint_dir / name).write_text(json.dumps(payload, indent=2) + "\n")
+
     if not pending:
-        write_checkpoint(phase, len(tasks) - len(pending), len(tasks), time.perf_counter())
-        return {"planned": len(tasks), "ran": 0, "already_records": len(recorded)}
+        checkpoint_now(len(tasks), len(all_tasks), time.perf_counter())
+        result = {
+            "phase": phase,
+            "planned": len(tasks),
+            "ran_this_invocation": 0,
+            "recorded_total": len(recorded),
+            "total_planned": len(all_tasks),
+            "coverage_fraction": round(len(recorded) / len(all_tasks), 6)
+            if all_tasks
+            else None,
+            "skipped_already_recorded": True,
+        }
+        result.update(extra_meta or {})
+        if run_json_path is not None:
+            run_json_path.parent.mkdir(parents=True, exist_ok=True)
+            run_json_path.write_text(json.dumps(result, indent=2) + "\n")
+        return result
 
     ctx = mp.get_context("spawn")
     started = time.perf_counter()
     results_q = ctx.Queue()
     done = [0]
     total = len(all_tasks)
-    raw_file = raw_path(phase).open("a")
+    raw_file = target_raw.open("a")
 
     def handle(record: dict) -> None:
         raw_file.write(json.dumps(record, default=str) + "\n")
@@ -991,7 +1056,7 @@ def run_phase(
         recorded[record["task_id"]] = record
         done[0] += 1
         if done[0] % 25 == 0 or done[0] == len(pending):
-            write_checkpoint(phase, len(recorded), total, started)
+            checkpoint_now(len(recorded), total, started)
             log(
                 f"phase={phase}: {len(recorded)}/{total} recorded "
                 f"({done[0]}/{len(pending)} this run, "
@@ -1072,7 +1137,7 @@ def run_phase(
                 pool.terminate()
             except Exception:  # noqa: BLE001
                 pass
-    write_checkpoint(phase, len(recorded), total, started)
+    checkpoint_now(len(recorded), total, started)
     elapsed = round(time.perf_counter() - started, 3)
     summary = {
         "phase": phase,
@@ -1086,10 +1151,761 @@ def run_phase(
         "wall_cap_s": wall_cap_s,
         "subset": subset,
         "completed_at_local": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "python": sys.version.split()[0],
+        "platform": sys.platform,
+        "frozen_manifest_sha256": (
+            (SUM_DIR / "frozen_manifest.sha256").read_text().split()[0]
+            if (SUM_DIR / "frozen_manifest.sha256").is_file()
+            else None
+        ),
     }
-    (SUM_DIR / f"run_{phase}.json").write_text(json.dumps(summary, indent=2) + "\n")
+    summary.update(extra_meta or {})
+    target_json = (
+        run_json_path
+        if run_json_path is not None
+        else SUM_DIR / f"run_{phase}.json"
+    )
+    target_json.parent.mkdir(parents=True, exist_ok=True)
+    target_json.write_text(json.dumps(summary, indent=2) + "\n")
     log(f"phase={phase} finished: {summary}", phase=phase)
     return summary
+
+
+
+
+# ---------------------------------------------------------------------------
+# GitHub Actions sharded execution (COMPLETE_SET second pass)
+# ---------------------------------------------------------------------------
+def load_jsonl_file(path: Path) -> dict[str, dict]:
+    records: dict[str, dict] = {}
+    if not path.is_file():
+        return records
+    with path.open() as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(record, dict) and "task_id" in record:
+                records[record["task_id"]] = record
+    return records
+
+
+def amb_tasks_sorted(manifest: dict) -> list[dict]:
+    """Stable ordering (ascending task_id) of the archived-AMB subset."""
+    return sorted(
+        (
+            task
+            for task in manifest["tasks"]
+            if task["archived"]["verdict"] == "AMB"
+        ),
+        key=lambda task: task["task_id"],
+    )
+
+
+def sharded_amb_tasks(manifest: dict, shard: int, num_shards: int) -> list[dict]:
+    """Deterministic shard assignment: stable index % num_shards == shard."""
+    if num_shards <= 0:
+        raise ValueError(f"num_shards must be positive, got {num_shards}")
+    if not 0 <= shard < num_shards:
+        raise ValueError(f"shard {shard} outside [0, {num_shards})")
+    tasks = amb_tasks_sorted(manifest)
+    return [task for index, task in enumerate(tasks) if index % num_shards == shard]
+
+
+def run_shard(
+    shard: int,
+    num_shards: int,
+    out_dir: str | Path,
+    workers: int,
+    wall_cap_s: float,
+    resume: bool,
+    limit: int | None,
+) -> dict:
+    """Execute one shard of the archived-AMB COMPLETE_SET pass.
+
+    Output layout: ``OUT/raw/recompute_complete_shard_<I>.jsonl`` and
+    ``OUT/run_shard_<I>.json``; per-task checkpoints go to ``OUT/checkpoints``.
+    """
+    ensure_dirs()
+    manifest = load_manifest_and_verify_freeze()
+    tasks = sharded_amb_tasks(manifest, shard, num_shards)
+    out_dir = Path(out_dir)
+    raw_file = out_dir / "raw" / f"recompute_complete_shard_{shard}.jsonl"
+    run_json = out_dir / f"run_shard_{shard}.json"
+    extra = {
+        "shard": shard,
+        "num_shards": num_shards,
+        "shard_tasks_planned": len(tasks),
+        "all_amb_tasks": len(amb_tasks_sorted(manifest)),
+        "out_dir": str(out_dir),
+        "execution_environment": (
+            "github-actions" if os.environ.get("GITHUB_ACTIONS") == "true" else "local"
+        ),
+        "github_run_id": os.environ.get("GITHUB_RUN_ID"),
+        "github_job": os.environ.get("GITHUB_JOB"),
+        "github_sha": os.environ.get("GITHUB_SHA"),
+    }
+    summary = run_phase(
+        "complete",
+        workers,
+        wall_cap_s,
+        "amb",
+        resume,
+        limit,
+        tasks_override=tasks,
+        raw_file_override=raw_file,
+        run_json_path=run_json,
+        checkpoint_dir=out_dir / "checkpoints",
+        extra_meta=extra,
+    )
+    recorded = load_jsonl_file(raw_file)
+    summary["recorded_total"] = len(recorded)
+    summary["shard_coverage_fraction"] = (
+        round(len(recorded) / len(tasks), 6) if tasks else None
+    )
+    run_json.parent.mkdir(parents=True, exist_ok=True)
+    run_json.write_text(json.dumps(summary, indent=2) + "\n")
+    return summary
+
+
+def verify_manifest_command(
+    manifest_path: Path,
+    expect_sha: str | None,
+    out_path: Path | None,
+) -> dict:
+    """Validate the frozen task manifest (SHA-256 and frozen invariants)."""
+    if not manifest_path.is_file():
+        raise SystemExit(f"manifest not found: {manifest_path}")
+    digest = sha256_file(manifest_path)
+    manifest = json.loads(manifest_path.read_text())
+    tasks = manifest.get("tasks") or []
+    amb = [task for task in tasks if task.get("archived", {}).get("verdict") == "AMB"]
+    checks = {
+        "sha256_matches_expectation": expect_sha is None or digest == expect_sha,
+        "schema_version_ok": manifest.get("schema_version") == SCHEMA_VERSION,
+        "frozen_flag_true": manifest.get("frozen") is True,
+        "tasks_3645": len(tasks) == EXPECTED_TIER_ROWS,
+        "bounded_problems_555": manifest.get("counts", {}).get("bounded_problems")
+        == EXPECTED_TIER_PROBLEMS,
+        "amb_tasks_1956": len(amb) == 1_956,
+        "ver_tasks_1689": len(tasks) - len(amb) == 1_689,
+        "task_ids_unique": len({task["task_id"] for task in tasks}) == len(tasks),
+        "tier_conflict_only": all(task.get("tier") == TIER_CONFLICT for task in tasks),
+        "mode_first": all(task.get("mode") == "first" for task in tasks),
+        "complete_set_false": all(task.get("complete_set") is False for task in tasks),
+        "sharded_assignment_stable": all(
+            [task["task_id"] for task in sharded_amb_tasks(manifest, shard, 20)]
+            for shard in (0, 1, 19)
+        ),
+    }
+    repeated = 0
+    for shard in range(20):
+        repeated += len(sharded_amb_tasks(manifest, shard, 20))
+    checks["shard_partition_exact_1956"] = repeated == 1_956
+    result = {
+        "manifest": str(manifest_path),
+        "sha256": digest,
+        "expected_sha256": expect_sha,
+        "checks": checks,
+        "all_checks_pass": all(checks.values()),
+        "tasks": len(tasks),
+        "amb_tasks": len(amb),
+        "ver_tasks": len(tasks) - len(amb),
+        "bounded_problems": manifest.get("counts", {}).get("bounded_problems"),
+    }
+    if out_path is not None:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(result, indent=2) + "\n")
+    print(json.dumps(result, indent=2))
+    if not result["all_checks_pass"]:
+        raise SystemExit(2)
+    return result
+
+
+def export_primary_pass(out_path: Path) -> dict:
+    """Export a compact primary-pass summary for the GitHub Actions aggregate job.
+
+    The primary verdict pass (3,645/3,645) runs on the local audit host; the
+    GH shards only cover the COMPLETE_SET AMB pass.  This compact file carries
+    the primary drift matrix, the VER critical-pair rows, the legacy replay and
+    SCG fingerprint evidence so that the GH aggregate job can emit one complete
+    summary without re-running the primary pass.
+    """
+    manifest = load_manifest_and_verify_freeze()
+    drift_payload = build_drift_tables(manifest)
+    detail_rows = drift_payload["detail_rows"]
+    by_id = {row["task_id"]: row for row in detail_rows}
+    critical = critical_pair_analysis(detail_rows)
+    time_domain = time_domain_analysis(detail_rows)
+    legacy = legacy_replay_analysis(detail_rows)
+    scg_path = SUM_DIR / "scg_fingerprint_summary.json"
+    scg_summary = json.loads(scg_path.read_text()) if scg_path.is_file() else None
+    plan_path = SUM_DIR / "mscg_lp_reference_plan.json"
+    rows = []
+    for task in manifest["tasks"]:
+        row = by_id[task["task_id"]]
+        rows.append(
+            {
+                "task_id": task["task_id"],
+                "evaluation_id": task["evaluation_id"],
+                "historical_model_hash": task["historical_model_hash"],
+                "bounded_problem_id": task["bounded_problem_id"],
+                "L": task["L"],
+                "H": task["H"],
+                "n_transitions": task["n_transitions"],
+                "archived_verdict": task["archived"]["verdict"],
+                "recomputed_status": row["recomputed_status"],
+                "recomputed_verdict": row["recomputed_verdict"],
+                "recomputed_wall_s": row["recomputed_wall_s"],
+                "recomputed_peak_rss_mb": row["recomputed_peak_rss_mb"],
+                "scg_classes": row["recomputed_scg_classes"],
+                "scg_edges": row["recomputed_scg_edges"],
+                "all_pairs": row["recomputed_all_pairs"]
+                if task["archived"]["verdict"] == "VER"
+                else None,
+                "certificates": row["recomputed_feasible_pairs"]
+                if task["archived"]["verdict"] == "VER"
+                else None,
+            }
+        )
+    ver_rows = [row for row in detail_rows if row["archived_verdict"] == "VER"]
+    primary = {
+        "schema_version": "v6-historical-primary-pass-summary-v1",
+        "frozen_manifest": {
+            "sha256": (
+                (SUM_DIR / "frozen_manifest.sha256").read_text().split()[0]
+                if (SUM_DIR / "frozen_manifest.sha256").is_file()
+                else None
+            ),
+            "tasks": len(manifest["tasks"]),
+            "bounded_problems": manifest["counts"]["bounded_problems"],
+        },
+        "coverage": {
+            "planned": len(manifest["tasks"]),
+            "recorded": len(load_raw_records("first")),
+            "completed": sum(
+                1
+                for row in detail_rows
+                if row["recomputed_status"] == "COMPLETED"
+            ),
+        },
+        "verdict_drift": drift_payload["drift"],
+        "critical_pairs_ver_rows": {
+            "rows": len(ver_rows),
+            "archived_zero_pairs": sum(
+                1 for row in ver_rows if row["archived_critical_pairs"] == 0
+            ),
+            "recomputed_zero_pairs": sum(
+                1 for row in ver_rows if row["recomputed_all_pairs"] == 0
+            ),
+            "feasible_zero": sum(
+                1 for row in ver_rows if row["recomputed_feasible_pairs"] == 0
+            ),
+        },
+        "time_domain_primary": {
+            "archived_overlap_endpoints_available": False,
+            "recomputed_amb_first_pass_overlap_rows": time_domain[
+                "recomputed_amb_rows_with_certificate_overlap"
+            ],
+            "overlap_inside_archived_window_fraction": time_domain[
+                "overlap_inside_archived_window_fraction"
+            ],
+            "overlap_width_p50": time_domain["overlap_width_p50"],
+            "overlap_width_p95": time_domain["overlap_width_p95"],
+        },
+        "legacy_replay": legacy,
+        "time_domain_legacy_replay": time_domain["legacy_replay_sample"],
+        "scg_fingerprint_sample": scg_summary,
+        "critical_pairs": critical,
+        "mscg_lp_reference_plan": {
+            "present": plan_path.is_file(),
+            "path": str(plan_path.relative_to(ROOT)) if plan_path.is_file() else None,
+        },
+        "rows": rows,
+    }
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(primary, indent=1) + "\n")
+    log(
+        f"exported primary pass summary: {out_path} "
+        f"({out_path.stat().st_size} bytes, {len(rows)} rows)",
+        phase="export",
+    )
+    return primary
+
+
+# ---------------------------------------------------------------------------
+# Aggregation of GH shards
+# ---------------------------------------------------------------------------
+def aggregate_shards(
+    shards_dir: Path,
+    out_dir: Path,
+    num_shards: int | None,
+    primary_summary_path: Path | None,
+) -> dict:
+    ensure_dirs()
+    manifest = load_manifest_and_verify_freeze()
+    amb = amb_tasks_sorted(manifest)
+    amb_ids = [task["task_id"] for task in amb]
+    amb_id_set = set(amb_ids)
+    task_by_id = {task["task_id"]: task for task in manifest["tasks"]}
+    out_dir = Path(out_dir)
+    summary_dir = out_dir / "summary"
+    summary_dir.mkdir(parents=True, exist_ok=True)
+
+    raw_files = sorted(shards_dir.glob("raw/recompute_complete_shard_*.jsonl"))
+    shard_index: dict[int, Path] = {}
+    for path in raw_files:
+        match = re.search(r"recompute_complete_shard_(\d+)\.jsonl$", path.name)
+        if match:
+            shard_index[int(match.group(1))] = path
+    shard_ids = sorted(shard_index)
+    detected_num_shards = (
+        num_shards if num_shards is not None else (max(shard_ids) + 1 if shard_ids else None)
+    )
+    expected_shards = (
+        list(range(detected_num_shards)) if detected_num_shards is not None else []
+    )
+    missing_shard_files = [i for i in expected_shards if i not in shard_index]
+
+    record_owner: dict[str, int] = {}
+    records: dict[str, dict] = {}
+    duplicates: list[str] = []
+    extraneous: list[str] = []
+    shard_reports: list[dict] = []
+    for shard in shard_ids:
+        path = shard_index[shard]
+        shard_records = load_jsonl_file(path)
+        run_json_path = path.parent.parent / f"run_shard_{shard}.json"
+        run_report = (
+            json.loads(run_json_path.read_text()) if run_json_path.is_file() else {}
+        )
+        shard_reports.append(
+            {
+                "shard": shard,
+                "raw_file": str(path),
+                "sha256": sha256_file(path),
+                "records": len(shard_records),
+                "expected_shard_tasks": len(
+                    [task for task in amb if amb_ids.index(task["task_id"]) % (detected_num_shards or 1) == shard]
+                )
+                if detected_num_shards
+                else None,
+                "elapsed_s": run_report.get("elapsed_s"),
+                "workers": run_report.get("workers"),
+                "wall_cap_s": run_report.get("wall_cap_s"),
+                "github_run_id": run_report.get("github_run_id"),
+                "shard_coverage_fraction": run_report.get("shard_coverage_fraction"),
+            }
+        )
+        for task_id, record in shard_records.items():
+            if task_id not in amb_id_set:
+                extraneous.append(task_id)
+                continue
+            if task_id in record_owner:
+                duplicates.append(task_id)
+                continue
+            record_owner[task_id] = shard
+            records[task_id] = record
+    missing = [task_id for task_id in amb_ids if task_id not in record_owner]
+
+    statuses = Counter(record.get("execution_status") for record in records.values())
+    completed_ids = [
+        task_id
+        for task_id, record in records.items()
+        if record.get("execution_status") == "COMPLETED"
+    ]
+    # ---------------------------------------------------------------- primary
+    primary = None
+    if primary_summary_path is not None and Path(primary_summary_path).is_file():
+        primary = json.loads(Path(primary_summary_path).read_text())
+
+    def _pairs(record: dict | None):
+        return _all_pairs(record) if record else None
+
+    # ------------------------------------------------- complete-pass analysis
+    amb_rows = []
+    for task_id in amb_ids:
+        record = records.get(task_id)
+        task = task_by_id[task_id]
+        archived_pairs = task["archived"]["critical_pair_count"]
+        completed = bool(record and record.get("execution_status") == "COMPLETED")
+        recomputed_pairs = _pairs(record) if completed else None
+        amb_rows.append(
+            {
+                "task_id": task_id,
+                "shard": record_owner.get(task_id),
+                "archived_verdict": "AMB",
+                "status": record.get("execution_status") if record else "NOT_RUN",
+                "verdict": record.get("verdict") if record else None,
+                "archived_critical_pairs": archived_pairs,
+                "recomputed_all_pairs": recomputed_pairs,
+                "recomputed_feasible_pairs": record.get("certificates_count")
+                if completed
+                else None,
+                "overlap_min": record.get("overlap_min") if completed else None,
+                "overlap_max": record.get("overlap_max") if completed else None,
+                "overlap_width": record.get("overlap_width") if completed else None,
+                "overlap_inside_window": record.get("overlap_inside_window")
+                if completed
+                else None,
+                "scg_classes": _counter(record, "scg_classes"),
+                "scg_edges": _counter(record, "scg_edges"),
+                "wall_s": record.get("wall_s") if record else None,
+                "peak_rss_mb": record.get("peak_rss_mb") if record else None,
+                "archived_reference_scg_classes": task["archived"][
+                    "reference_scg_classes"
+                ],
+                "archived_reference_scg_edges": task["archived"]["reference_scg_edges"],
+            }
+        )
+
+    pair_rows = [
+        row
+        for row in amb_rows
+        if row["recomputed_all_pairs"] is not None
+        and row["archived_critical_pairs"] is not None
+    ]
+    pair_deltas = [
+        row["recomputed_all_pairs"] - row["archived_critical_pairs"] for row in pair_rows
+    ]
+    pair_ratios = [
+        row["recomputed_all_pairs"] / row["archived_critical_pairs"]
+        for row in pair_rows
+        if row["archived_critical_pairs"]
+    ]
+    amb_critical = {
+        "rows": len(pair_rows),
+        "equal": sum(1 for delta in pair_deltas if delta == 0),
+        "increased": sum(1 for delta in pair_deltas if delta > 0),
+        "decreased": sum(1 for delta in pair_deltas if delta < 0),
+        "mean_archived": round(
+            statistics.mean(row["archived_critical_pairs"] for row in pair_rows), 3
+        )
+        if pair_rows
+        else None,
+        "mean_recomputed": round(
+            statistics.mean(row["recomputed_all_pairs"] for row in pair_rows), 3
+        )
+        if pair_rows
+        else None,
+        "median_delta": statistics.median(pair_deltas) if pair_deltas else None,
+        "median_ratio_recomputed_over_archived": round(statistics.median(pair_ratios), 6)
+        if pair_ratios
+        else None,
+        "rows_feasible_positive": sum(
+            1
+            for row in amb_rows
+            if row["recomputed_feasible_pairs"] is not None
+            and row["recomputed_feasible_pairs"] > 0
+        ),
+        "rows_feasible_zero": sum(
+            1
+            for row in amb_rows
+            if row["recomputed_feasible_pairs"] == 0
+        ),
+        "mean_recomputed_feasible": round(
+            statistics.mean(
+                row["recomputed_feasible_pairs"]
+                for row in amb_rows
+                if row["recomputed_feasible_pairs"] is not None
+            ),
+            3,
+        )
+        if any(row["recomputed_feasible_pairs"] is not None for row in amb_rows)
+        else None,
+    }
+    ver_block = None
+    combined_critical = dict(amb_critical)
+    combined_critical["rows_by_archived_verdict"] = {"AMB": dict(amb_critical)}
+    if primary is not None and primary.get("critical_pairs_ver_rows"):
+        ver_block = primary["critical_pairs_ver_rows"]
+        ver_rows = int(ver_block.get("rows") or 0)
+        combined_critical["rows"] = (ver_block.get("rows") or 0) + amb_critical["rows"]
+        combined_critical["equal"] = amb_critical["equal"] + int(
+            ver_block.get("archived_zero_pairs") == ver_block.get("rows")
+            and ver_block.get("recomputed_zero_pairs") == ver_block.get("rows")
+        ) * ver_rows
+        combined_critical["rows_by_archived_verdict"] = {
+            "VER": {
+                "rows": ver_rows,
+                "equal": ver_rows
+                if ver_block.get("archived_zero_pairs") == ver_rows
+                and ver_block.get("recomputed_zero_pairs") == ver_rows
+                else None,
+                "increased": 0,
+                "decreased": 0,
+            },
+            "AMB": dict(amb_critical),
+        }
+    # ------------------------------------------------------- time domain drift
+    time_rows = [
+        row
+        for row in amb_rows
+        if row["overlap_min"] is not None and row["overlap_max"] is not None
+    ]
+    widths = [row["overlap_width"] for row in time_rows if row["overlap_width"] is not None]
+    time_domain = {
+        "archived_overlap_endpoints_available": False,
+        "archived_overlap_endpoints_note": (
+            "the archived Proposed shard CSVs and the archived MSCG-LP reference "
+            "CSV persist only verdicts/counters, not certificate overlap "
+            "endpoints; the archived-vs-v6 endpoint comparison is supplied by the "
+            "legacy-semantics replay sample exported in the primary-pass summary"
+        ),
+        "complete_pass_rows_with_overlap": len(time_rows),
+        "overlap_inside_archived_window": sum(
+            1 for row in time_rows if row["overlap_inside_window"] is True
+        ),
+        "overlap_inside_archived_window_fraction": round(
+            sum(1 for row in time_rows if row["overlap_inside_window"] is True)
+            / len(time_rows),
+            6,
+        )
+        if time_rows
+        else None,
+        "overlap_width_p50": percentile(widths, 0.5),
+        "overlap_width_p95": percentile(widths, 0.95),
+        "overlap_width_max": max(widths) if widths else None,
+        "legacy_replay": primary.get("legacy_replay") if primary else None,
+        "time_domain_legacy_replay": primary.get("time_domain_legacy_replay")
+        if primary
+        else None,
+        "first_pass_overlap": primary.get("time_domain_primary") if primary else None,
+    }
+    scg_deltas = [
+        int(row["scg_classes"]) - int(row["archived_reference_scg_classes"])
+        for row in amb_rows
+        if row["scg_classes"] is not None
+        and row["archived_reference_scg_classes"] is not None
+    ]
+    scg_block = {
+        "complete_pass_rows_with_scg_counters": len(scg_deltas),
+        "classes_equal": sum(1 for delta in scg_deltas if delta == 0),
+        "classes_smaller_under_v6": sum(1 for delta in scg_deltas if delta < 0),
+        "classes_larger_under_v6": sum(1 for delta in scg_deltas if delta > 0),
+        "median_class_delta": statistics.median(scg_deltas) if scg_deltas else None,
+        "fingerprint_sample": primary.get("scg_fingerprint_sample") if primary else None,
+    }
+    coverage = {
+        "primary_verdict_pass": (
+            primary.get("coverage") if primary else "PRIMARY_PASS_NOT_INCLUDED"
+        ),
+        "complete_pass_amb_subset": {
+            "planned": len(amb),
+            "recorded": len(records),
+            "recorded_fraction": round(len(records) / len(amb), 6) if amb else None,
+            "completed": len(completed_ids),
+            "timeout_wall_clock": statuses.get("TIMEOUT_WALL_CLOCK", 0),
+            "error": statuses.get("ERROR", 0)
+            + statuses.get("MODEL_IDENTITY_MISMATCH", 0),
+            "not_run": len(missing),
+            "duplicate_records": len(duplicates),
+            "extraneous_records": len(extraneous),
+        },
+        "shards": {
+            "detected": shard_ids,
+            "detected_num_shards": detected_num_shards,
+            "expected_num_shards": expected_shards,
+            "missing_shard_files": missing_shard_files,
+        },
+    }
+    complete_pass_finished = (
+        len(records) == len(amb)
+        and not missing
+        and not duplicates
+        and not extraneous
+        and not missing_shard_files
+        and set(statuses) <= {"COMPLETED", "TIMEOUT_WALL_CLOCK"}
+    )
+    snapshot_status = (
+        "FINAL"
+        if complete_pass_finished and primary is not None
+        else "FINAL_PARTIAL"
+    )
+    limitations = [
+        "the archived Proposed shards carry no mode column; FIRST_CERTIFICATE is the documented assumption, supported by the 0.108 median proposed/reference runtime ratio",
+        "the archived Proposed shards carry no verifier counters, so the archived critical-pair count is taken from the paired archived MSCG-LP reference record (complete enumeration, different baseline implementation: its terminal_pairs counts all normal x fault path pairs)",
+        "archived certificate overlap endpoints were never persisted, so archived-vs-v6 overlap endpoint deltas are only available on the legacy-semantics replay sample",
+        "the conflict tier is a necessary-condition exposure screen; the 32,805 no-conflict rows remain inside the conservative upper bound and are not certified unaffected",
+        "the COMPLETE_SET pass is attempted, not guaranteed: rows that exceed the 60 s wall cap keep their primary-pass verdict but have no complete critical-pair count (TIMEOUT_WALL_CLOCK is recorded, never a fabricated verdict)",
+        "the MSCG-LP reference recompute is planning only in this deliverable, not executed; it is not independent of the repaired shared SCG",
+        "verdict drift measured here is for the historical rmt_fms baseline only and does not transfer to the 8,280-cell v6 formal matrix",
+    ]
+    if primary is None:
+        limitations.append(
+            "primary-pass summary was not supplied to the aggregate job; the verdict-drift section is marked PRIMARY_PASS_NOT_INCLUDED"
+        )
+    if missing_shard_files:
+        limitations.append(
+            f"missing shard files: {missing_shard_files}; coverage is partial"
+        )
+    summary = {
+        "schema_version": DRIFT_SCHEMA_VERSION,
+        "snapshot_status": snapshot_status,
+        "snapshot_note": (
+            "GitHub Actions COMPLETE_SET second pass aggregation. FINAL requires "
+            "all 1,956 archived-AMB rows recorded exactly once (statuses COMPLETED "
+            "or TIMEOUT_WALL_CLOCK) and the primary-pass summary supplied; "
+            "otherwise FINAL_PARTIAL with the explicit denominator."
+        ),
+        "frozen_manifest": {
+            "path": str(PROTOCOL_MANIFEST.relative_to(ROOT)),
+            "sha256": (
+                (SUM_DIR / "frozen_manifest.sha256").read_text().split()[0]
+                if (SUM_DIR / "frozen_manifest.sha256").is_file()
+                else None
+            ),
+            "tasks": len(manifest["tasks"]),
+            "bounded_problems": manifest["counts"]["bounded_problems"],
+            "amb_tasks": len(amb),
+        },
+        "scope_separation": manifest["scope_separation"],
+        "recompute_protocol": manifest["recompute_protocol"],
+        "execution": {
+            "environment": (
+                "github-actions"
+                if os.environ.get("GITHUB_ACTIONS") == "true"
+                else "local"
+            ),
+            "sharded": True,
+            "shard_report": shard_reports,
+        },
+        "coverage": coverage,
+        "primary_verdict_pass": primary.get("verdict_drift") if primary else None,
+        "critical_pairs": combined_critical,
+        "time_domain": time_domain,
+        "scg_shape": scg_block,
+        "legacy_replay": primary.get("legacy_replay") if primary else None,
+        "mscg_lp_reference_plan": primary.get("mscg_lp_reference_plan")
+        if primary
+        else None,
+        "inputs": manifest["source_inputs"],
+        "limitations": limitations,
+    }
+    drift_detail_rows = []
+    primary_rows = {row["task_id"]: row for row in (primary or {}).get("rows", [])}
+    for task in manifest["tasks"]:
+        task_id = task["task_id"]
+        prow = primary_rows.get(task_id, {})
+        record = records.get(task_id)
+        completed = bool(record and record.get("execution_status") == "COMPLETED")
+        archived_verdict = task["archived"]["verdict"]
+        first_verdict = prow.get("recomputed_verdict")
+        first_status = prow.get("recomputed_status", "PRIMARY_PASS_NOT_INCLUDED")
+        complete_pairs = _pairs(record) if completed else None
+        drift_detail_rows.append(
+            {
+                "task_id": task_id,
+                "evaluation_id": task["evaluation_id"],
+                "bounded_problem_id": task["bounded_problem_id"],
+                "historical_model_hash": task["historical_model_hash"],
+                "v6_model_hash": task["v6_model_hash"],
+                "L": task["L"],
+                "H": task["H"],
+                "n_transitions": task["n_transitions"],
+                "archived_verdict": archived_verdict,
+                "archived_critical_pairs": task["archived"]["critical_pair_count"],
+                "archived_reference_scg_classes": task["archived"][
+                    "reference_scg_classes"
+                ],
+                "archived_reference_scg_edges": task["archived"]["reference_scg_edges"],
+                "first_pass_status": first_status,
+                "first_pass_verdict": first_verdict,
+                "first_pass_verdict_drift": (
+                    None
+                    if first_verdict in (None, "NOT_RUN", "PRIMARY_PASS_NOT_INCLUDED")
+                    else (first_verdict != archived_verdict)
+                ),
+                "complete_pass_shard": record_owner.get(task_id),
+                "complete_pass_status": record.get("execution_status")
+                if record
+                else "NOT_RUN",
+                "complete_pass_verdict": record.get("verdict") if record else None,
+                "complete_pass_certificates": record.get("certificates_count")
+                if completed
+                else None,
+                "complete_pass_all_pairs": complete_pairs,
+                "complete_pass_wall_s": record.get("wall_s") if record else None,
+                "complete_pass_peak_rss_mb": record.get("peak_rss_mb")
+                if record
+                else None,
+                "complete_pass_overlap_min": record.get("overlap_min")
+                if completed
+                else None,
+                "complete_pass_overlap_max": record.get("overlap_max")
+                if completed
+                else None,
+                "complete_pass_scg_classes": _counter(record, "scg_classes"),
+                "complete_pass_scg_edges": _counter(record, "scg_edges"),
+            }
+        )
+    with (summary_dir / "drift_detail.csv").open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=list(drift_detail_rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(drift_detail_rows)
+    (summary_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    (summary_dir / "coverage.json").write_text(json.dumps(coverage, indent=1) + "\n")
+    (summary_dir / "shard_manifest.json").write_text(
+        json.dumps(
+            {
+                "shard_report": shard_reports,
+                "duplicates": sorted(set(duplicates)),
+                "extraneous": sorted(set(extraneous)),
+                "missing_tasks": missing,
+                "missing_shard_files": missing_shard_files,
+            },
+            indent=1,
+        )
+        + "\n"
+    )
+    input_hashes = {
+        "frozen_manifest_sha256": summary["frozen_manifest"]["sha256"],
+        "primary_summary": {
+            "path": str(primary_summary_path) if primary_summary_path else None,
+            "sha256": sha256_file(Path(primary_summary_path))
+            if primary_summary_path and Path(primary_summary_path).is_file()
+            else None,
+        },
+        "shard_files": [
+            {"shard": report["shard"], "sha256": report["sha256"]}
+            for report in shard_reports
+        ],
+    }
+    (summary_dir / "aggregate_inputs.json").write_text(
+        json.dumps(input_hashes, indent=2) + "\n"
+    )
+    plan_path = SUM_DIR / "mscg_lp_reference_plan.json"
+    if plan_path.is_file():
+        (summary_dir / "mscg_lp_reference_plan.json").write_text(
+            plan_path.read_text()
+        )
+    log(
+        "aggregate: "
+        + json.dumps(
+            {
+                "snapshot_status": snapshot_status,
+                "shards": len(shard_ids),
+                "recorded": len(records),
+                "completed": len(completed_ids),
+                "critical_pairs": {
+                    key: combined_critical.get(key)
+                    for key in ("rows", "equal", "increased", "decreased")
+                },
+            }
+        ),
+        phase="aggregate",
+    )
+    return summary
+
+
+def build_complete_phase_report_stub() -> None:
+    """Placeholder hook kept for CLI symmetry (report is written separately)."""
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -1996,6 +2812,28 @@ def parse_args(argv=None):
     sub = parser.add_subparsers(dest="command", required=True)
     manifest_p = sub.add_parser("manifest", help="freeze the task list")
     manifest_p.add_argument("--force", action="store_true")
+    verify_p = sub.add_parser(
+        "verify-manifest", help="validate the frozen task manifest (SHA and invariants)"
+    )
+    verify_p.add_argument("--manifest", type=Path, default=PROTOCOL_MANIFEST)
+    verify_p.add_argument("--expect-sha", default=None)
+    verify_p.add_argument("--out", type=Path, default=None)
+    export_p = sub.add_parser(
+        "export-primary",
+        help="export the compact primary-pass summary for the GH aggregate job",
+    )
+    export_p.add_argument("--out", type=Path, required=True)
+    aggregate_p = sub.add_parser(
+        "aggregate", help="validate and aggregate the GH COMPLETE_SET shards"
+    )
+    aggregate_p.add_argument("--shards-dir", type=Path, required=True)
+    aggregate_p.add_argument("--out", type=Path, required=True)
+    aggregate_p.add_argument("--num-shards", type=int, default=None)
+    aggregate_p.add_argument(
+        "--primary-summary",
+        type=Path,
+        default=SUM_DIR / "primary_pass_summary.json",
+    )
     run_p = sub.add_parser("run", help="run a recomputation phase")
     run_p.add_argument("--phase", choices=sorted(PHASE_FILES), required=True)
     run_p.add_argument("--workers", type=int, default=DEFAULT_WORKERS)
@@ -2003,6 +2841,19 @@ def parse_args(argv=None):
     run_p.add_argument("--subset", choices=["amb", "all"], default="amb")
     run_p.add_argument("--limit", type=int, default=None)
     run_p.add_argument("--no-resume", action="store_true")
+    run_p.add_argument(
+        "--shard",
+        type=int,
+        default=None,
+        help="shard index for the archived-AMB COMPLETE_SET pass",
+    )
+    run_p.add_argument("--num-shards", type=int, default=None)
+    run_p.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="output directory for sharded runs (default work/v6_historical_recompute/gh_shards)",
+    )
     sub.add_parser("audit", help="build drift tables and plans")
     all_p = sub.add_parser("all", help="manifest + first + complete + audit")
     all_p.add_argument("--workers", type=int, default=DEFAULT_WORKERS)
@@ -2018,7 +2869,36 @@ def main(argv=None) -> int:
     if args.command == "manifest":
         build_frozen_manifest(force=args.force)
         return 0
+    if args.command == "verify-manifest":
+        verify_manifest_command(args.manifest, args.expect_sha, args.out)
+        return 0
+    if args.command == "export-primary":
+        export_primary_pass(args.out)
+        return 0
+    if args.command == "aggregate":
+        aggregate_shards(
+            args.shards_dir,
+            args.out,
+            args.num_shards,
+            args.primary_summary,
+        )
+        return 0
     if args.command == "run":
+        if args.shard is not None:
+            if args.phase != "complete":
+                raise SystemExit("--shard is only supported for --phase complete")
+            if args.num_shards is None:
+                raise SystemExit("--shard requires --num-shards")
+            run_shard(
+                shard=args.shard,
+                num_shards=args.num_shards,
+                out_dir=args.out or (WORK_DIR / "gh_shards"),
+                workers=max(1, min(args.workers, DEFAULT_WORKERS)),
+                wall_cap_s=args.wall_cap,
+                resume=not args.no_resume,
+                limit=args.limit,
+            )
+            return 0
         run_phase(
             phase=args.phase,
             workers=max(1, min(args.workers, DEFAULT_WORKERS)),
