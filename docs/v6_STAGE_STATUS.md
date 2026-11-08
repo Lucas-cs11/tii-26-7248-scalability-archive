@@ -66,3 +66,21 @@ to GitHub Actions; the formal matrix runs only on Modal.
   `TIMEOUT_WALL_CLOCK`/`INC` in the formal matrix, never as verdicts.
 * Historical critical-pair counts use a different enumeration basis from the
   archived reference (documented in `docs/v6_historical_recompute_report.md`).
+
+
+## Final state (2026-11-08)
+
+- **Formal 8,280-cell Modal matrix: COMPLETE** — run `run-5038d2a9-20261107T113535Z`,
+  120/120 shards, 8,280/8,280 unique records, 0 missing/duplicate/error.
+  COMPLETED 5,406 / TIMEOUT_WALL_CLOCK 2,874 / ERROR 0; VER 1,975 / AMB 2,782 /
+  INC 649. Modal metered delta $5.53 (pilot + formal) against the $10 cap and
+  the $9.50 guard.
+- **Independent audit on GitHub Actions: PASS** (run 42434059038; 8,280 tasks,
+  8,280 unique task ids, 120 shards, 0 technical failures, no findings).
+- **Statistics and Figure 6 computed on GitHub Actions**; four figure formats,
+  caption, plotting data and the formal statistics are in the deliverable.
+- **Historical recompute: FINAL** (3,645/3,645, zero verdict drift; COMPLETE_SET
+  1,956/1,956 on GitHub Actions run 42366299274).
+- **Deliverable**: `outputs/TII_Scalability_Benchmark_v6_Modal_FullScale_Results.zip`
+  (36.0 MB, 9,406 files, `MANIFEST.sha256` self-check PASS) with
+  `FINAL_ACCEPTANCE_REPORT.md` (decision **READY_FOR_IEEE_TII**).

@@ -47,7 +47,13 @@ def main() -> int:
     cost = stats.get("cost_accounting", {})
     groups = stats.get("groups", {})
     cells = dataset.get("tasks")
-    status = "FORMAL" if str(dataset.get("analysis_kind", "")).lower().startswith("formal") else "PILOT-SELFCHECK — NOT FORMAL DATA"
+    is_formal = bool(dataset.get("is_formal")) or str(dataset.get("label", "")).upper() == "FORMAL"
+    status = "FORMAL" if is_formal else "PILOT-SELFCHECK — NOT FORMAL DATA"
+    overall = (stats.get("denominators") or {}).get("overall") or {}
+    cells = overall.get("n_total") or audit.get("tasks_audited") or "n/a"
+    audited = audit.get("tasks_audited") or audit.get("unique_task_ids") or "n/a"
+    unique = audit.get("unique_task_ids") or "n/a"
+    shards_audited = audit.get("shards_audited") or "n/a"
     rows = []
     for name in ("A_structural", "B_wip", "C_Lsweep", "D_difficult"):
         bucket = denom.get(name, {})
@@ -66,8 +72,8 @@ applied to the v17 manuscript or to any approved blue paragraph.
 > (`{frozen.get('protocol', 'scalability-v6-frozen-protocol-1')}`, {cells} cells,
 > {dataset.get('cell_timeout_s', 60)} s per-cell wall-clock cap, 50,000
 > state-class cap) executed entirely on Modal CPU workers; the independent
-> audit reported {audit.get('unique_tasks', audit.get('tasks', 'n/a'))} unique
-> task records with {audit.get('missing', 0)} missing and
+> audit reported {audited} audited task records ({unique} unique task IDs,
+> {shards_audited} shards) with {audit.get('missing', 0)} missing and
 > {audit.get('duplicates', 0)} duplicate records. Points marked at the cap are
 > right-censored wall-clock timeouts and are not treated as zero-runtime
 > observations or as verdicts. Completed-but-inconclusive cells are reported
@@ -106,7 +112,7 @@ source.
 > and reported as cloud overhead. Each task writes one atomic record plus a
 > ledger entry with a byte-level SHA-256; interrupted containers resume from the
 > ledger without re-running completed tasks. The independent audit reproduced
-> {audit.get('unique_tasks', 'n/a')} unique records with
+> {audited} audited records ({unique} unique task IDs) with
 > {audit.get('missing', 0)} missing and {audit.get('duplicates', 0)} duplicates.
 >
 > Status fields are orthogonal. `execution_status=TIMEOUT_WALL_CLOCK` means the

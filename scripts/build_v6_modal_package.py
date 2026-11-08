@@ -108,6 +108,9 @@ def main() -> int:
 
     # 04 raw 8280, 05 checkpoint/recovery
     copied["raw"] = copy_tree(args.run_dir, staging / "04_raw_8280")
+    # Drop the orchestrator staging copy (a duplicate of the frozen protocol)
+    # so the raw block contains only the 8,280 records and their sidecars.
+    shutil.rmtree(staging / "04_raw_8280" / "staging", ignore_errors=True)
     copied["recovery"] = copy_tree(ROOT / "work/v6_modal_recovery", staging / "05_checkpoint_and_recovery")
     copied["pilot"] = copy_tree(ROOT / "work/v6_modal_pilot", staging / "05_checkpoint_and_recovery/pilot")
 
@@ -124,7 +127,8 @@ def main() -> int:
 
     # 09 paper material
     paper = staging / "09_paper_material"
-    for name in ("section_vc_suggestions.md", "s7b_suggestions.md", "reviewer_mapping_v6.md"):
+    for name in ("v6_section_vc_suggestions.md", "v6_s7b_suggestions.md",
+                 "v6_reviewer_mapping.md"):
         copy_file(ROOT / "docs" / name, paper / name)
 
     # 10 reproducibility
@@ -152,23 +156,74 @@ def main() -> int:
 
     # acceptance report
     audit = load(args.audit_dir / "audit.json", {}) or {}
+    acceptance_extra = {
+        "audit_tasks_audited": audit.get("tasks_audited"),
+        "audit_unique_task_ids": audit.get("unique_task_ids"),
+        "audit_shards_audited": audit.get("shards_audited"),
+        "audit_execution_status": audit.get("execution_status"),
+        "audit_classification": audit.get("classification"),
+        "audit_technical_failures": audit.get("technical_failures"),
+        "audit_findings": audit.get("audit_findings"),
+        "audit_errors": audit.get("audit_errors"),
+    }
     analysis = load(args.analysis_dir / "statistics.json", {}) or {}
     acceptance = {
         "gates": gate_decision.get("gates"),
         "formal_gates_decision": gate_decision.get("decision"),
-        "raw_audit": {key: audit.get(key) for key in
-                      ("PASS", "tasks", "unique_tasks", "missing", "duplicates", "errors")},
+        "raw_audit": acceptance_extra,
         "statistics_headline": analysis.get("headline") or analysis.get("denominators"),
         "modal_cost": load(ROOT / "work/v6_modal_budget/budget.json", {}),
         "figure6": {"files": [name for name in
                               ("figure6.svg", "figure6.pdf", "figure6.eps", "figure6.png")]},
     }
-    (staging / "FINAL_ACCEPTANCE_REPORT.md").write_text(
-        "# v6 Modal full-scale final acceptance report\n\n"
-        "```json\n" + json.dumps(acceptance, indent=2, sort_keys=True) + "\n```\n\n"
-        "Machine-readable source: `00_provenance/run_provenance.json`, "
-        "`06_independent_audit/`, `07_statistical_analysis/statistics.json`.\n"
-    )
+    gates = gate_decision.get("gates") or {}
+    totals = (run_manifest.get("totals") or {})
+    audit_pass = bool(audit.get("PASS"))
+    report = [
+        "# Final acceptance report — v6 Modal full-scale (8,280 cells)",
+        "",
+        f"**Decision: {'READY_FOR_IEEE_TII' if (all(gates.values()) and audit_pass) else 'NOT READY'}**",
+        "",
+        "## Execution",
+        f"- run id `{run_manifest.get('run_id')}`, source commit `{run_manifest.get('source_sha')}`,",
+        f"  image spec `{run_manifest.get('image_spec_sha256')}`, Modal CPU 1 core / 4096 MiB,",
+        f"  60 s per-cell cap, `max_parallel` {((run_manifest.get('resources') or {}).get('max_parallel'))},",
+        f"  volume `tii-v6-scalability` prefix `{run_manifest.get('volume_prefix')}`.",
+        f"- raw records: **{run_manifest.get('raw_records')}** / 8,280 over 120 shards;",
+        f"  run manifest declares {run_manifest.get('tasks')} tasks in {run_manifest.get('shards')} shards.",
+        "",
+        "## Verdict / status accounting",
+        f"- COMPLETED {totals.get('tasks_completed')}, TIMEOUT_WALL_CLOCK {totals.get('tasks_timeout_wall_clock')},",
+        f"  ERROR {totals.get('tasks_error')} (right-censored; never imputed).",
+        f"- VER {totals.get('verdict_ver')}, AMB {totals.get('verdict_amb')}, INC {totals.get('verdict_inc')} (INC is completed-but-inconclusive).",
+        "",
+        "## Formal gates",
+        "```text",
+        *[f"{name} = {str(value).lower()}" for name, value in sorted(gates.items())],
+        "```",
+        "",
+        "## Independent audit (GitHub Actions)",
+        f"- PASS = **{audit_pass}**; audited tasks {audit.get('tasks_audited')},",
+        f"  unique task ids {audit.get('unique_task_ids')}, shards {audit.get('shards_audited')},",
+        f"  technical failures {audit.get('technical_failures')}, findings {audit.get('audit_findings')}.",
+        "",
+        "## Cost and incidents",
+        f"- Modal metered delta for pilot + formal: ${(run_manifest.get('actual_modal_cost') or {}).get('delta_usd')}",
+        f"  (cap $10, guard $9.50); incidents:",
+        *[f"  - {item.get('issue')} (data loss {item.get('data_loss')})"
+          for item in (run_manifest.get("incidents") or [])],
+        "",
+        "## Deliverable contents",
+        "`00_provenance`, `01_frozen_protocol`, `02_modal_environment`,",
+        "`03_modal_cost_and_resource_audit`, `04_raw_8280`, `05_checkpoint_and_recovery`,",
+        "`06_independent_audit`, `07_statistical_analysis`, `08_figures`, `09_paper_material`,",
+        "`10_reproducibility`, `MANIFEST.sha256`.",
+        "",
+        "Machine-readable source: `00_provenance/run_provenance.json`,",
+        "`06_independent_audit/audit.json`, `07_statistical_analysis/statistics.json`.",
+        "",
+    ]
+    (staging / "FINAL_ACCEPTANCE_REPORT.md").write_text("\n".join(report))
 
     # MANIFEST.sha256
     lines = []
