@@ -208,6 +208,14 @@ def load_tasks(tasks_dir):
 
 
 def load_records(raw_dir):
+    # Modal runs store one JSON file per task under raw/shard_XXX/; GitHub
+    # Actions runs store one JSONL file per shard.  Accept both layouts.
+    modal_json = sorted(raw_dir.glob("raw/shard_*/*.json"))
+    if not modal_json:
+        modal_json = sorted(raw_dir.glob("*/raw/shard_*/*.json"))
+    if modal_json:
+        records = [json.loads(path.read_text()) for path in modal_json]
+        return modal_json, records
     paths = sorted(raw_dir.glob("*/raw/shard_*.jsonl"))
     if not paths:
         paths = sorted(raw_dir.glob("**/shard_*.jsonl"))
