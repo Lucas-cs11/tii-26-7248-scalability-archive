@@ -360,11 +360,21 @@ class BudgetMonitor:
         model_spend = self.task_wall_s / 3600.0 * self._usd_per_hour
         candidates = [value for value in (actual_spend, model_spend) if value is not None]
         self.spend_usd = round(max(candidates) if candidates else 0.0, 6)
-        if self.attempted_tasks > 0:
+        # Project the full matrix from the *compute* estimate only, never from
+        # the metered delta: the metered delta includes fixed image-build and
+        # container-startup costs that do not scale with the remaining tasks,
+        # and 20 in-flight containers contribute cost without contributing
+        # attempted tasks.  A projection is only meaningful once at least 5 %
+        # (and never fewer than 200) tasks have reported.
+        min_projection_tasks = max(200, int(0.05 * FORMAL_TASKS))
+        if (self.kind == "run" and self.attempted_tasks >= min_projection_tasks):
             self.projected_full_run_usd = round(
-                self.spend_usd / self.attempted_tasks * FORMAL_TASKS * BUDGET_SAFETY_FACTOR,
+                model_spend / self.attempted_tasks * FORMAL_TASKS
+                * BUDGET_SAFETY_FACTOR,
                 4,
             )
+        else:
+            self.projected_full_run_usd = None
         stop_reasons = []
         if self.spend_usd > self.threshold:
             stop_reasons.append(f"spent ${self.spend_usd:.4f} > ${self.threshold:.2f}")
@@ -639,6 +649,60 @@ def _read_remote_text(vol, remote_path: str) -> str:
     return _read_remote_bytes(vol, remote_path).decode("utf-8")
 
 
+def _remote_progress_scan(vol, prefix: str) -> dict:
+    """One batched scan of the volume instead of two RPCs per shard.
+
+    The resume path must decide which of the 120 shards still need work.  A
+    per-shard ``listdir``+``read_file`` pair is 240+ sequential RPCs and was
+    observed to take minutes (or stall) on a slow network; three recursive
+    listings plus at most a handful of metric reads give the same answer.
+    """
+    raw_counts: dict[str, int] = {}
+    for entry in _remote_listdir(vol, f"/{prefix}/raw", recursive=True):
+        path = str(entry.path)
+        if path.endswith(".json"):
+            parent = Path(path).parent.name
+            if parent.startswith("shard_"):
+                key = parent[len("shard_"):]
+                raw_counts[key] = raw_counts.get(key, 0) + 1
+    metrics_present: set[str] = set()
+    for entry in _remote_listdir(vol, f"/{prefix}/metrics"):
+        name = Path(entry.path).name
+        if name.startswith("shard_") and name.endswith(".json"):
+            metrics_present.add(name[len("shard_"):-len(".json")])
+    attempt_max: dict[str, int] = {}
+    for entry in _remote_listdir(vol, f"/{prefix}/run_metadata/attempts"):
+        name = Path(entry.path).name
+        if not name.startswith("shard_") or "_attempt_" not in name:
+            continue
+        shard, rest = name[len("shard_"):].split("_attempt_", 1)
+        try:
+            attempt_max[shard] = max(attempt_max.get(shard, -1), int(rest.split(".")[0]))
+        except ValueError:
+            continue
+    # Read the per-shard metrics concurrently: with 91 finished shards a
+    # sequential loop is 91 volume round-trips and was observed to stall for
+    # minutes on a slow/flaky proxy.  The volume client is safe to use from
+    # worker threads here (each call is a short unary RPC).
+    statuses: dict[str, dict] = {}
+    def _read_status(shard: str) -> tuple[str, dict]:
+        try:
+            return shard, _read_remote_json(vol, f"/{prefix}/metrics/shard_{shard}.json")
+        except Exception:  # noqa: BLE001
+            return shard, {}
+    if metrics_present:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=12) as pool:
+            for shard, data in pool.map(_read_status, sorted(metrics_present)):
+                statuses[shard] = data
+        # Defensive fallback: if the threaded reads came back empty (some Modal
+        # clients are not safe to share across threads), read them sequentially
+        # instead of silently concluding that every shard still needs work.
+        if not any(statuses.values()):
+            statuses = {shard: _read_status(shard)[1] for shard in sorted(metrics_present)}
+    return {"raw_counts": raw_counts, "statuses": statuses, "attempt_max": attempt_max}
+
+
 def _read_remote_json(vol, remote_path: str):
     return json.loads(_read_remote_text(vol, remote_path))
 
@@ -677,23 +741,20 @@ def _remote_next_attempt(vol, prefix: str, shard: str) -> int:
     return maximum + 1
 
 
-def _remote_shards_needing_work(vol, prefix: str, manifest: dict) -> list[str]:
+def _remote_shards_needing_work(vol, prefix: str, manifest: dict,
+                                scan: dict | None = None) -> list[str]:
     shard_task_ids = manifest.get("shard_task_ids") or {}
+    if scan is None:
+        scan = _remote_progress_scan(vol, prefix)
     needed = []
     for shard in sorted(manifest.get("shard_sha256") or {}):
         expected = len(shard_task_ids.get(shard) or [])
-        raw_files = [entry for entry in _remote_listdir(vol, f"/{prefix}/raw/shard_{shard}")
-                     if Path(entry.path).suffix == ".json"]
-        metrics = {}
-        try:
-            metrics = _read_remote_json(vol, f"/{prefix}/metrics/shard_{shard}.json")
-        except Exception:  # noqa: BLE001
-            metrics = {}
+        metrics = scan["statuses"].get(shard, {})
         complete = (
             metrics.get("status") == "COMPLETED"
             and not metrics.get("tasks_error")
             and not metrics.get("tasks_unfinished")
-            and len(raw_files) == expected
+            and scan["raw_counts"].get(shard, 0) == expected
         )
         if not complete:
             needed.append(shard)
@@ -1224,12 +1285,31 @@ def _execute(args, kind: str) -> int:
                 vol = runner.VOLUME
                 run_metadata = _remote_run_metadata(vol, args.volume_prefix, run_id)
                 plan_manifest = _remote_manifest(vol, args.volume_prefix)
-                shard_ids = _remote_shards_needing_work(vol, args.volume_prefix, plan_manifest)
                 if args.only_shards:
+                    # Explicit shard list: skip the (potentially slow) remote
+                    # discovery entirely.  This is the safe path when the
+                    # unfinished shards are already known from the downloaded
+                    # metrics listing.
+                    known = set(plan_manifest.get("shard_sha256") or {})
                     requested = [f"{int(part):03d}" for part in args.only_shards.split(",") if part.strip()]
-                    shard_ids = sorted(set(shard_ids) & set(requested))
-                attempts = {shard: _remote_next_attempt(vol, args.volume_prefix, shard)
-                            for shard in shard_ids}
+                    shard_ids = sorted(set(requested) & known)
+                    attempt_max: dict[str, int] = {}
+                    for entry in _remote_listdir(vol, f"/{args.volume_prefix}/run_metadata/attempts"):
+                        name = Path(entry.path).name
+                        if name.startswith("shard_") and "_attempt_" in name:
+                            shard, rest = name[len("shard_"):].split("_attempt_", 1)
+                            try:
+                                attempt_max[shard] = max(attempt_max.get(shard, -1),
+                                                         int(rest.split(".")[0]))
+                            except ValueError:
+                                continue
+                    attempts = {shard: attempt_max.get(shard, -1) + 1 for shard in shard_ids}
+                else:
+                    scan = _remote_progress_scan(vol, args.volume_prefix)
+                    shard_ids = _remote_shards_needing_work(
+                        vol, args.volume_prefix, plan_manifest, scan=scan)
+                    attempts = {shard: scan["attempt_max"].get(shard, -1) + 1
+                                for shard in shard_ids}
                 print(f"resume {run_id}: {len(shard_ids)} shard(s) need work", flush=True)
                 if shard_ids:
                     state, monitor = _run_pool(runner, run_id, shard_ids, attempts,
@@ -2482,7 +2562,7 @@ def _add_resource_args(parser):
     parser.add_argument("--cell-timeout", type=float, default=DEFAULT_CELL_TIMEOUT_S)
     parser.add_argument("--max-parallel", type=int, default=8)
     parser.add_argument("--poll-seconds", type=float, default=5.0)
-    parser.add_argument("--max-infra-retries", type=int, default=2)
+    parser.add_argument("--max-infra-retries", type=int, default=1)
     parser.add_argument("--app-name", default=DEFAULT_APP_NAME)
     parser.add_argument("--volume-name", default=DEFAULT_VOLUME_NAME)
     parser.add_argument("--volume-prefix", default=DEFAULT_VOLUME_PREFIX)
