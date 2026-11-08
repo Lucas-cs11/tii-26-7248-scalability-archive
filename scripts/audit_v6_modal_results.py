@@ -271,10 +271,17 @@ def audit_run(args) -> dict:
         )
 
     # ------------------------------------------------------------ run manifest
-    manifest_shards = run_manifest.get("shards") or {}
-    for shard in expected_shards:
-        if shard not in manifest_shards:
-            audit.error(f"run manifest has no state for shard {shard}")
+    # ``run_manifest["shards"]`` is a per-shard state mapping in the
+    # orchestrator's native manifest, but a reconstructed/aggregate manifest may
+    # carry only the shard count.  Treat a non-mapping as "no per-shard state"
+    # (the per-shard metrics and ledgers are audited separately below) instead
+    # of iterating over an int.
+    manifest_shards_raw = run_manifest.get("shards")
+    manifest_shards = manifest_shards_raw if isinstance(manifest_shards_raw, dict) else {}
+    if manifest_shards:
+        for shard in expected_shards:
+            if shard not in manifest_shards:
+                audit.error(f"run manifest has no state for shard {shard}")
     if run_manifest.get("source_sha") and expected_source_sha != run_manifest.get("source_sha"):
         audit.error("run manifest source_sha differs from expected source SHA")
     if expected_image and (run_manifest.get("image") or {}).get("spec_sha256") not in (None, expected_image):
